@@ -52,6 +52,14 @@ function setComparisonHandler(fn) {
   showComparison = fn;
 }
 
+// Set by menu.js: opens the merge-request review window (all changed files,
+// before/after, synced viewers). Injected for the same reason as above.
+let showReview = null;
+
+function setReviewHandler(fn) {
+  showReview = fn;
+}
+
 // Opens a URL in the user's browser; injected for the same reason.
 let openExternal = null;
 
@@ -351,6 +359,18 @@ const postRoutes = {
       openExternal(url);
     }
 
+    return { ok: true };
+  },
+
+  // Open the visual review of a merge request (all changed files,
+  // before/after, synced zoom). The heavy lifting happens in the window;
+  // this just launches it.
+  '/merge-request/review': async body => {
+    if (!showReview) {
+      throw new Error('The review window is not available.');
+    }
+
+    await showReview({ source: body.source, target: body.target });
     return { ok: true };
   },
 
@@ -802,4 +822,7 @@ function stop() {
   autoPull.stop();
 }
 
-module.exports = { start, stop, setComparisonHandler, setUrlOpener, setFolderPicker, PORT, HOST, TOKEN };
+module.exports = {
+  start, stop, setComparisonHandler, setReviewHandler,
+  setUrlOpener, setFolderPicker, PORT, HOST, TOKEN
+};

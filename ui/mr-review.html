@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Review merge request</title>
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/diagram-js.css">
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/bpmn-js.css">
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css">
+<script src="../node_modules/bpmn-js/dist/bpmn-navigated-viewer.production.min.js"></script>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+  header {
+    padding: 10px 16px;
+    border-bottom: 1px solid #e2e2e5;
+    background: #f7f7f8;
+  }
+  h1 { font-size: 14px; margin: 0 0 2px; }
+  header .branches { font-size: 12px; color: #555; }
+  header .branches code {
+    font-family: ui-monospace, Consolas, monospace;
+    background: #ececf0; border-radius: 4px; padding: 1px 5px;
+  }
+  header .arrow { color: #999; margin: 0 4px; }
+
+  #layout { flex: 1; display: flex; min-height: 0; }
+
+  /* ---- file rail ---- */
+  #files {
+    flex: 0 0 250px;
+    border-right: 1px solid #e2e2e5;
+    overflow-y: auto;
+    background: #fbfbfc;
+  }
+  #files h2 {
+    margin: 0; padding: 9px 14px; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .05em; color: #888;
+    position: sticky; top: 0; background: #fbfbfc; border-bottom: 1px solid #eee;
+  }
+  .file {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 14px; cursor: pointer; border-bottom: 1px solid #f0f0f2;
+    font-size: 12.5px;
+  }
+  .file:hover { background: #eef2f8; }
+  .file.on { background: #e3edfb; box-shadow: inset 2px 0 0 #1565c0; }
+  .file.text { cursor: default; color: #999; }
+  .file.text:hover { background: transparent; }
+  .file__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .st {
+    flex: 0 0 auto; font-size: 9px; font-weight: 700; letter-spacing: .03em;
+    padding: 1px 5px; border-radius: 3px; width: 54px; text-align: center;
+  }
+  .st--A { color: #1b5e20; background: #e6f4ea; }
+  .st--M { color: #7a5b00; background: #fbf1d6; }
+  .st--D { color: #8b1f1f; background: #fde8e8; }
+  .st--R { color: #0d47a1; background: #e3f0fb; }
+
+  /* ---- centre: toolbar + panes ---- */
+  #centre { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #toolbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 14px; border-bottom: 1px solid #eee; background: #fafafa;
+    font-size: 12px;
+  }
+  #toolbar .name { font-weight: 600; }
+  #toolbar .spacer { flex: 1; }
+  #toolbar button {
+    font: inherit; font-size: 13px; line-height: 1;
+    border: 1px solid #ccc; background: #fff; color: #333;
+    width: 26px; height: 24px; border-radius: 5px; cursor: pointer;
+  }
+  #toolbar button:hover { background: #f0f0f0; }
+  #toolbar .synced {
+    font-size: 11px; color: #1565c0; display: inline-flex; align-items: center; gap: 4px;
+  }
+  #toolbar .synced .dot { width: 7px; height: 7px; border-radius: 50%; background: #1565c0; }
+
+  #panes { flex: 1; display: flex; min-height: 0; }
+  .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .pane + .pane { border-left: 2px solid #e2e2e5; }
+  .pane h2 {
+    margin: 0; padding: 7px 14px; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .05em;
+    background: #fafafa; border-bottom: 1px solid #eee;
+  }
+  .pane.before h2 { color: #b26a00; }
+  .pane.after h2  { color: #2e7d32; }
+  .canvas { flex: 1; background: #fff; min-height: 0; }
+  .missing {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    color: #8a8a8a; font-size: 13px; padding: 20px; text-align: center;
+  }
+  .missing.added   { color: #2e7d32; }
+  .missing.removed { color: #c62828; }
+
+  #placeholder {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    color: #999; font-size: 13px; text-align: center; padding: 24px;
+  }
+
+  /* ---- change list ---- */
+  #changes {
+    flex: 0 0 300px; border-left: 1px solid #e2e2e5;
+    background: #fcfcfd; overflow-y: auto;
+  }
+  #changes h2 {
+    margin: 0; padding: 8px 14px; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .05em; color: #888;
+    background: #fafafa; border-bottom: 1px solid #eee;
+    position: sticky; top: 0;
+  }
+  #changeList { margin: 0; padding: 0; list-style: none; }
+  .el { padding: 9px 14px; border-bottom: 1px solid #eee; cursor: pointer; }
+  .el:hover { background: #f2f5f9; }
+  .el__head { display: flex; align-items: baseline; gap: 6px; }
+  .el__name { font-size: 12.5px; font-weight: 600; }
+  .el__type { font-size: 10.5px; color: #777; }
+  .tag {
+    font-size: 9px; text-transform: uppercase; letter-spacing: .04em;
+    padding: 1px 5px; border-radius: 3px; color: #fff; flex: 0 0 auto;
+  }
+  .tag--changed { background: #b8860b; }
+  .tag--added   { background: #2e7d32; }
+  .tag--removed { background: #c62828; }
+  .tag--moved   { background: #777; }
+  .prop { margin: 5px 0 0; font-size: 11.5px; }
+  .prop__label { color: #555; }
+  .prop__from, .prop__to {
+    font-family: ui-monospace, Consolas, monospace; font-size: 11px;
+    padding: 0 3px; border-radius: 2px; word-break: break-all;
+  }
+  .prop__from { background: #fde8e8; text-decoration: line-through; color: #8b1f1f; }
+  .prop__to   { background: #e6f4ea; color: #1b5e20; }
+  .prop__arrow { color: #999; margin: 0 3px; }
+  .empty { padding: 14px; font-size: 12px; color: #999; }
+  .banner {
+    padding: 8px 14px; font-size: 12px;
+    background: #fff8e1; border-bottom: 1px solid #f0e0a0; color: #6b5600;
+  }
+
+  /* ---- canvas highlighting (same language as the compare window) ---- */
+  .djs-element.cgp-changed .djs-visual > :nth-child(1) { stroke: #b8860b !important; stroke-width: 3px !important; }
+  .djs-element.cgp-added   .djs-visual > :nth-child(1) { stroke: #2e7d32 !important; stroke-width: 3px !important; }
+  .djs-element.cgp-removed .djs-visual > :nth-child(1) { stroke: #c62828 !important; stroke-width: 3px !important; stroke-dasharray: 5 3 !important; }
+  .djs-element.cgp-focus   .djs-visual > :nth-child(1) { stroke-width: 5px !important; }
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Reviewing merge request</h1>
+    <div class="branches" id="branches"></div>
+  </header>
+
+  <div id="layout">
+    <div id="files">
+      <h2 id="filesHead">Changed files</h2>
+      <div id="fileList"></div>
+    </div>
+
+    <div id="centre">
+      <div id="toolbar" hidden>
+        <span class="name" id="openName"></span>
+        <span class="spacer"></span>
+        <span class="synced" title="Both diagrams zoom and pan together"><span class="dot"></span> Synced</span>
+        <button id="zoomOut" title="Zoom out">&minus;</button>
+        <button id="zoomFit" title="Fit both">&#9634;</button>
+        <button id="zoomIn" title="Zoom in">&plus;</button>
+      </div>
+
+      <div id="placeholder">Select a changed diagram on the left to see it before and after.</div>
+
+      <div id="panes" hidden>
+        <div class="pane before">
+          <h2>Before</h2>
+          <div class="canvas" id="before"></div>
+        </div>
+        <div class="pane after">
+          <h2>After</h2>
+          <div class="canvas" id="after"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="changes">
+      <h2>What changed</h2>
+      <div id="banner" class="banner" hidden></div>
+      <ul id="changeList"></ul>
+    </div>
+  </div>
+
+<script src="mr-review.js"></script>
+</body>
+</html>

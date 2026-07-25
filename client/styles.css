@@ -1276,6 +1276,15 @@ body.dark .cgp-panel,
   white-space: nowrap;
 }
 
+.cgp-mr__title--link {
+  cursor: pointer;
+}
+
+.cgp-mr__title--link:hover {
+  color: var(--cgp-info);
+  text-decoration: underline;
+}
+
 .cgp-mr__meta {
   display: flex;
   align-items: center;

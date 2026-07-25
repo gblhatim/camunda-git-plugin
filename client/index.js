@@ -243,6 +243,10 @@ const BUSY_LABELS = {
     label: 'Bringing the two branches together so you can resolve them',
     slow: 'Still going - this fetches from the server and starts the merge.'
   },
+  '/merge-request/review': {
+    label: 'Opening the review',
+    slow: 'Still going - this fetches the two branches to compare them.'
+  },
   '/conflict/undo': { label: 'Putting that decision back' },
   '/conflict/compare': { label: 'Opening the two versions' },
   '/merge/complete': { label: 'Finishing up' },
@@ -857,6 +861,9 @@ function GitPlugin(props) {
     // lives in Source Control - take the user there rather than leaving
     // them on the list wondering where the diagrams went.
     refreshMergeRequests: () => loadMergeRequests(),
+    // Opens the visual review window (all changed files, before/after,
+    // synced zoom) in the main process.
+    reviewMr: (source, target) => act('/merge-request/review', { source, target }),
     // Opens in the real browser via the main process; deliberately not
     // through `act`, so it raises no busy bar or success notice for what is
     // just following a link.

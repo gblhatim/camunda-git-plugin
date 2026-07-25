@@ -1713,7 +1713,13 @@ export function MergeRequests({ data, actions, busy }) {
         items.map(mr => h('li', { key: `${mr.number}`, className: 'cgp-mr' },
           h('div', { className: 'cgp-mr__top' },
             h('span', { className: 'cgp-mr__num' }, `#${mr.number}`),
-            h('span', { className: 'cgp-mr__title' }, mr.title),
+            // The title is the way into the review: all changed files, each
+            // diagram before and after with synced zoom.
+            h('span', {
+              className: 'cgp-mr__title cgp-mr__title--link',
+              title: 'See every changed file, before and after',
+              onClick: () => actions.reviewMr(mr.source, mr.target)
+            }, mr.title),
             mr.draft && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Draft')
           ),
 
@@ -1735,6 +1741,13 @@ export function MergeRequests({ data, actions, busy }) {
                 : h('span', { className: 'cgp-tag cgp-tag--muted' }, 'UNKNOWN'),
 
             h('span', { className: 'cgp-toolbar__spacer' }),
+
+            h('button', {
+              className: 'btn cgp-btn',
+              disabled: busy,
+              title: 'See every changed file, before and after, with synced zoom',
+              onClick: () => actions.reviewMr(mr.source, mr.target)
+            }, 'Review changes'),
 
             // Offered whenever it is not known to be clean: conflicts, or an
             // unknown state the merge itself will settle.

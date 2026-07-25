@@ -14,6 +14,7 @@ const { openWindow } = require('./windows');
 const bridgeServer = require('./bridge-server');
 const conflictService = require('./conflict-service');
 const diagramDiffService = require('./diagram-diff-service');
+const mergeRequestService = require('./merge-request-service');
 const autoPull = require('./auto-pull');
 
 // This module is required once, in the main process, when Modeler loads the
@@ -94,6 +95,33 @@ bridgeServer.setComparisonHandler(async filePath => {
         diff,
         merge
       })
+    }
+  });
+});
+
+/**
+ * Open the visual review of a merge request: every changed file listed, and
+ * each diagram rendered before and after with synced zoom.
+ *
+ * The window pulls its data lazily over the namespaced IPC - the overview
+ * once, then each file as it is opened - so a request touching many diagrams
+ * does not parse them all up front.
+ */
+bridgeServer.setReviewHandler(async ({ source, target }) => {
+  // Computed once here so a failure to reach the repo surfaces as an error
+  // on the click, not an empty window.
+  const overview = await mergeRequestService.reviewChanges({ source, target });
+
+  openWindow({
+    kind: 'mr-review',
+    title: `Review ${source} → ${target}`,
+    htmlFile: 'mr-review.html',
+    width: 1500,
+    height: 900,
+    handlers: {
+      getReview: async () => overview,
+      getFile: async filePath =>
+        mergeRequestService.reviewFile({ source, target, path: filePath })
     }
   });
 });

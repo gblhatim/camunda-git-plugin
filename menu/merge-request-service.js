@@ -24,6 +24,7 @@ const configStore = require('./config-store');
 const remoteService = require('./remote-service');
 const branchService = require('./branch-service');
 const conflictService = require('./conflict-service');
+const diagramDiffService = require('./diagram-diff-service');
 
 /**
  * The parsed origin, or a clear reason there are no merge requests to show.
@@ -182,7 +183,171 @@ async function startResolution({ source, target }) {
   };
 }
 
+// =====================================================================
+// Reviewing a merge request: what it changes, before and after.
+//
+// A read-only view - it never checks anything out or merges. It resolves
+// the two branches (preferring the server's copy, since a merge request is
+// defined by what was pushed), finds their merge base, and diffs the base
+// against the source. That is the three-dot diff a host's "Files changed"
+// tab shows: exactly what the request adds, without the target's own later
+// work bleeding in.
+// =====================================================================
+
+const DIAGRAM_EXT = /\.(bpmn|dmn|form)$/i;
+
+/**
+ * Prefer the server's copy of a branch - the request is defined by what was
+ * pushed - falling back to a local branch of the same name when there is no
+ * remote-tracking ref (offline, or never fetched).
+ */
+async function resolveRef(name) {
+  return (await branchService.remoteBranchExists(name)) ? `origin/${name}` : name;
+}
+
+async function refsFor(source, target) {
+  const [ sourceRef, targetRef ] = await Promise.all([
+    resolveRef(source), resolveRef(target)
+  ]);
+
+  const git = gitService.getGit();
+  const base = (await git.raw([ 'merge-base', targetRef, sourceRef ])).trim();
+
+  return { sourceRef, targetRef, base };
+}
+
+/**
+ * The changed files of a merge request, diagrams first. `-M` reports a moved
+ * diagram as a rename rather than a delete plus an add.
+ */
+async function listChanged({ base, sourceRef }) {
+  const git = gitService.getGit();
+  const out = await git.raw([ 'diff', '--name-status', '-M', base, sourceRef ]);
+
+  const files = out
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const cols = line.split('\t');
+      const letter = (cols[0] || '').charAt(0).toUpperCase();
+      const renameLike = letter === 'R' || letter === 'C';
+      const filePath = renameLike ? (cols[2] || cols[1] || '') : (cols[1] || '');
+
+      return {
+        status: letter,
+        path: filePath,
+        from: renameLike ? (cols[1] || null) : null,
+        name: filePath.split('/').pop(),
+        isDiagram: DIAGRAM_EXT.test(filePath)
+      };
+    });
+
+  // Diagrams first - they are the ones with a visual review - then the rest
+  // alphabetically.
+  files.sort((a, b) =>
+    (b.isDiagram - a.isDiagram) || a.path.localeCompare(b.path)
+  );
+
+  return files;
+}
+
+async function reviewChanges({ source, target }) {
+  if (!source || !target) {
+    throw new Error('A review needs both a source and a target branch.');
+  }
+
+  await resolveHost();
+
+  const git = gitService.getGit();
+
+  // Get the server's current idea of both branches so the review matches the
+  // merge request. Offline is not fatal - fall back to whatever is local.
+  try {
+    await git.fetch([ 'origin' ]);
+  } catch (err) {
+    // keep going with local refs
+  }
+
+  const refs = await refsFor(source, target);
+  const files = await listChanged(refs);
+
+  return {
+    source,
+    target,
+    base: refs.base,
+    fileCount: files.length,
+    diagramCount: files.filter(f => f.isDiagram).length,
+    files
+  };
+}
+
+/**
+ * The before and after of one file in the request, plus - for a diagram -
+ * the element-level diff between them so the viewer can highlight what moved
+ * and what changed.
+ *
+ * Recomputes the refs without a fetch (the list was just fetched when the
+ * window opened) and validates the path against the actual change set, so a
+ * client cannot ask git to show an arbitrary path.
+ */
+async function reviewFile({ source, target, path: rel }) {
+  if (!source || !target || !rel) {
+    throw new Error('A file review needs a source, a target, and a path.');
+  }
+
+  gitService.assertSafeRelativePath(rel);
+
+  const refs = await refsFor(source, target);
+  const files = await listChanged(refs);
+  const entry = files.find(f => f.path === rel);
+
+  if (!entry) {
+    throw new Error('That file is not part of this merge request.');
+  }
+
+  const git = gitService.getGit();
+
+  const show = async (ref, at) => {
+    try {
+      return await git.show([ `${ref}:${at}` ]);
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const beforePath = entry.from || rel;
+
+  const before = entry.status === 'A' ? null : await show(refs.base, beforePath);
+  const after = entry.status === 'D' ? null : await show(refs.sourceRef, rel);
+
+  // The element-level diff is only meaningful for a diagram present on both
+  // sides; an add or a delete has only one version to show.
+  let diff = null;
+
+  if (entry.isDiagram && before && after) {
+    try {
+      diff = await diagramDiffService.compare(before, after);
+    } catch (err) {
+      diff = { comparable: false, reason: `Could not compare these versions: ${err.message}` };
+    }
+  }
+
+  return {
+    path: rel,
+    name: entry.name,
+    status: entry.status,
+    from: entry.from,
+    isDiagram: entry.isDiagram,
+    before,
+    after,
+    diff
+  };
+}
+
 module.exports = {
   list,
-  startResolution
+  startResolution,
+  reviewChanges,
+  reviewFile
 };
