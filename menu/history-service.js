@@ -249,6 +249,93 @@ async function getHistory(options) {
   return { commits: rows, laneCount: width, total: rows.length };
 }
 
+// A commit id as it can appear in a graph row: a full or abbreviated hex
+// sha. Validated before it reaches git so a row's hash can never be turned
+// into an option or another argument, belt-and-braces on top of argv.
+const SHA = /^[0-9a-f]{4,40}$/i;
+
+/**
+ * Everything about one commit that the row itself does not carry: the full
+ * message body, the author's email, when it was committed as opposed to
+ * authored, and - the point of the view - exactly which files it touched
+ * and how.
+ *
+ * Fetched on demand rather than for every row, because `--name-status`
+ * across a hundred commits is a lot of work for a list where only the one
+ * a person opened is being read.
+ */
+async function getCommit(hash) {
+  if (!SHA.test(String(hash || ''))) {
+    throw new Error('That is not a commit id.');
+  }
+
+  const git = gitService.getGit();
+
+  // Metadata and message in one record. `%b` (the body) can run to many
+  // lines, so it is last and the record is split on the field separator,
+  // never on newlines.
+  const fields = [ '%H', '%h', '%an', '%ae', '%aI', '%cI', '%P', '%D', '%s', '%b' ];
+
+  const meta = await git.raw([
+    'show', '-s', `--format=${fields.join(FS)}`, hash
+  ]);
+
+  const [
+    full, short, author, email, authorDate, commitDate, parents, refs, subject, body
+  ] = meta.split(FS);
+
+  const parentList = parents ? parents.trim().split(' ').filter(Boolean) : [];
+  const isMerge = parentList.length > 1;
+
+  // Which files changed, and how. `-M` turns a delete+add of the same
+  // content into a rename, which reads far better for a moved diagram.
+  // A merge commit shows nothing here (git suppresses the combined diff),
+  // which is correct: a merge that resolved cleanly changed nothing on its
+  // own.
+  const nameStatus = await git.raw([
+    'show', '--name-status', '-M', '--format=', hash
+  ]);
+
+  const files = nameStatus
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const cols = line.split('\t');
+      const code = cols[0] || '';
+      const letter = code.charAt(0).toUpperCase();
+
+      // A rename/copy carries a similarity number and two paths; the new
+      // path is the one worth showing, with the old path kept for context.
+      const isRenameLike = letter === 'R' || letter === 'C';
+      const path = isRenameLike ? (cols[2] || cols[1] || '') : (cols[1] || '');
+      const from = isRenameLike ? (cols[1] || '') : null;
+
+      return {
+        status: letter,
+        path,
+        from,
+        isDiagram: /\.(bpmn|dmn|form)$/i.test(path)
+      };
+    });
+
+  return {
+    hash: full ? full.trim() : String(hash),
+    short: short || String(hash).slice(0, 7),
+    author: author || '',
+    email: email || '',
+    authorDate: authorDate || null,
+    commitDate: commitDate || null,
+    parents: parentList,
+    refs: parseRefs(refs),
+    subject: subject || '',
+    body: (body || '').trim(),
+    isMerge,
+    files,
+    fileCount: files.length
+  };
+}
+
 /**
  * ASCII rendering of the computed graph - used by the tests to compare
  * against `git log --graph`, and handy when debugging lane assignment.
@@ -314,6 +401,7 @@ function toAscii({ commits }) {
 
 module.exports = {
   getHistory,
+  getCommit,
   listSavePoints,
   readCommits,
   assignLanes,

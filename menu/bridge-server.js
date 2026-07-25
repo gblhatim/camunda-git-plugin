@@ -305,6 +305,11 @@ const postRoutes = {
     return { ok: true, status: await readStatus() };
   },
 
+  // Read-only, but a POST because it takes a commit id - GET handlers here
+  // do not receive the query string. Loaded lazily when a row is opened, so
+  // the graph itself stays a single cheap `git log`.
+  '/history/commit': async body => historyService.getCommit(body.hash),
+
   // --- workstreams -----------------------------------------------------
 
   '/workstream/switch': async body => {

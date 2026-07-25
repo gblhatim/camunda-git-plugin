@@ -426,6 +426,20 @@ function GitPlugin(props) {
     }
   }, [ bridge ]);
 
+  // Full detail for one commit - message body, dates, and the files it
+  // touched - fetched only when a row in the graph is opened.
+  const fetchCommit = useCallback(async hash => {
+    if (!bridge) return null;
+
+    const detail = await apiPost(bridge, '/history/commit', { hash });
+
+    if (detail && detail.error) {
+      throw new Error(detail.error);
+    }
+
+    return detail;
+  }, [ bridge ]);
+
   const loadSavePoints = useCallback(async b => {
     const target = b || bridge;
     if (!target) return;
@@ -1156,7 +1170,7 @@ function GitPlugin(props) {
             // Right: the branch graph, in the width the bottom panel gives us.
             h('div', { className: 'cgp-split__aside' },
               h('p', { className: 'cgp-split__title' }, 'History'),
-              h(History, { history, busy, onRefresh: () => loadHistory() })
+              h(History, { history, busy, onRefresh: () => loadHistory(), fetchCommit })
             )
           )
         )

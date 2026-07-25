@@ -1064,6 +1064,185 @@ body.dark .cgp-panel,
 .cgp-ref--remote { color: var(--cgp-muted); }
 .cgp-ref--tag    { color: var(--cgp-edited); }
 
+/* ------------------------------------------------ history: hover + detail */
+
+.cgp-commit { cursor: pointer; transition: background .08s ease; }
+
+.cgp-commit--open {
+  background: var(--cgp-raised);
+  position: relative;
+}
+
+/* A thin accent down the left of an opened commit, tying the row to the
+   detail panel that drops out of it. */
+.cgp-commit--open::before {
+  content: "";
+  position: absolute;
+  left: -6px; top: 3px; bottom: 3px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--cgp-info);
+}
+
+/* The label that follows the cursor. Measured position (set inline), so
+   this only carries looks. */
+.cgp-hovercard {
+  background: var(--cgp-panel-bg, #fff);
+  color: var(--cgp-fg);
+  border: 1px solid var(--cgp-line);
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .18);
+  padding: 10px 12px;
+  backdrop-filter: saturate(1.2) blur(6px);
+  animation: cgp-pop .09s ease-out;
+}
+
+@keyframes cgp-pop {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cgp-hovercard__refs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+
+.cgp-hovercard__subject {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.cgp-hovercard__meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 5px;
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--cgp-muted);
+}
+
+.cgp-hovercard__hash {
+  margin-top: 5px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--cgp-faint);
+}
+
+.cgp-hovercard__hint {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--cgp-line);
+  font-size: 10.5px;
+  color: var(--cgp-faint);
+}
+
+.cgp-dot-sep { color: var(--cgp-faint); }
+
+.cgp-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 600;
+  padding: 0 6px; height: 16px; border-radius: 8px;
+  white-space: nowrap;
+}
+
+.cgp-chip--merge {
+  color: var(--cgp-info);
+  background: color-mix(in srgb, var(--cgp-info) 14%, transparent);
+}
+
+/* The detail panel a click drops out under a row. It is a list item so it
+   sits in the same flow as the commits, but spans the full width. */
+.cgp-commit-detail__wrap { list-style: none; }
+
+.cgp-commit-detail {
+  margin: 2px 0 10px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--cgp-line);
+  border-radius: 8px;
+  background: var(--cgp-raised);
+  animation: cgp-pop .1s ease-out;
+}
+
+.cgp-commit-detail__head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cgp-commit-detail__subject {
+  font-size: 13px; font-weight: 600; line-height: 1.35;
+}
+
+.cgp-commit-detail__body {
+  margin: 0 0 10px 0;
+  padding: 8px 10px;
+  background: var(--cgp-panel-bg, rgba(0, 0, 0, .02));
+  border-radius: 6px;
+  border: 1px solid var(--cgp-line);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.cgp-meta { margin: 0 0 10px 0; }
+
+.cgp-meta__row {
+  display: flex;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: 11.5px;
+  border-bottom: 1px dashed var(--cgp-line);
+}
+
+.cgp-meta__row:last-child { border-bottom: 0; }
+
+.cgp-meta dt {
+  flex: 0 0 62px;
+  color: var(--cgp-faint);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 10px;
+  padding-top: 1px;
+}
+
+.cgp-meta dd { margin: 0; flex: 1; min-width: 0; color: var(--cgp-fg); word-break: break-word; }
+
+.cgp-mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+.cgp-filelist { list-style: none; margin: 6px 0 0 0; padding: 0; }
+
+.cgp-filelist__row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 0;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.cgp-filelist__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cgp-tag {
+  flex: 0 0 auto;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  width: 62px;
+  text-align: center;
+}
+
+.cgp-tag--added   { color: var(--cgp-added);   background: color-mix(in srgb, var(--cgp-added) 15%, transparent); }
+.cgp-tag--edited  { color: var(--cgp-edited);  background: color-mix(in srgb, var(--cgp-edited) 15%, transparent); }
+.cgp-tag--deleted { color: var(--cgp-deleted); background: color-mix(in srgb, var(--cgp-deleted) 15%, transparent); }
+.cgp-tag--info    { color: var(--cgp-info);    background: color-mix(in srgb, var(--cgp-info) 15%, transparent); }
+.cgp-tag--muted   { color: var(--cgp-muted);   background: var(--cgp-raised); }
+
 /* ---------------------------------------------------------------- split */
 
 /* The bottom panel is wide and short, unlike VS Code's tall sidebar, so the
