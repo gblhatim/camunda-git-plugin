@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "check": "node scripts/check-undefined.js",
-    "test": "node test/merge.test.js && node test/combine.test.js && node test/combine-integration.test.js",
+    "test": "node test/merge.test.js && node test/combine.test.js && node test/combine-integration.test.js && node test/merge-request-integration.test.js",
     "build": "npm run check && webpack",
     "build:only": "webpack",
     "watch": "webpack --watch"

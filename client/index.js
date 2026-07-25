@@ -40,7 +40,8 @@ import {
   Activity,
   Settings,
   ChangesPane,
-  WorkHero
+  WorkHero,
+  MergeRequests
 } from './components.js';
 
 import { History } from './history.js';
@@ -55,6 +56,7 @@ const ACTIVITY_ID = 'git-activity';
 const SETTINGS_ID = 'git-settings';
 const HISTORY_ID = 'git-history';
 const RELEASES_ID = 'git-releases';
+const MERGE_REQUESTS_ID = 'git-merge-requests';
 const POLL_MS = 5000;
 
 // ---------------------------------------------------------------- bridge
@@ -237,6 +239,10 @@ const BUSY_LABELS = {
 
   '/conflict/resolve': { label: 'Applying your decision' },
   '/conflict/combine': { label: 'Combining both versions' },
+  '/merge-request/resolve': {
+    label: 'Bringing the two branches together so you can resolve them',
+    slow: 'Still going - this fetches from the server and starts the merge.'
+  },
   '/conflict/undo': { label: 'Putting that decision back' },
   '/conflict/compare': { label: 'Opening the two versions' },
   '/merge/complete': { label: 'Finishing up' },
@@ -335,6 +341,7 @@ function GitPlugin(props) {
   const [ next, setNext ] = useState(null);
   const [ release, setRelease ] = useState(null);
   const [ releaseChanges, setReleaseChanges ] = useState(null);
+  const [ mergeRequests, setMergeRequests ] = useState(null);
 
   // Which section the user opened, overriding whatever the lead suggests.
   // Null means "follow the lead" - so the panel reorganises itself as the
@@ -488,6 +495,26 @@ function GitPlugin(props) {
     }
   }, [ bridge ]);
 
+  /**
+   * Open merge/pull requests from the team server. Hits the network (the
+   * host's API), so it loads on demand - tab activation and after a
+   * refresh - never on the status poll.
+   */
+  const loadMergeRequests = useCallback(async b => {
+    const target = b || bridge;
+    if (!target) return;
+
+    try {
+      const data = await apiGet(target, '/merge-requests');
+      // An error here is normal - no remote, no token, an unrecognised host
+      // - and the panel says so rather than looking broken.
+      setMergeRequests(data);
+    } catch (err) {
+      console.error('[camunda-git-plugin] merge requests fetch failed:', err);
+      setMergeRequests({ error: err.message });
+    }
+  }, [ bridge ]);
+
   const loadSettings = useCallback(async b => {
     const target = b || bridge;
     if (!target) return;
@@ -574,9 +601,10 @@ function GitPlugin(props) {
     // rendered *from* this state, so loading it lazily when the tab is
     // opened means the tab never appears to be opened in the first place.
     loadRelease(target);
+    loadMergeRequests(target);
   }, [
     bridge, loadTree, loadHistory, loadSavePoints, loadWorkstreams,
-    loadActivity, loadContext, loadNext, loadRelease
+    loadActivity, loadContext, loadNext, loadRelease, loadMergeRequests
   ]);
 
   useEffect(() => {
@@ -613,7 +641,7 @@ function GitPlugin(props) {
       await Promise.all([
         loadWorkstreams(b), loadTree(b), loadSettings(b),
         loadActivity(b), loadHistory(b), loadContext(b), loadSavePoints(b),
-        loadNext(b), loadRelease(b)
+        loadNext(b), loadRelease(b), loadMergeRequests(b)
       ]);
 
       timer = setInterval(() => refresh(b), POLL_MS);
@@ -675,6 +703,7 @@ function GitPlugin(props) {
       [EXPLORER_ID]: () => loadTree(bridge),
       [HISTORY_ID]: () => loadHistory(bridge),
       [RELEASES_ID]: () => { refresh(bridge); loadRelease(bridge); },
+      [MERGE_REQUESTS_ID]: () => { refresh(bridge); loadMergeRequests(bridge); },
       [ACTIVITY_ID]: () => loadActivity(bridge),
       [SETTINGS_ID]: () => { loadSettings(bridge); loadContext(bridge); }
     }[activeTab];
@@ -821,6 +850,42 @@ function GitPlugin(props) {
       reloadAll();
 
       return res || { ok: false, steps: [], summary: '' };
+    },
+
+    // Reproduce a merge request's conflicts locally and hand off to the
+    // resolver. On success the working tree is mid-merge, so the resolver
+    // lives in Source Control - take the user there rather than leaving
+    // them on the list wondering where the diagrams went.
+    refreshMergeRequests: () => loadMergeRequests(),
+    // Opens in the real browser via the main process; deliberately not
+    // through `act`, so it raises no busy bar or success notice for what is
+    // just following a link.
+    openUrl: url => (bridge ? apiPost(bridge, '/open-url', { url }) : Promise.resolve()),
+    resolveMr: async (source, target) => {
+      const res = await act('/merge-request/resolve', { source, target });
+      if (!res) return null;
+
+      reloadAll();
+
+      if (res.hasConflicts) {
+        setNotice({
+          type: 'success',
+          text: 'Both branches are open together. Resolve each diagram below, ' +
+            'then Finish and Send - that updates the merge request.'
+        });
+
+        if (typeof triggerAction === 'function') {
+          triggerAction('open-panel', { tab: PANEL_ID });
+        }
+      } else if (res.upToDate) {
+        setNotice({
+          type: 'success',
+          text: 'Nothing to resolve - your branch already has the target\'s changes. ' +
+            'Send it and the merge request will be mergeable.'
+        });
+      }
+
+      return res;
     },
 
     // Going back to an earlier save point. The run adds a save point rather
@@ -971,7 +1036,7 @@ function GitPlugin(props) {
   }), [
     act, peek, bridge, reloadAll, adoptSetup, pickFolderPath,
     loadTree, loadSettings, loadActivity, loadWorkstreams, loadHistory,
-    loadContext, loadSetup, loadSavePoints
+    loadContext, loadSetup, loadSavePoints, loadMergeRequests, triggerAction
   ]);
 
   const openDiagram = useCallback(file => {
@@ -1299,6 +1364,22 @@ function GitPlugin(props) {
         h('div', { className: busy ? 'cgp-busy' : '' },
           h(Notice, { notice, busy, onFix: actions.applyFix }),
           h(Releases, { release, changes: releaseChanges, actions, busy })
+        )
+      )
+    ),
+
+    // ---- merge requests ----
+    //
+    // Only appears once we know the server is a host we can talk to; an
+    // ordinary git remote (or none) has no merge requests to show.
+    mergeRequests && mergeRequests.supported && h(Fill, {
+      slot: 'bottom-panel', id: MERGE_REQUESTS_ID, label: 'Merge Requests', layout, priority: 4
+    },
+      h('div', { className: 'cgp-panel' },
+        h(BusyBar, { pending }),
+        h('div', { className: busy ? 'cgp-busy' : '' },
+          h(Notice, { notice, busy, onFix: actions.applyFix }),
+          h(MergeRequests, { data: mergeRequests, actions, busy })
         )
       )
     ),

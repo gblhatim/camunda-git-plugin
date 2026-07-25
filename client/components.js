@@ -1663,6 +1663,100 @@ export function Releases({ release, changes, actions, busy }) {
   );
 }
 
+// -------------------------------------------------------- merge requests
+
+/**
+ * Open pull/merge requests, with the conflicting ones raised to the top and
+ * a one-click path into resolving them *here* rather than in the host's web
+ * conflict editor - which cannot show a diagram at all.
+ */
+export function MergeRequests({ data, actions, busy }) {
+  if (!data) {
+    return h('div', { className: 'cgp-panel' },
+      h('p', { className: 'cgp-empty' }, 'Loading merge requests...'));
+  }
+
+  if (data.error) {
+    return h('div', { className: 'cgp-panel' },
+      h('div', { className: 'cgp-notice cgp-notice--warn' },
+        h('div', { className: 'cgp-notice__title' }, 'Could not load merge requests'),
+        h('div', { className: 'cgp-notice__body' }, data.error),
+        h('div', { className: 'cgp-notice__body cgp-sub' },
+          'A private project needs a token - add one under Git Settings.')));
+  }
+
+  if (!data.supported) {
+    return h('div', { className: 'cgp-panel' },
+      h('p', { className: 'cgp-empty' },
+        `The team server (${data.host || 'this host'}) is not GitHub or GitLab, ` +
+        'so merge requests are not available here.'));
+  }
+
+  const items = data.items || [];
+  const provider = data.provider || 'the server';
+
+  return h('div', { className: 'cgp-panel' },
+    h('div', { className: 'cgp-toolbar' },
+      h('span', { className: 'cgp-eyebrow' },
+        items.length
+          ? `${items.length} open on ${provider}`
+          : `Nothing open on ${provider}`),
+      h('span', { className: 'cgp-toolbar__spacer' }),
+      h('button', {
+        className: 'btn cgp-btn', disabled: busy, onClick: actions.refreshMergeRequests
+      }, h(Icon, { name: 'Renew', size: 13 }), ' Refresh')
+    ),
+
+    !items.length
+      ? h('p', { className: 'cgp-empty' }, 'No open merge requests right now.')
+      : h('ul', { className: 'cgp-mr-list' },
+        items.map(mr => h('li', { key: `${mr.number}`, className: 'cgp-mr' },
+          h('div', { className: 'cgp-mr__top' },
+            h('span', { className: 'cgp-mr__num' }, `#${mr.number}`),
+            h('span', { className: 'cgp-mr__title' }, mr.title),
+            mr.draft && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Draft')
+          ),
+
+          h('div', { className: 'cgp-mr__meta' },
+            h('span', { className: 'cgp-mr__branches' },
+              h('span', { className: 'cgp-mono' }, mr.source),
+              ' → ',
+              h('span', { className: 'cgp-mono' }, mr.target)),
+            mr.isCurrent && h('span', { className: 'cgp-chip cgp-chip--current' }, 'You are here'),
+            mr.author && h('span', { className: 'cgp-sub' }, `by ${mr.author}`)
+          ),
+
+          h('div', { className: 'cgp-mr__foot' },
+            // The status the whole tab is really about.
+            mr.hasConflicts === true
+              ? h('span', { className: 'cgp-tag cgp-tag--deleted' }, 'CONFLICTS')
+              : mr.hasConflicts === false
+                ? h('span', { className: 'cgp-tag cgp-tag--added' }, 'MERGEABLE')
+                : h('span', { className: 'cgp-tag cgp-tag--muted' }, 'UNKNOWN'),
+
+            h('span', { className: 'cgp-toolbar__spacer' }),
+
+            // Offered whenever it is not known to be clean: conflicts, or an
+            // unknown state the merge itself will settle.
+            mr.hasConflicts !== false && h('button', {
+              className: 'btn cgp-btn cgp-btn--primary',
+              disabled: busy,
+              title: 'Bring both branches together here and resolve each diagram visually',
+              onClick: () => actions.resolveMr(mr.source, mr.target)
+            }, 'Resolve in Modeler'),
+
+            h('button', {
+              className: 'btn cgp-btn',
+              disabled: busy,
+              title: `Open this on ${provider}`,
+              onClick: () => actions.openUrl(mr.url)
+            }, `Open on ${provider}`)
+          )
+        ))
+      )
+  );
+}
+
 // -------------------------------------------------------------- conflicts
 
 export function ConflictResolver({ conflicts, resolved, actions, busy, context }) {

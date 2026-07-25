@@ -136,11 +136,117 @@ async function listGitLabIssues({ host, path }, token) {
   }));
 }
 
+/**
+ * Open pull requests, in the same shape as GitLab's merge requests below,
+ * so the caller does not care which host it is.
+ *
+ * Mergeability is the point of the list here - it is what says which ones
+ * need conflicts resolved - but GitHub's *list* endpoint never includes it;
+ * only the single-PR endpoint computes it. So each is enriched with one
+ * extra call, capped, because a large backlog should not turn one refresh
+ * into a hundred API requests.
+ */
+async function listGitHubPulls({ host, path }, token) {
+  const server = host === 'github.com' ? 'api.github.com' : `${host}/api/v3`;
+  const headers = { Accept: 'application/vnd.github+json' };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(
+    `https://${server}/repos/${path}/pulls?state=open&per_page=50`,
+    { headers }
+  );
+
+  if (!res.ok) {
+    throw new Error(`GitHub API error ${res.status}: ${await res.text()}`);
+  }
+
+  const pulls = await res.json();
+
+  const items = pulls.map(pr => ({
+    number: pr.number,
+    title: pr.title,
+    url: pr.html_url,
+    author: pr.user && pr.user.login,
+    source: pr.head && pr.head.ref,
+    target: pr.base && pr.base.ref,
+    draft: !!pr.draft,
+    hasConflicts: null   // filled in below where the budget allows
+  }));
+
+  const ENRICH_LIMIT = 20;
+
+  await Promise.all(items.slice(0, ENRICH_LIMIT).map(async mr => {
+    try {
+      const one = await fetch(
+        `https://${server}/repos/${path}/pulls/${mr.number}`, { headers }
+      );
+
+      if (!one.ok) {
+        return;
+      }
+
+      const detail = await one.json();
+
+      // `mergeable` is null while GitHub is still computing it; the
+      // definitive "has conflicts" is `mergeable_state === 'dirty'`.
+      if (detail.mergeable_state === 'dirty' || detail.mergeable === false) {
+        mr.hasConflicts = true;
+      } else if (detail.mergeable === true) {
+        mr.hasConflicts = false;
+      }
+    } catch (err) {
+      // Leave hasConflicts null - "unknown", which the UI shows honestly.
+    }
+  }));
+
+  return items;
+}
+
+/**
+ * Open merge requests. GitLab includes `has_conflicts` in the list itself,
+ * so no per-item enrichment is needed.
+ */
+async function listGitLabMergeRequests({ host, path }, token) {
+  const headers = {};
+  if (token) {
+    headers['PRIVATE-TOKEN'] = token;
+  }
+
+  const projectId = encodeURIComponent(path);
+  const res = await fetch(
+    `https://${host}/api/v4/projects/${projectId}/merge_requests?state=opened&per_page=50`,
+    { headers }
+  );
+
+  if (!res.ok) {
+    throw new Error(`GitLab API error ${res.status}: ${await res.text()}`);
+  }
+
+  const mrs = await res.json();
+
+  return mrs.map(mr => ({
+    number: mr.iid,
+    title: mr.title,
+    url: mr.web_url,
+    author: mr.author && mr.author.username,
+    source: mr.source_branch,
+    target: mr.target_branch,
+    draft: !!mr.draft || !!mr.work_in_progress,
+    hasConflicts: typeof mr.has_conflicts === 'boolean'
+      ? mr.has_conflicts
+      : (mr.merge_status === 'cannot_be_merged' ? true : null)
+  }));
+}
+
 module.exports = {
   parseRemote,
   buildRepoUrl,
   buildGitHubCompareUrl,
   buildGitLabMrUrl,
   listGitHubIssues,
-  listGitLabIssues
+  listGitLabIssues,
+  listGitHubPulls,
+  listGitLabMergeRequests
 };

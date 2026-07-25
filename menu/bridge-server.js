@@ -42,6 +42,7 @@ const autoPull = require('./auto-pull');
 const historyService = require('./history-service');
 const nextAction = require('./next-action');
 const releaseService = require('./release-service');
+const mergeRequestService = require('./merge-request-service');
 
 // Set by menu.js, which owns the Electron windows. Kept as an injected
 // callback so this module stays testable outside Electron.
@@ -201,6 +202,10 @@ const getRoutes = {
   '/project/setup': async () => projectSetup.inspect(),
   '/context': async () => contextService.get(),
 
+  // Open pull/merge requests from the team server, flagged with which ones
+  // conflict. Read-only; the resolving happens on a POST below.
+  '/merge-requests': async () => mergeRequestService.list(),
+
   // Deliberately does not need a working repository - it is what answers
   // "there isn't one yet".
   '/setup': async () => setupService.inspect()
@@ -327,6 +332,41 @@ const postRoutes = {
   // do not receive the query string. Loaded lazily when a row is opened, so
   // the graph itself stays a single cheap `git log`.
   '/history/commit': async body => historyService.getCommit(body.hash),
+
+  // Reproduce a merge request's conflicts locally so they can be resolved
+  // in the panel. Returns the refreshed conflict shape so the panel can
+  // switch straight into the resolver, exactly like /pull does when it
+  // conflicts.
+  // Open a host link (a merge request page) in the real browser. Restricted
+  // to http(s) so the panel cannot be talked into opening a file: or other
+  // scheme.
+  '/open-url': async body => {
+    const url = String(body.url || '');
+
+    if (!/^https?:\/\//i.test(url)) {
+      throw new Error('Only http(s) links can be opened.');
+    }
+
+    if (openExternal) {
+      openExternal(url);
+    }
+
+    return { ok: true };
+  },
+
+  '/merge-request/resolve': async body => {
+    const result = await mergeRequestService.startResolution({
+      source: body.source,
+      target: body.target
+    });
+
+    return Object.assign(result, {
+      conflicts: await conflictService.listConflicts(),
+      context: await conflictService.getMergeContext(),
+      resolved: await conflictService.listResolved(),
+      status: await readStatus()
+    });
+  },
 
   // --- workstreams -----------------------------------------------------
 

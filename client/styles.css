@@ -1243,6 +1243,74 @@ body.dark .cgp-panel,
 .cgp-tag--info    { color: var(--cgp-info);    background: color-mix(in srgb, var(--cgp-info) 15%, transparent); }
 .cgp-tag--muted   { color: var(--cgp-muted);   background: var(--cgp-raised); }
 
+/* ---------------------------------------------------------- merge requests */
+
+.cgp-mr-list { list-style: none; margin: 6px 0 0 0; padding: 0; }
+
+.cgp-mr {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cgp-line);
+}
+
+.cgp-mr__top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cgp-mr__num {
+  flex: 0 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  color: var(--cgp-faint);
+}
+
+.cgp-mr__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cgp-mr__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 5px 0;
+  font-size: 11.5px;
+  color: var(--cgp-muted);
+}
+
+.cgp-mr__branches {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cgp-mr__branches .cgp-mono {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--cgp-raised);
+  font-size: 11px;
+}
+
+.cgp-mr__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.cgp-chip--current {
+  color: var(--cgp-added);
+  background: color-mix(in srgb, var(--cgp-added) 14%, transparent);
+}
+
 /* ---------------------------------------------------------------- split */
 
 /* The bottom panel is wide and short, unlike VS Code's tall sidebar, so the
