@@ -63,10 +63,11 @@ bridgeServer.setComparisonHandler(async filePath => {
   // index stages. Without a base (one side added the file, or a plain
   // two-way review) there is nothing to merge, and `compare` alone stands.
   //
-  // Computed but not yet consumed by the window: Phase 1 wires the data
-  // through; the panel that reads it is a follow-up. An extra field the page
-  // ignores is harmless, and keeping the plumbing here means the follow-up is
-  // renderer-only.
+  // Consumed by the window (`ui/compare.js` renderMerge) to show which
+  // differences actually clash. The *acting* on it - folding both sides into
+  // one diagram - is a separate route (`/conflict/combine`, driven from the
+  // Source Control panel), because resolution stages a file and the compare
+  // window is deliberately read-only.
   let merge = null;
 
   if (versions.base) {

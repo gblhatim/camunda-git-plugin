@@ -1732,7 +1732,22 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
               ? `"${oursName}" deleted this diagram - keeping it removes the file.`
               : 'Both versions deleted this diagram.'
         ),
+
+        // When the two sides changed different things, keeping a whole side
+        // throws the other side's work away - which is exactly the case
+        // combining exists for, so it is called out rather than left as an
+        // equal-looking third button.
+        c.combinable && h('div', { className: 'cgp-sub', style: { color: 'var(--cgp-added)' } },
+          'These changes do not clash - they can be combined without losing either side.'
+        ),
+
         h('div', { className: 'cgp-field', style: { marginTop: '5px' } },
+          c.combinable && h('button', {
+            className: 'btn cgp-btn cgp-btn--primary',
+            disabled: busy,
+            title: 'Merge both sets of changes into one diagram. Nothing is discarded.',
+            onClick: () => actions.combine(c.path)
+          }, 'Combine both'),
           c.isDiagram && c.hasOurs && c.hasTheirs && h('button', {
             className: 'btn cgp-btn',
             disabled: busy,

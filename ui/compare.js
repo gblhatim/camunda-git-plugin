@@ -278,7 +278,9 @@ function renderMerge(merge) {
   if (merge.summary.combinesCleanly) {
     summary.appendChild(el('span', 'cleanN',
       `All ${clean.length} change${clean.length === 1 ? '' : 's'} combine cleanly`));
-    summary.appendChild(document.createTextNode(' — nothing conflicts. Keeping either side is safe.'));
+    summary.appendChild(document.createTextNode(
+      ' — nothing conflicts. Use "Combine both" in the panel to keep every ' +
+      'change; keeping a single side here would drop the other side\'s work.'));
   } else {
     summary.appendChild(el('span', 'conflN',
       `${conflicts.length} need${conflicts.length === 1 ? 's' : ''} a decision`));
@@ -391,9 +393,11 @@ async function load() {
         'One side deleted this diagram. Keeping that side removes the file.';
     } else if (showedMerge && !merge.summary.combinesCleanly) {
       $('note').textContent =
-        'The changes marked "combine cleanly" survive whichever side you keep. ' +
-        'The conflicts do not: keeping one side takes its value and discards ' +
-        'the other. Click any element to find it on both canvases.';
+        'Some changes clash, so this diagram is resolved by keeping one side - ' +
+        'and keeping a side takes only that side\'s changes; the other side\'s, ' +
+        'clean or not, are dropped. Reopen the diagram afterwards to re-apply ' +
+        'anything from the version you did not keep. Click any element to find ' +
+        'it on both canvases.';
     } else {
       $('note').textContent =
         'Only one version can be kept. Whichever you discard, you can always ' +
