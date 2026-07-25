@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Compare versions</title>
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/diagram-js.css">
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/bpmn-js.css">
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css">
+<script src="../node_modules/bpmn-js/dist/bpmn-navigated-viewer.production.min.js"></script>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #ddd;
+    background: #f7f7f8;
+  }
+  h1 { font-size: 15px; margin: 0 0 3px; }
+  header p { margin: 0; font-size: 12px; color: #555; }
+
+  #panes { flex: 1; display: flex; min-height: 0; }
+  .pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .pane + .pane { border-left: 2px solid #ddd; }
+  .pane h2 {
+    margin: 0;
+    padding: 8px 14px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+  }
+  .pane.mine h2   { color: #2e7d32; }
+  .pane.theirs h2 { color: #1565c0; }
+  .canvas { flex: 1; background: #fff; min-height: 0; }
+  .missing {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c62828;
+    font-size: 13px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  footer {
+    padding: 10px 16px;
+    border-top: 1px solid #ddd;
+    background: #f7f7f8;
+    font-size: 12px;
+    color: #555;
+  }
+
+  /* ---- highlighting on the canvas ---- */
+  /*
+   * Applied through diagram-js markers, so the outline follows the shape
+   * rather than being a box drawn over it. Colour alone is not the signal:
+   * every highlighted element also appears in the list on the right, which
+   * is what carries the detail and what a colour-blind reader uses.
+   */
+  .djs-element.cgp-changed .djs-visual > :nth-child(1) {
+    stroke: #b8860b !important;
+    stroke-width: 3px !important;
+  }
+  .djs-element.cgp-added .djs-visual > :nth-child(1) {
+    stroke: #2e7d32 !important;
+    stroke-width: 3px !important;
+  }
+  .djs-element.cgp-removed .djs-visual > :nth-child(1) {
+    stroke: #c62828 !important;
+    stroke-width: 3px !important;
+    stroke-dasharray: 5 3 !important;
+  }
+  .djs-element.cgp-focus .djs-visual > :nth-child(1) {
+    stroke-width: 5px !important;
+  }
+  /*
+   * A conflict is the loudest thing on the canvas, because it is the only
+   * thing that needs a person: everything else the merge decided on its own.
+   */
+  .djs-element.cgp-conflict .djs-visual > :nth-child(1) {
+    stroke: #d81b60 !important;
+    stroke-width: 4px !important;
+  }
+
+  /* ---- the change list ---- */
+  #changes {
+    flex: 0 0 320px;
+    border-left: 1px solid #ddd;
+    background: #fcfcfd;
+    overflow-y: auto;
+    min-width: 0;
+  }
+  #changes h2 {
+    margin: 0;
+    padding: 8px 14px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+  }
+  #changeList { margin: 0; padding: 0; list-style: none; }
+  .el {
+    padding: 9px 14px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  .el:hover { background: #f2f5f9; }
+  .el__head { display: flex; align-items: baseline; gap: 6px; }
+  .el__name { font-size: 12.5px; font-weight: 600; }
+  .el__type { font-size: 10.5px; color: #777; }
+  .tag {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #fff;
+  }
+  .tag--changed { background: #b8860b; }
+  .tag--added   { background: #2e7d32; }
+  .tag--removed { background: #c62828; }
+  .tag--moved   { background: #777; }
+  .tag--conflict { background: #d81b60; }
+  .tag--clean    { background: #607d8b; }
+
+  .prop { margin: 5px 0 0 0; font-size: 11.5px; }
+  .prop__label { color: #555; }
+  .prop__from, .prop__to {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 11px;
+    padding: 0 3px;
+    border-radius: 2px;
+    word-break: break-all;
+  }
+  .prop__from { background: #fde8e8; text-decoration: line-through; color: #8b1f1f; }
+  .prop__to   { background: #e6f4ea; color: #1b5e20; }
+  .prop__arrow { color: #999; margin: 0 3px; }
+
+  .banner {
+    padding: 8px 14px;
+    font-size: 12px;
+    background: #fff8e1;
+    border-bottom: 1px solid #f0e0a0;
+    color: #6b5600;
+  }
+  .empty { padding: 14px; font-size: 12px; color: #777; }
+
+  /* ---- three-way merge summary ---- */
+  /*
+   * The headline the whole Phase 1 exists to show: how much combines on its
+   * own versus how much a person still has to decide.
+   */
+  #mergeSummary {
+    padding: 9px 14px;
+    font-size: 12px;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+  }
+  #mergeSummary .conflN { color: #d81b60; font-weight: 600; }
+  #mergeSummary .cleanN { color: #2e7d32; font-weight: 600; }
+  #mergeSummary .sep    { color: #bbb; margin: 0 6px; }
+
+  /* One decision, three columns. `was` is the ancestor both sides started
+     from; `you`/`the team` are what each pulled it to. */
+  .prop3 {
+    margin: 6px 0 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 8px;
+    align-items: baseline;
+  }
+  .prop3__label {
+    grid-column: 1 / -1;
+    font-size: 11.5px;
+    color: #555;
+    margin-top: 2px;
+  }
+  .prop3__side { font-size: 10.5px; color: #888; text-align: right; }
+  .val {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 11px;
+    padding: 0 3px;
+    border-radius: 2px;
+    word-break: break-all;
+  }
+  .val--was    { background: #f0f0f0; color: #555; }
+  .val--ours   { background: #e6f4ea; color: #1b5e20; }
+  .val--theirs { background: #e3f0fb; color: #0d47a1; }
+
+  .el__note { margin: 4px 0 0; font-size: 11px; color: #a01243; }
+
+  /* A clean auto-merge is real information but not a decision, so it reads
+     quieter than a conflict. */
+  .el--clean .el__name { font-weight: 500; }
+  .el--clean .prop__label { color: #666; }
+  .side-badge {
+    font-size: 9.5px;
+    color: #fff;
+    padding: 0 4px;
+    border-radius: 2px;
+    margin-left: 4px;
+  }
+  .side-badge--ours   { background: #2e7d32; }
+  .side-badge--theirs { background: #1565c0; }
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="fileName">Compare versions</h1>
+    <p>Your version is on the left, the team's on the right. Close this window and choose which one to keep.</p>
+  </header>
+
+  <div id="panes">
+    <div class="pane mine">
+      <h2>Your version</h2>
+      <div class="canvas" id="ours"></div>
+    </div>
+    <div class="pane theirs">
+      <h2>The team's version</h2>
+      <div class="canvas" id="theirs"></div>
+    </div>
+
+    <div id="changes">
+      <h2>What is different</h2>
+      <div id="banner" class="banner" hidden></div>
+      <div id="mergeSummary" hidden></div>
+      <ul id="changeList"></ul>
+    </div>
+  </div>
+
+  <footer id="note"></footer>
+<script src="compare.js"></script>
+</body>
+</html>

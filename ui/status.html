@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Git Status &amp; Diff</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: #f7f7f8;
+    color: #1a1a1a;
+  }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  #repoPath { color: #666; font-size: 12px; margin-bottom: 12px; word-break: break-all; }
+  .toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  button {
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: white;
+    cursor: pointer;
+  }
+  button:hover { background: #eee; }
+  button.primary { background: #2a7ae2; color: white; border-color: #2a7ae2; }
+  button.primary:hover { background: #1f63bd; }
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-bottom: 8px;
+    font-family: inherit;
+  }
+  section { margin-bottom: 18px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #555; margin: 0 0 6px; }
+  ul.files { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  ul.files li { padding: 2px 0; font-family: monospace; }
+  .status-M { color: #b8860b; }
+  .status-A { color: #2e7d32; }
+  .status-D { color: #c62828; }
+  .status-untracked { color: #888; }
+  pre.diff {
+    background: #1e1e1e;
+    color: #ddd;
+    padding: 10px;
+    border-radius: 6px;
+    max-height: 260px;
+    overflow: auto;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .diff-add { color: #7fdc7f; }
+  .diff-del { color: #ff8080; }
+  #message { font-size: 12px; color: #555; min-height: 16px; }
+  #error { color: #c62828; font-size: 12px; }
+</style>
+</head>
+<body>
+  <h1>Git Status &amp; Diff</h1>
+  <div id="repoPath">loading...</div>
+
+  <div class="toolbar">
+    <button id="refresh">Refresh</button>
+    <button id="push">Push</button>
+    <button id="pull">Pull</button>
+  </div>
+
+  <section>
+    <h2>Branch</h2>
+    <div id="branch">-</div>
+  </section>
+
+  <section>
+    <h2>Changed files</h2>
+    <ul class="files" id="files"></ul>
+  </section>
+
+  <section>
+    <h2>Commit</h2>
+    <textarea id="commitMessage" rows="2" placeholder="Commit message"></textarea>
+    <button class="primary" id="commit">Commit all changes</button>
+  </section>
+
+  <section>
+    <h2>Diff (unstaged)</h2>
+    <pre class="diff" id="unstagedDiff"></pre>
+  </section>
+
+  <section>
+    <h2>Diff (staged)</h2>
+    <pre class="diff" id="stagedDiff"></pre>
+  </section>
+
+  <div id="message"></div>
+  <div id="error"></div>
+
+<script src="status.js"></script>
+</body>
+</html>

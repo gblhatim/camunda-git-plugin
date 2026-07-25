@@ -1,0 +1,1549 @@
+/*
+ * Styles for the git plugin's panels.
+ *
+ * Loaded through Modeler's `style` contribution point rather than inlined
+ * in the components, so the markup stays readable and the whole look can
+ * be adjusted in one place.
+ *
+ * Everything is scoped under .cgp- to avoid colliding with Modeler's own
+ * classes, and colours are expressed as CSS custom properties so the dark
+ * theme is a single override block rather than conditionals in JS.
+ */
+
+.cgp-panel {
+  --cgp-fg: #1a1a1a;
+  --cgp-muted: rgba(26, 26, 26, .62);
+  --cgp-faint: rgba(26, 26, 26, .38);
+  --cgp-line: rgba(26, 26, 26, .13);
+  --cgp-raised: rgba(26, 26, 26, .035);
+
+  --cgp-added: #2e7d32;
+  --cgp-edited: #b8860b;
+  --cgp-deleted: #c62828;
+  --cgp-info: #1565c0;
+
+  height: 100%;
+  overflow: auto;
+  padding: 12px 14px 18px;
+  color: var(--cgp-fg);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* Modeler switches its Carbon theme class on the body/root for dark mode. */
+body.dark .cgp-panel,
+.dark .cgp-panel,
+[data-theme="dark"] .cgp-panel {
+  --cgp-fg: #e8e8e8;
+  --cgp-muted: rgba(232, 232, 232, .66);
+  --cgp-faint: rgba(232, 232, 232, .4);
+  --cgp-line: rgba(232, 232, 232, .16);
+  --cgp-raised: rgba(232, 232, 232, .05);
+
+  --cgp-added: #7bc67e;
+  --cgp-edited: #e0b44c;
+  --cgp-deleted: #f28b82;
+  --cgp-info: #8ab4f8;
+}
+
+/* ---------------------------------------------------------------- blocks */
+
+.cgp-block {
+  border: 1px solid var(--cgp-line);
+  border-radius: 5px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: var(--cgp-raised);
+}
+
+.cgp-block--plain {
+  border: 0;
+  background: none;
+  padding: 0;
+}
+
+.cgp-block__title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.cgp-eyebrow {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cgp-faint);
+  margin: 0 0 3px;
+}
+
+.cgp-headline {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.cgp-sub {
+  font-size: 11.5px;
+  color: var(--cgp-muted);
+  margin: 2px 0 0;
+}
+
+.cgp-divider {
+  border: 0;
+  border-top: 1px solid var(--cgp-line);
+  margin: 14px 0 12px;
+}
+
+/* ----------------------------------------------------------------- rows */
+
+.cgp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cgp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  margin: 0 -6px;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.cgp-row:hover {
+  background: var(--cgp-raised);
+}
+
+.cgp-row__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cgp-row__meta {
+  font-size: 11px;
+  color: var(--cgp-faint);
+  white-space: nowrap;
+}
+
+/* Actions stay out of the way until the row is hovered - the VS Code
+   behaviour - but remain reachable by keyboard. */
+.cgp-row__actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .12s;
+}
+
+.cgp-row:hover .cgp-row__actions,
+.cgp-row:focus-within .cgp-row__actions {
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------- status */
+
+.cgp-tag {
+  min-width: 5.5em;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.cgp-tag--added   { color: var(--cgp-added); }
+.cgp-tag--edited  { color: var(--cgp-edited); }
+.cgp-tag--deleted { color: var(--cgp-deleted); }
+.cgp-tag--info    { color: var(--cgp-info); }
+.cgp-tag--muted   { color: var(--cgp-muted); }
+
+.cgp-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--cgp-edited);
+}
+
+/* --------------------------------------------------------------- inputs */
+
+.cgp-field {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.cgp-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 8px;
+  color: var(--cgp-fg);
+  background: transparent;
+  border: 1px solid var(--cgp-line);
+  border-radius: 4px;
+}
+
+.cgp-input:focus {
+  outline: none;
+  border-color: var(--cgp-info);
+}
+
+.cgp-input::placeholder {
+  color: var(--cgp-faint);
+}
+
+/* Small, quiet buttons; Modeler's own .btn handles the base look. */
+.cgp-btn.btn {
+  font-size: 11.5px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.cgp-btn--primary.btn {
+  font-weight: 600;
+}
+
+.cgp-btn--icon.btn {
+  padding: 1px 7px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+/* --------------------------------------------------------------- notices */
+
+.cgp-notice {
+  border-left: 3px solid var(--cgp-line);
+  padding: 7px 10px;
+  margin-bottom: 12px;
+  border-radius: 0 4px 4px 0;
+  font-size: 12.5px;
+}
+
+.cgp-notice--error   { border-left-color: var(--cgp-deleted); background: rgba(198, 40, 40, .07); }
+.cgp-notice--success { border-left-color: var(--cgp-added); background: rgba(46, 125, 50, .07); }
+.cgp-notice--warn    { border-left-color: var(--cgp-edited); background: rgba(184, 134, 11, .08); }
+
+.cgp-notice__title { font-weight: 600; }
+.cgp-notice__body  { margin-top: 3px; color: var(--cgp-muted); }
+.cgp-notice__raw {
+  margin: 4px 0 0;
+  font-size: 11px;
+  white-space: pre-wrap;
+  color: var(--cgp-muted);
+}
+
+.cgp-steps { list-style: none; margin: 0 0 6px; padding: 0; font-size: 12.5px; }
+.cgp-steps li { padding: 1px 0; }
+.cgp-step-ok   { color: var(--cgp-added); margin-right: 6px; }
+.cgp-step-fail { color: var(--cgp-deleted); margin-right: 6px; }
+
+.cgp-plan { margin: 0 0 8px; padding-left: 20px; font-size: 12.5px; }
+
+/* -------------------------------------------------------------- explorer */
+
+.cgp-tree { list-style: none; margin: 0; padding: 0; }
+.cgp-tree .cgp-tree { margin-left: 13px; border-left: 1px solid var(--cgp-line); padding-left: 6px; }
+
+.cgp-folder {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  margin: 0 -6px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--cgp-muted);
+  font-size: 12px;
+  user-select: none;
+}
+
+.cgp-folder:hover { background: var(--cgp-raised); }
+
+.cgp-caret {
+  display: inline-block;
+  width: 9px;
+  font-size: 9px;
+  color: var(--cgp-faint);
+  transition: transform .12s;
+}
+
+.cgp-caret--open { transform: rotate(90deg); }
+
+.cgp-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  margin: 0 -6px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.cgp-file:hover { background: var(--cgp-raised); }
+.cgp-file--changed .cgp-file__name { color: var(--cgp-edited); }
+
+.cgp-file__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cgp-ext {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  color: var(--cgp-faint);
+  border: 1px solid var(--cgp-line);
+  border-radius: 3px;
+  padding: 0 4px;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------- states */
+
+.cgp-empty {
+  color: var(--cgp-muted);
+  font-size: 12.5px;
+  padding: 6px 0;
+}
+
+.cgp-busy { opacity: .55; pointer-events: none; }
+
+/* ------------------------------------------------------------ busy states */
+
+/*
+ * The bar sits above the dimmed region rather than inside it, so the one
+ * thing that stays at full contrast while git runs is the explanation of
+ * why everything else is greyed out.
+ */
+.cgp-busybar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--cgp-line);
+  border-left: 3px solid var(--cgp-info);
+  border-radius: 3px;
+  background: var(--cgp-raised);
+  font-size: 12.5px;
+}
+
+.cgp-busybar__label { color: var(--cgp-fg); }
+
+.cgp-busybar__elapsed {
+  color: var(--cgp-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cgp-busybar__hint {
+  flex-basis: 100%;
+  color: var(--cgp-muted);
+  font-size: 11.5px;
+}
+
+.cgp-spinner {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 2px solid var(--cgp-line);
+  border-top-color: var(--cgp-info);
+  border-radius: 50%;
+  animation: cgp-spin .7s linear infinite;
+}
+
+.cgp-spinner--inline {
+  display: inline-block;
+  vertical-align: -2px;
+  margin-right: 5px;
+}
+
+@keyframes cgp-spin { to { transform: rotate(360deg); } }
+
+/*
+ * Respect the OS setting. A spinner is decoration; the label is the message,
+ * and it survives on its own.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .cgp-spinner { animation-duration: 3s; }
+}
+
+/* ------------------------------------------------------ the lead action */
+
+/*
+ * The proportions are flipped from Source Control's split. There the aside
+ * holds the branch graph, which wants every pixel it can get; here the main
+ * column is where the acting happens and the aside is a list that reads
+ * fine narrow.
+ *
+ * Wrapping rather than a media query: the bottom panel is resized by
+ * dragging, so what matters is how much room this element got, not how wide
+ * the window is. Below roughly 640px the aside drops under the main column
+ * instead of squeezing both into uselessness.
+ */
+.cgp-split--work { flex-wrap: wrap; }
+
+.cgp-split--work .cgp-split__main {
+  flex: 1 1 380px;
+  max-width: none;
+}
+
+.cgp-split--work .cgp-split__aside {
+  flex: 1 1 280px;
+  max-width: 380px;
+}
+
+@media (max-width: 640px) {
+  .cgp-split--work .cgp-split__aside {
+    max-width: none;
+    border-left: none;
+    border-top: 1px solid var(--cgp-line);
+    padding-left: 0;
+    padding-top: 12px;
+    margin-top: 12px;
+  }
+}
+
+.cgp-lead {
+  border: 1px solid var(--cgp-line);
+  border-left: 3px solid var(--cgp-info);
+  border-radius: 3px;
+  background: var(--cgp-raised);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.cgp-lead--urgent { border-left-color: var(--cgp-deleted); }
+.cgp-lead--calm { border-left-color: var(--cgp-line); }
+
+.cgp-lead__title {
+  margin: 0 0 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--cgp-fg);
+}
+
+.cgp-lead__detail {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--cgp-muted);
+  line-height: 1.45;
+}
+
+.cgp-lead__also {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+}
+
+/* ------------------------------------------------------------- folds */
+
+.cgp-fold { border-top: 1px solid var(--cgp-line); }
+
+.cgp-fold:last-of-type { border-bottom: 1px solid var(--cgp-line); }
+
+.cgp-fold__head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--cgp-fg);
+  font-size: 12.5px;
+}
+
+.cgp-fold__head:hover { background: var(--cgp-raised); }
+
+.cgp-fold__caret {
+  color: var(--cgp-faint);
+  flex: none;
+}
+
+.cgp-fold__title { flex: none; }
+
+.cgp-fold__summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  color: var(--cgp-muted);
+  font-size: 11.5px;
+}
+
+/* The routine inside already carries its own block padding. */
+.cgp-fold__body > .cgp-block { margin-top: 0; }
+
+/* --------------------------------------------------- task details on hover */
+
+/*
+ * The hover card lives inside the diagram editor's overlay layer, not the
+ * bottom panel, so it cannot lean on the panel's layout - but the theme
+ * variables are document-level and apply here too. `pointer-events: none`
+ * so the card never eats a click meant for the canvas beneath it, and never
+ * triggers its own hover-out by sitting under the cursor.
+ */
+.cgp-taskcard {
+  pointer-events: none;
+  max-width: 320px;
+  padding: 8px 10px;
+  border: 1px solid var(--cgp-line, rgba(0,0,0,.15));
+  border-radius: 4px;
+  background: var(--cgp-bg, #fff);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
+  font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--cgp-fg, #1a1a1a);
+}
+
+.cgp-taskcard__head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 5px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--cgp-line, rgba(0,0,0,.1));
+}
+
+.cgp-taskcard__type {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #fff;
+  background: var(--cgp-info, #1565c0);
+  padding: 1px 5px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.cgp-taskcard__name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cgp-taskcard__section {
+  margin-top: 6px;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--cgp-faint, #888);
+}
+
+.cgp-taskcard__row {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.cgp-taskcard__label { color: var(--cgp-muted, #666); flex: none; }
+
+.cgp-taskcard__value {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  text-align: right;
+  word-break: break-all;
+}
+
+.cgp-taskcard__field {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding-left: 8px;
+}
+
+.cgp-taskcard__fieldname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cgp-taskcard__fieldtype {
+  font-size: 10px;
+  color: var(--cgp-muted, #666);
+  flex: none;
+}
+
+.cgp-taskcard__doc {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--cgp-line, rgba(0,0,0,.1));
+  color: var(--cgp-muted, #555);
+  font-style: italic;
+  white-space: pre-wrap;
+}
+
+/* -------------------------------------------------------- save points */
+
+.cgp-savepoints {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+}
+
+.cgp-savepoint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--cgp-line);
+}
+
+.cgp-savepoint:last-child { border-bottom: none; }
+
+.cgp-savepoint--head { background: var(--cgp-raised); }
+
+.cgp-savepoint__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.cgp-savepoint__subject {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.cgp-savepoint__meta {
+  display: block;
+  color: var(--cgp-muted);
+  font-size: 11px;
+}
+
+.cgp-savepoint__action { flex: none; }
+
+.cgp-block--nested {
+  margin-top: 10px;
+  border-left: 3px solid var(--cgp-info);
+  padding-left: 10px;
+}
+
+.cgp-filelist {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  font-size: 11.5px;
+}
+
+.cgp-filelist li { padding: 2px 0; }
+
+.cgp-effect {
+  display: inline-block;
+  min-width: 62px;
+  margin-right: 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--cgp-muted);
+}
+
+.cgp-effect--restored { color: var(--cgp-added); }
+.cgp-effect--removed { color: var(--cgp-deleted); }
+.cgp-effect--changed { color: var(--cgp-edited); }
+
+/* Secondary action in a row - present, but not competing with Switch. */
+.cgp-btn--quiet {
+  color: var(--cgp-muted);
+  margin-left: 4px;
+}
+
+.cgp-btn--quiet:hover { color: var(--cgp-deleted); }
+
+.cgp-check {
+  display: block;
+  margin: 8px 0;
+  font-size: 12px;
+  color: var(--cgp-muted);
+  cursor: pointer;
+}
+
+.cgp-btn--link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--cgp-info);
+  cursor: pointer;
+  font-size: 11.5px;
+}
+
+.cgp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cgp-toolbar__spacer { flex: 1; }
+
+/* --------------------------------------------------------------- setup */
+
+.cgp-setup {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: cgp-step;
+}
+
+.cgp-setup__step {
+  padding: 6px 0 8px 0;
+  border-bottom: 1px solid var(--cgp-line);
+}
+
+.cgp-setup__step:last-child { border-bottom: 0; }
+
+.cgp-setup__head { display: flex; align-items: baseline; gap: 8px; }
+
+.cgp-setup__mark {
+  flex: 0 0 14px;
+  text-align: center;
+  color: var(--cgp-faint);
+}
+
+.cgp-setup__step--done .cgp-setup__mark { color: var(--cgp-added); }
+
+.cgp-setup__title {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cgp-fg);
+  cursor: pointer;
+  text-align: left;
+}
+
+.cgp-setup__title:disabled { cursor: default; color: var(--cgp-faint); }
+.cgp-setup__title:not(:disabled):hover { text-decoration: underline; }
+
+.cgp-setup__step--done .cgp-setup__title { font-weight: 400; }
+
+/* A blocked step stays legible - it is there to show what is coming, not
+   to be read as broken. */
+.cgp-setup__step--blocked { opacity: 0.55; }
+
+.cgp-setup__detail {
+  margin: 2px 0 0 22px;
+  font-size: 11px;
+  color: var(--cgp-faint);
+  word-break: break-word;
+}
+
+.cgp-setup__form { margin: 8px 0 2px 22px; }
+
+/* ------------------------------------------------------------- context */
+
+.cgp-ctx {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--cgp-border);
+}
+
+.cgp-ctx__head { display: flex; align-items: center; gap: 6px; }
+
+.cgp-ctx__toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--cgp-fg);
+  font: inherit;
+  font-size: 11.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.cgp-ctx__toggle:hover { text-decoration: underline; }
+
+.cgp-ctx__body {
+  margin-top: 6px;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.cgp-ctx__row { display: flex; gap: 8px; align-items: baseline; }
+
+.cgp-ctx__label {
+  flex: 0 0 92px;
+  color: var(--cgp-faint);
+  font-size: 11px;
+}
+
+/* The value column is what gets screenshotted and pasted into a support
+   thread, so it wraps rather than truncating. */
+.cgp-ctx__value {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.cgp-ctx__sha {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  color: var(--cgp-info);
+}
+
+.cgp-ctx__link { color: var(--cgp-info); text-decoration: none; }
+.cgp-ctx__link:hover { text-decoration: underline; }
+
+/* ---------------------------------------------------------- workstreams */
+
+/* The ticket is the part a developer pastes elsewhere, so it reads as a
+   distinct token rather than as part of the sentence. */
+.cgp-ticket {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--cgp-raised);
+  border: 1px solid var(--cgp-border);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--cgp-info);
+}
+
+.cgp-ticket--link { text-decoration: none; cursor: pointer; }
+.cgp-ticket--link:hover { border-color: var(--cgp-info); text-decoration: underline; }
+
+.cgp-create { margin-top: 6px; }
+
+.cgp-create__types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.cgp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid var(--cgp-border);
+  border-radius: 12px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cgp-chip:hover { border-color: var(--cgp-info); }
+
+.cgp-chip--on {
+  border-color: var(--cgp-info);
+  background: var(--cgp-raised);
+  font-weight: 600;
+}
+
+.cgp-input--ticket {
+  max-width: 220px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.cgp-sub--warn { color: var(--cgp-deleted); }
+
+/* ------------------------------------------------------- project setup */
+
+/* Team settings sit apart from personal ones: changing them lands on
+   everybody, and the panel should not let that read as an ordinary
+   preference. */
+.cgp-block--team {
+  border-left: 2px solid var(--cgp-info);
+  padding-left: 10px;
+}
+
+.cgp-radio { display: block; cursor: pointer; margin-bottom: 4px; }
+
+.cgp-plan {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--cgp-raised);
+  border-radius: 3px;
+}
+
+.cgp-plan__steps {
+  margin: 4px 0 6px;
+  padding-left: 20px;
+  font-size: 12px;
+}
+
+.cgp-plan__steps li { margin-bottom: 2px; }
+
+/* ------------------------------------------------------------- activity */
+
+.cgp-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11.5px;
+}
+
+.cgp-log__row {
+  padding: 2px 6px;
+  margin: 0 -6px;
+  border-radius: 3px;
+}
+
+/* The command itself stays a single tidy line; its output is free to wrap
+   below it. */
+.cgp-log__line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.cgp-log__row:hover { background: var(--cgp-raised); }
+.cgp-log__row--failed .cgp-log__cmd { color: var(--cgp-deleted); }
+
+.cgp-log__time   { color: var(--cgp-faint); flex: 0 0 auto; }
+.cgp-log__origin { flex: 0 0 2.6em; color: var(--cgp-info); font-size: 10px; }
+.cgp-log__origin--auto { font-weight: 700; }
+.cgp-log__cmd    { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.cgp-log__ms     { color: var(--cgp-faint); flex: 0 0 auto; }
+
+.cgp-log__error {
+  margin: 2px 0 0 calc(2.6em + 60px);
+  color: var(--cgp-deleted);
+  font-size: 11px;
+}
+
+/* ---- command output ---- */
+
+.cgp-log__output { margin: 1px 0 4px calc(2.6em + 60px); }
+
+.cgp-log__toggle {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--cgp-faint);
+  font: inherit;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+
+.cgp-log__toggle:hover { color: var(--cgp-fg); text-decoration: underline; }
+
+.cgp-log__pre {
+  margin: 3px 0 0;
+  padding: 6px 8px;
+  max-height: 320px;
+  overflow: auto;
+  background: var(--cgp-raised);
+  border-left: 2px solid var(--cgp-border);
+  border-radius: 2px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--cgp-fg);
+}
+
+.cgp-log__stderr { color: var(--cgp-faint); }
+.cgp-log__row--failed .cgp-log__stderr { color: var(--cgp-deleted); }
+
+/* ---- the prompt ---- */
+
+.cgp-console {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--cgp-border);
+}
+
+.cgp-console__prompt {
+  flex: 0 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--cgp-info);
+  font-weight: 700;
+}
+
+.cgp-console__input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 6px;
+  background: var(--cgp-raised);
+  color: var(--cgp-fg);
+  border: 1px solid var(--cgp-border);
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11.5px;
+}
+
+.cgp-console__input:focus {
+  outline: none;
+  border-color: var(--cgp-info);
+}
+
+.cgp-console__off {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--cgp-border);
+  color: var(--cgp-faint);
+  font-size: 11px;
+}
+
+.cgp-select {
+  padding: 2px 4px;
+  background: var(--cgp-raised);
+  color: var(--cgp-fg);
+  border: 1px solid var(--cgp-border);
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+/* -------------------------------------------------------------- history */
+
+.cgp-icon { flex: 0 0 auto; vertical-align: middle; }
+.cgp-icon--text { display: inline-block; text-align: center; opacity: .75; }
+
+.cgp-commits { list-style: none; margin: 0; padding: 0; }
+
+.cgp-commit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;              /* must match ROW_H in history.js */
+  padding: 0 6px;
+  margin: 0 -6px;
+  border-radius: 3px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.cgp-commit:hover { background: var(--cgp-raised); }
+
+.cgp-commit__graph { flex: 0 0 auto; overflow: visible; }
+
+.cgp-commit__subject {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cgp-commit__author { color: var(--cgp-faint); font-size: 11px; white-space: nowrap; }
+
+.cgp-commit__hash {
+  color: var(--cgp-faint);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+}
+
+.cgp-commit__refs { display: flex; gap: 4px; flex: 0 0 auto; }
+
+.cgp-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  padding: 0 5px;
+  border-radius: 9px;
+  border: 1px solid var(--cgp-line);
+  white-space: nowrap;
+}
+
+.cgp-ref--head   { color: var(--cgp-added); border-color: currentColor; font-weight: 600; }
+.cgp-ref--local  { color: var(--cgp-info); }
+.cgp-ref--remote { color: var(--cgp-muted); }
+.cgp-ref--tag    { color: var(--cgp-edited); }
+
+/* ---------------------------------------------------------------- split */
+
+/* The bottom panel is wide and short, unlike VS Code's tall sidebar, so the
+   same information is laid out in two columns instead of one. */
+.cgp-split {
+  display: flex;
+  gap: 0;
+  height: 100%;
+  min-height: 0;
+}
+
+.cgp-split__main {
+  flex: 0 0 380px;
+  min-width: 260px;
+  max-width: 46%;
+  overflow: auto;
+  padding-right: 14px;
+}
+
+.cgp-split__aside {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  border-left: 1px solid var(--cgp-line);
+  padding-left: 14px;
+}
+
+.cgp-split__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cgp-faint);
+  margin: 0 0 8px;
+}
+
+/* Count badge beside a section heading, as in VS Code's SCM view. */
+.cgp-badge {
+  display: inline-block;
+  min-width: 17px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--cgp-line);
+  color: var(--cgp-fg);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+/* Full-width primary action under the message box. */
+.cgp-commit-btn.btn {
+  width: 100%;
+  justify-content: center;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 5px 10px;
+}
+
+.cgp-msg {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 8px;
+  color: var(--cgp-fg);
+  background: transparent;
+  border: 1px solid var(--cgp-line);
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 30px;
+}
+
+.cgp-msg:focus { outline: none; border-color: var(--cgp-info); }
+.cgp-msg::placeholder { color: var(--cgp-faint); }
+
+/* File rows: name, dimmed folder, status letter right-aligned. */
+.cgp-scm-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 6px;
+  margin: 0 -6px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  min-width: 0;
+  cursor: default;
+}
+
+.cgp-scm-row:hover { background: var(--cgp-raised); }
+
+.cgp-scm-row__name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cgp-scm-row__dir {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cgp-faint);
+  font-size: 11px;
+}
+
+.cgp-scm-row__code {
+  flex: 0 0 auto;
+  width: 1.1em;
+  text-align: center;
+  font-weight: 700;
+  font-size: 11.5px;
+}
+
+.cgp-code--M { color: var(--cgp-edited); }
+.cgp-code--A { color: var(--cgp-added); }
+.cgp-code--D { color: var(--cgp-deleted); }
+.cgp-code--U { color: var(--cgp-added); }
+.cgp-code--R { color: var(--cgp-info); }
+.cgp-code--C { color: var(--cgp-info); }
+
+/* =====================================================================
+   Releases tab
+   The integrator's view earns a richer surface than the work panels: it
+   is the one place someone stops to read "what is live, what is queued"
+   before acting, so the state is shown, not just listed. Everything below
+   still runs on the same --cgp-* theme tokens, so light/dark need no extra
+   rules beyond the translucent colour tints (matching .cgp-notice).
+   ===================================================================== */
+
+.cgp-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 18px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid var(--cgp-line);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(21, 101, 192, .08), rgba(21, 101, 192, 0) 60%),
+    var(--cgp-raised);
+}
+
+body.dark .cgp-hero,
+.dark .cgp-hero,
+[data-theme="dark"] .cgp-hero {
+  background:
+    linear-gradient(135deg, rgba(138, 180, 248, .12), rgba(138, 180, 248, 0) 60%),
+    var(--cgp-raised);
+}
+
+.cgp-hero__main { flex: 1 1 auto; min-width: 0; }
+
+.cgp-hero__eyebrow {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--cgp-faint);
+  margin: 0 0 4px;
+}
+
+.cgp-hero__line { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+
+.cgp-hero__version {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--cgp-fg);
+  line-height: 1.1;
+}
+
+.cgp-hero__none {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cgp-muted);
+}
+
+.cgp-hero__detail {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  color: var(--cgp-muted);
+}
+
+/* ---- pills ---- */
+
+.cgp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.cgp-pill--live {
+  color: var(--cgp-added);
+  background: rgba(46, 125, 50, .12);
+  border-color: rgba(46, 125, 50, .35);
+}
+
+.cgp-pill--live::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cgp-added);
+  box-shadow: 0 0 0 0 rgba(46, 125, 50, .5);
+  animation: cgp-pulse 2.2s ease-out infinite;
+}
+
+@keyframes cgp-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(46, 125, 50, .45); }
+  70%  { box-shadow: 0 0 0 5px rgba(46, 125, 50, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cgp-pill--live::before { animation: none; }
+}
+
+.cgp-pill--warn {
+  color: var(--cgp-edited);
+  background: rgba(184, 134, 11, .14);
+  border-color: rgba(184, 134, 11, .35);
+}
+
+/* ---- stat tiles ---- */
+
+.cgp-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.cgp-stat {
+  min-width: 66px;
+  padding: 6px 12px;
+  border: 1px solid var(--cgp-line);
+  border-radius: 6px;
+  background: var(--cgp-panel-bg, rgba(255, 255, 255, .35));
+  text-align: center;
+}
+
+body.dark .cgp-stat,
+.dark .cgp-stat,
+[data-theme="dark"] .cgp-stat { background: rgba(255, 255, 255, .03); }
+
+.cgp-stat__num {
+  display: block;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--cgp-fg);
+}
+
+.cgp-stat__num--queued  { color: var(--cgp-info); }
+.cgp-stat__num--flight  { color: var(--cgp-edited); }
+.cgp-stat__num--zero    { color: var(--cgp-faint); }
+
+.cgp-stat__label {
+  display: block;
+  margin-top: 2px;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--cgp-faint);
+}
+
+/* ---- dual-merge flow strip ---- */
+
+/*
+ * The one idea the whole tab is built around, drawn once: work crosses from
+ * everyday development onto a release/hotfix branch, goes live and is tagged
+ * on the released branch, then comes back so the next release still has it.
+ * Seeing the "back" arrow is what makes the missing-back-merge warning make
+ * sense the first time somebody hits it.
+ */
+.cgp-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  border: 1px dashed var(--cgp-line);
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.cgp-flow__node {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--cgp-line);
+  background: var(--cgp-raised);
+  white-space: nowrap;
+}
+
+.cgp-flow__node--base    { color: var(--cgp-info); border-color: currentColor; }
+.cgp-flow__node--ship    { color: var(--cgp-edited); border-color: currentColor; }
+.cgp-flow__node--release { color: var(--cgp-added); border-color: currentColor; font-weight: 600; }
+
+.cgp-flow__node code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+}
+
+.cgp-flow__arrow { color: var(--cgp-faint); font-size: 13px; flex: 0 0 auto; }
+
+.cgp-flow__back {
+  flex-basis: 100%;
+  margin-top: 2px;
+  color: var(--cgp-muted);
+  font-size: 10.5px;
+}
+
+.cgp-flow__back b { color: var(--cgp-added); font-weight: 600; }
+
+/* ---- tag chips (recent releases) ---- */
+
+.cgp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.cgp-tagchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--cgp-line);
+  background: var(--cgp-raised);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--cgp-edited);
+}
+
+.cgp-tagchip--latest {
+  border-color: var(--cgp-added);
+  color: var(--cgp-added);
+  font-weight: 600;
+}
+
+.cgp-tagchip__date {
+  color: var(--cgp-faint);
+  font-family: inherit;
+  font-size: 10px;
+}
+
+/* A quieter divider label for grouping sections on the tab. */
+.cgp-section-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cgp-faint);
+  margin: 0 0 6px;
+}
+
+/* =====================================================================
+   Shared graphical pieces, reused across Source Control, Workstreams and
+   History so the tabs read as one system.
+   ===================================================================== */
+
+/* ---- branch-type pill ---- */
+
+/*
+ * The kind of work a branch is, as a colour the eye learns: blue for new
+ * work, amber for a fix, red for an urgent one. It is the same information
+ * the create form asks for, shown back on the branch so a list of
+ * workstreams is scannable by type without reading every name.
+ */
+.cgp-typepill {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 7px;
+  border-radius: 9px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  line-height: 1.7;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+
+.cgp-typepill--feature { color: var(--cgp-info); }
+.cgp-typepill--bugfix  { color: var(--cgp-edited); }
+.cgp-typepill--hotfix  { color: var(--cgp-deleted); }
+
+/* ---- ahead/behind sync bar (Source Control) ---- */
+
+.cgp-syncbar { align-items: center; }
+
+.cgp-syncstat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--cgp-line);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--cgp-faint);
+  background: var(--cgp-raised);
+  white-space: nowrap;
+}
+
+.cgp-syncstat--in  { color: var(--cgp-info); border-color: currentColor; }
+.cgp-syncstat--out { color: var(--cgp-added); border-color: currentColor; }
+
+/* ---- history graph ref polish ---- */
+
+/* Echoes the Releases tab: a tag reads as a tag everywhere, the checked-out
+   branch is quietly highlighted. Colour already came from --cgp-*; these add
+   the faint fill that ties them to the release chips. */
+.cgp-ref--head { background: rgba(46, 125, 50, .1); }
+.cgp-ref--tag  {
+  background: rgba(184, 134, 11, .1);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+body.dark .cgp-ref--head,
+.dark .cgp-ref--head,
+[data-theme="dark"] .cgp-ref--head { background: rgba(123, 198, 126, .12); }
+
+body.dark .cgp-ref--tag,
+.dark .cgp-ref--tag,
+[data-theme="dark"] .cgp-ref--tag { background: rgba(224, 180, 76, .12); }
+
+/* ---- "My work": the lead action's tone icon ---- */
+
+/*
+ * The one thing worth doing carries a colour before a word is read: red when
+ * something is wrong, green when it is just tidy-up, blue for the ordinary
+ * next step. It reinforces the same tone the border already sets.
+ */
+.cgp-lead__icon { flex: 0 0 auto; }
+.cgp-tone--urgent { color: var(--cgp-deleted); }
+.cgp-tone--calm   { color: var(--cgp-added); }
+.cgp-tone--action { color: var(--cgp-info); }
+
+/* ---- Activity: transcript legibility ---- */
+
+/* A red count next to the total makes a failed command findable without
+   scrolling the whole log. */
+.cgp-failcount {
+  margin-left: 8px;
+  color: var(--cgp-deleted);
+  font-weight: 700;
+}
+
+/*
+ * A hairline down the left edge marks a row without shifting the fixed-width
+ * columns the transcript aligns on (an inset shadow costs no layout box):
+ * red for a command that failed, blue for one a person typed, so the two
+ * things worth spotting in a wall of automatic git stand out.
+ */
+.cgp-log__row--failed { box-shadow: inset 2px 0 var(--cgp-deleted); }
+.cgp-log__row--mine   { box-shadow: inset 2px 0 var(--cgp-info); }
+.cgp-log__row--mine.cgp-log__row--failed {
+  box-shadow: inset 2px 0 var(--cgp-deleted);
+}

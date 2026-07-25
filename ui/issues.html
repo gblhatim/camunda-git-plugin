@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Issues</title>
+<style>
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    margin: 0;
+    padding: 16px;
+    background: #f7f7f8;
+    color: #1a1a1a;
+  }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  #sub { color: #666; font-size: 12px; margin-bottom: 12px; word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #e0e0e0; }
+  th { color: #555; font-size: 11px; text-transform: uppercase; }
+  a { color: #2a7ae2; text-decoration: none; cursor: pointer; }
+  a:hover { text-decoration: underline; }
+  #error { color: #c62828; font-size: 12px; margin-top: 10px; }
+  #message { font-size: 12px; color: #555; }
+</style>
+</head>
+<body>
+  <h1 id="title">Issues</h1>
+  <div id="sub">loading...</div>
+  <div id="message"></div>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Title</th><th>Author</th><th>Opened</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div id="error"></div>
+<script src="issues.js"></script>
+</body>
+</html>
