@@ -270,6 +270,24 @@ const postRoutes = {
     };
   },
 
+  // Combine both sides of a conflicted diagram into one, rather than
+  // keeping a side. Returns the same refreshed shape as resolve, so the
+  // panel updates in one round trip.
+  '/conflict/combine': async body => {
+    const combined = await conflictService.combineFile(body.path);
+    const conflicts = await conflictService.listConflicts();
+
+    return {
+      context: await conflictService.getMergeContext(),
+      combined,
+      summary: 'Combined both versions and saved the result.',
+      remaining: conflicts.length,
+      conflicts,
+      resolved: await conflictService.listResolved(),
+      status: await readStatus()
+    };
+  },
+
   // Put one file back to being conflicted. The escape hatch for a decision
   // rather than for the whole operation.
   '/conflict/undo': async body => {

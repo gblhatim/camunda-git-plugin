@@ -236,6 +236,7 @@ const BUSY_LABELS = {
   '/routine/rollback/run': { label: 'Putting your diagrams back' },
 
   '/conflict/resolve': { label: 'Applying your decision' },
+  '/conflict/combine': { label: 'Combining both versions' },
   '/conflict/undo': { label: 'Putting that decision back' },
   '/conflict/compare': { label: 'Opening the two versions' },
   '/merge/complete': { label: 'Finishing up' },
@@ -834,6 +835,11 @@ function GitPlugin(props) {
     },
 
     resolve: (path, keep) => act('/conflict/resolve', { path, keep }),
+    // Fold both sides into one diagram instead of discarding a side. The
+    // tree reloads because a diagram's contents changed on disk, not just
+    // its staged/unstaged state.
+    combine: path =>
+      act('/conflict/combine', { path }).then(res => { loadTree(); return res; }),
     undoResolution: path =>
       act('/conflict/undo', { path }, 'That file needs a decision again.'),
     compare: path => act('/conflict/compare', { path }),

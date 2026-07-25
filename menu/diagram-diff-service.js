@@ -580,14 +580,17 @@ function survivingChanges(bProps, otherProps) {
  * decide. The ancestor is what separates the two, and it is already fetched
  * (conflict-service reads all three index stages) and, until now, discarded.
  *
- * Phase 1 is analysis only: it classifies, it does not synthesise merged
- * XML. Resolution still goes through the existing keep-a-side path - but the
- * caller can now say "12 of these combine cleanly, 2 need you" instead of
- * asking someone to pick a whole side blind.
+ * This function is analysis only: it classifies, it does not synthesise
+ * merged XML - that is `mergeXml` below, which consumes this. Splitting the
+ * two keeps the classification independently testable against `git
+ * --graph`-style expectations, and lets the caller say "12 of these combine
+ * cleanly, 2 need you" without building a document.
  *
- * Layout is deliberately out of scope. A pure move is a DI change, which
- * `ownProperties` already excludes, and file-level resolution cannot
- * preserve one anyway; reuniting layouts is a Phase 2 concern.
+ * Property-level layout is out of scope here on purpose: a pure move is a DI
+ * change, which `ownProperties` already excludes. `mergeXml` does carry the
+ * layout of *added and removed* elements across, because an element with no
+ * shape is invisible on the canvas - but it does not try to reconcile two
+ * different positions for the same element.
  */
 async function merge(baseXml, oursXml, theirsXml) {
   if (!baseXml || !oursXml || !theirsXml) {
@@ -754,9 +757,580 @@ async function merge(baseXml, oursXml, theirsXml) {
   };
 }
 
+// =====================================================================
+// Phase 2: synthesise the merged document.
+//
+// `merge` above only classifies. This turns a *cleanly combinable* case
+// into an actual merged .bpmn - the thing file-level "keep a side"
+// cannot do, and the reason it silently drops one person's work when
+// both edited the same diagram without clashing.
+//
+// The strategy is deliberately conservative: start from a fresh parse of
+// OURS (so our layout and our own edits are already in place), then apply
+// only the operations the analysis attributed to THEIRS - add the
+// elements they added, drop the ones they removed, and fold in the
+// properties they changed. Ours' clean changes need no work because they
+// are already in the document being mutated.
+//
+// It never guesses. Every result is verified element-by-element against
+// what the clean merge *should* produce (`verifyMerge`); if the synthesis
+// missed anything - a deep extension-element edit it did not know how to
+// fold in, say - it returns `combinable: false` and the caller falls back
+// to the existing keep-a-side flow. A combine that might be wrong is worse
+// than no combine, because the whole point is that keep-a-side is lossy in
+// a way nobody notices.
+// =====================================================================
+
+async function parseDoc(xml) {
+  const moddle = new BpmnModdle();
+  const { rootElement } = await moddle.fromXML(xml);
+
+  return { moddle, definitions: rootElement };
+}
+
+function isPlane(node) {
+  return isModdle(node) && node.$type === 'bpmndi:BPMNPlane';
+}
+
+function isDiFigure(node) {
+  return isModdle(node) &&
+    (node.$type === 'bpmndi:BPMNShape' || node.$type === 'bpmndi:BPMNEdge');
+}
+
+/**
+ * The BPMNShape/BPMNEdge for each diagrammed element, and the first plane
+ * to drop newly-added figures into. Layout lives apart from the semantic
+ * tree, so an added or removed element has to be followed into here.
+ */
+function indexDi(root) {
+  const byElement = new Map();
+  let plane = null;
+  const seen = new Set();
+
+  const walk = node => {
+    if (!node || typeof node !== 'object' || seen.has(node)) {
+      return;
+    }
+
+    seen.add(node);
+
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+
+    if (isModdle(node)) {
+      if (isPlane(node) && !plane) {
+        plane = node;
+      }
+
+      if (isDiFigure(node) && node.bpmnElement && node.bpmnElement.id) {
+        byElement.set(node.bpmnElement.id, node);
+      }
+    }
+
+    Object.keys(node).forEach(key => {
+      if (key !== '$parent') {
+        walk(node[key]);
+      }
+    });
+  };
+
+  walk(root);
+
+  return { byElement, plane };
+}
+
+/**
+ * The list on a node's parent that actually holds it, so the same element
+ * can be spliced out of one document or appended into another without
+ * knowing in advance whether it lives in `flowElements`, `planeElement`,
+ * or a lane's `flowNodeRef`.
+ */
+function containerOf(node) {
+  const parent = node && node.$parent;
+
+  if (!parent) {
+    return null;
+  }
+
+  const key = Object.keys(parent).find(
+    k => k !== '$parent' && Array.isArray(parent[k]) && parent[k].indexOf(node) !== -1
+  );
+
+  return key ? { parent, key, array: parent[key] } : null;
+}
+
+function appendChild(parent, key, child) {
+  if (!Array.isArray(parent[key])) {
+    parent[key] = [];
+  }
+
+  parent[key].push(child);
+  child.$parent = parent;
+}
+
+function detachNode(node) {
+  const c = containerOf(node);
+
+  if (c) {
+    c.array.splice(c.array.indexOf(node), 1);
+  }
+}
+
+function rootProcess(definitions) {
+  const roots = definitions.rootElements || [];
+
+  return roots.find(e => isModdle(e) && /:Process$/.test(e.$type)) || null;
+}
+
+/**
+ * Move an element theirs added - and its layout - into our document.
+ */
+function injectElement(id, T, W, tDi, wDi, definitions) {
+  const te = T.get(id);
+
+  if (!te) {
+    throw new Error(`the added element ${id} is missing from their version`);
+  }
+
+  const from = containerOf(te);
+  const parentId = te.$parent && te.$parent.id;
+  const target = (parentId && W.get(parentId)) || rootProcess(definitions);
+
+  if (!target || !from) {
+    throw new Error(`no place in your version to add ${id}`);
+  }
+
+  appendChild(target, from.key, te);
+  W.set(id, te);
+
+  // Follow the element into the diagram: without its shape it exists in
+  // the XML but not on the canvas.
+  const figure = tDi.byElement.get(id);
+
+  if (figure && wDi.plane) {
+    const fig = containerOf(figure);
+    appendChild(wDi.plane, fig ? fig.key : 'planeElement', figure);
+  }
+}
+
+/**
+ * Honour a removal theirs made: drop the element and its layout from our
+ * document. Only ever called for a clean remove, where our side left the
+ * element untouched.
+ */
+function removeElement(id, W, wDi) {
+  const we = W.get(id);
+
+  if (we) {
+    detachNode(we);
+    W.delete(id);
+  }
+
+  const figure = wDi.byElement.get(id);
+
+  if (figure) {
+    detachNode(figure);
+  }
+}
+
+/**
+ * Fold theirs' property changes for one element into our copy of it.
+ *
+ * Mirrors `ownProperties`' traversal - attributes, text, untyped and
+ * typed children - and stops at nested elements that carry their own id,
+ * because those are separate entries the caller handles in their own
+ * right. Best-effort by design: `verifyMerge` is what guarantees the
+ * result, so a case this misses becomes an abstention, not a wrong merge.
+ */
+function foldChanges(w, b, t, depth) {
+  if (!w || depth > 12) {
+    return;
+  }
+
+  // Namespaced attributes - where every camunda:* property lives.
+  const wAttrs = w.$attrs || (w.$attrs = {});
+  const bAttrs = (b && b.$attrs) || {};
+  const tAttrs = (t && t.$attrs) || {};
+
+  new Set(Object.keys(bAttrs).concat(Object.keys(tAttrs))).forEach(key => {
+    const bv = bAttrs[key];
+    const tv = tAttrs[key];
+
+    // Theirs left it alone, or ours already moved it: keep ours.
+    if (tv === bv || wAttrs[key] !== bv) {
+      return;
+    }
+
+    if (tv === undefined) {
+      delete wAttrs[key];
+    } else {
+      wAttrs[key] = tv;
+    }
+  });
+
+  // Text content.
+  const bBody = b && b.$body !== undefined ? b.$body : null;
+  const tBody = t && t.$body !== undefined ? t.$body : null;
+  const wBody = w.$body !== undefined ? w.$body : null;
+
+  if (tBody !== bBody && wBody === bBody) {
+    if (tBody === null) {
+      delete w.$body;
+    } else {
+      w.$body = tBody;
+    }
+  }
+
+  foldArray(w, b, t, '$children', depth);
+
+  // Typed own properties.
+  const keys = new Set(
+    Object.keys(w)
+      .concat(b ? Object.keys(b) : [], t ? Object.keys(t) : [])
+      .filter(k => !k.startsWith('$') && k !== 'di' && k !== 'id')
+  );
+
+  keys.forEach(key => {
+    const wv = w[key];
+    const bv = b ? b[key] : undefined;
+    const tv = t ? t[key] : undefined;
+
+    if (Array.isArray(wv) || Array.isArray(bv) || Array.isArray(tv)) {
+      foldArray(w, b, t, key, depth);
+      return;
+    }
+
+    const wMod = isModdle(wv);
+    const bMod = isModdle(bv);
+    const tMod = isModdle(tv);
+
+    // A reference to an id'd element: compared and carried by id.
+    if ((wMod && wv.id) || (bMod && bv.id) || (tMod && tv.id)) {
+      const bid = bMod ? bv.id : undefined;
+      const tid = tMod ? tv.id : undefined;
+      const wid = wMod ? wv.id : undefined;
+
+      if (tid !== bid && wid === bid) {
+        if (tv === undefined) {
+          delete w[key];
+        } else {
+          w[key] = tv;
+        }
+      }
+
+      return;
+    }
+
+    // A nested element without its own id - condition, documentation,
+    // extensionElements, event definitions.
+    if (wMod || bMod || tMod) {
+      if (tMod && !bMod && !wMod) {
+        w[key] = tv;
+        tv.$parent = w;
+      } else if (wMod) {
+        foldChanges(wv, bMod ? bv : null, tMod ? tv : null, depth + 1);
+      }
+
+      return;
+    }
+
+    // A plain scalar.
+    if (tv !== bv && wv === bv) {
+      if (tv === undefined) {
+        delete w[key];
+      } else {
+        w[key] = tv;
+      }
+    }
+  });
+}
+
+function foldArray(w, b, t, key, depth) {
+  const wArr = Array.isArray(w[key]) ? w[key] : null;
+  const bArr = b && Array.isArray(b[key]) ? b[key] : null;
+  const tArr = t && Array.isArray(t[key]) ? t[key] : null;
+
+  if (!tArr && !bArr) {
+    return;
+  }
+
+  if (!wArr) {
+    // Ours has no such list; if theirs introduced one and the ancestor
+    // had none, take it wholesale.
+    if (tArr && !bArr) {
+      w[key] = tArr;
+      tArr.forEach(child => {
+        if (isModdle(child)) {
+          child.$parent = w;
+        }
+      });
+    }
+
+    return;
+  }
+
+  const index = arr =>
+    new Map((arr || []).map((item, i) => [ entryKey(item, i, arr), item ]));
+
+  const bMap = index(bArr);
+  const tMap = index(tArr);
+
+  // Entries theirs added.
+  (tArr || []).forEach((item, i) => {
+    const k = entryKey(item, i, tArr);
+
+    if (!bMap.has(k) && !index(wArr).has(k)) {
+      wArr.push(item);
+
+      if (isModdle(item)) {
+        item.$parent = w;
+      }
+    }
+  });
+
+  // Entries theirs removed while ours left them at the ancestor value.
+  wArr.slice().forEach((item, i) => {
+    const k = entryKey(item, i, wArr);
+
+    if (bMap.has(k) && !tMap.has(k)) {
+      const at = wArr.indexOf(item);
+
+      if (at !== -1) {
+        wArr.splice(at, 1);
+      }
+    }
+  });
+
+  // Entries on all three: recurse, but only into anonymous nested
+  // elements. Anything with its own id is a separate merge entry.
+  wArr.forEach((item, i) => {
+    if (!isModdle(item) || item.id) {
+      return;
+    }
+
+    const k = entryKey(item, i, wArr);
+
+    if (bMap.has(k) && tMap.has(k)) {
+      foldChanges(item, bMap.get(k), tMap.get(k), depth + 1);
+    }
+  });
+}
+
+/**
+ * The clean-merge value a property must end up at: whoever moved it off
+ * the ancestor wins, and if neither did it stays at the ancestor. This is
+ * the same rule `merge` classifies by, applied as an assertion.
+ */
+function expectedValue(bv, ov, tv) {
+  if (ov !== bv) {
+    return ov;
+  }
+
+  if (tv !== bv) {
+    return tv;
+  }
+
+  return bv;
+}
+
+/**
+ * Prove the synthesised document is exactly the clean merge, or say where
+ * it is not. Presence first (every element that should survive does, and
+ * nothing that should have gone remains), then, for elements all three
+ * share, every property folded to the value the merge rule demands.
+ *
+ * Added elements are not re-checked property by property: they were moved
+ * across as whole subtrees, so they are their source verbatim.
+ */
+function verifyMerge(mergedDefs, B, O, T) {
+  const M = indexElements(mergedDefs);
+  const ids = new Set(
+    Array.from(B.keys()).concat(Array.from(O.keys()), Array.from(T.keys()))
+  );
+
+  const expectPresent = new Set();
+
+  ids.forEach(id => {
+    const inB = B.has(id);
+    const present = inB ? (O.has(id) && T.has(id)) : (O.has(id) || T.has(id));
+
+    if (present) {
+      expectPresent.add(id);
+    }
+  });
+
+  for (const id of expectPresent) {
+    if (!M.has(id)) {
+      return `${id} should be in the combined diagram but is not`;
+    }
+  }
+
+  for (const id of M.keys()) {
+    if (!expectPresent.has(id)) {
+      return `${id} is in the combined diagram but should not be`;
+    }
+  }
+
+  for (const id of expectPresent) {
+    if (!(B.has(id) && O.has(id) && T.has(id))) {
+      continue;
+    }
+
+    const bp = ownProperties(B.get(id));
+    const op = ownProperties(O.get(id));
+    const tp = ownProperties(T.get(id));
+    const mp = ownProperties(M.get(id));
+
+    const keys = new Set(
+      Object.keys(bp).concat(Object.keys(op), Object.keys(tp))
+    );
+
+    for (const key of keys) {
+      const want = expectedValue(bp[key], op[key], tp[key]);
+      const got = mp[key];
+
+      if ((want === undefined ? undefined : want) !== (got === undefined ? undefined : got)) {
+        return `"${labelFor(key)}" on ${id} did not combine as expected`;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Produce the merged .bpmn for a cleanly combinable conflict.
+ *
+ * Returns `{ combinable: false, reason }` for anything that is not safe to
+ * do automatically - a real clash, nothing to combine, an unreadable
+ * version, or a synthesis that did not verify - so the caller can fall
+ * back to keep-a-side rather than write a diagram nobody chose.
+ */
+async function mergeXml(baseXml, oursXml, theirsXml) {
+  const analysis = await merge(baseXml, oursXml, theirsXml);
+
+  if (!analysis.mergeable) {
+    return { combinable: false, reason: analysis.reason };
+  }
+
+  if (analysis.conflicts.length) {
+    return {
+      combinable: false,
+      reason: 'Some changes clash, so this needs a person to choose a version.'
+    };
+  }
+
+  if (!analysis.clean.length) {
+    return {
+      combinable: false,
+      reason: 'There is nothing to combine - the two versions already match.'
+    };
+  }
+
+  let baseDoc;
+  let oursDoc;
+  let theirsDoc;
+  let oursCheck;
+
+  try {
+    [ baseDoc, oursDoc, theirsDoc, oursCheck ] = await Promise.all([
+      parseDoc(baseXml), parseDoc(oursXml), parseDoc(theirsXml), parseDoc(oursXml)
+    ]);
+  } catch (err) {
+    return { combinable: false, reason: `Could not read one of the versions: ${err.message}` };
+  }
+
+  const B = indexElements(baseDoc.definitions);
+  // Ours is the document we mutate and serialise, so its index *is* the
+  // working set - it changes as elements are added and removed below.
+  const W = indexElements(oursDoc.definitions);
+  const T = indexElements(theirsDoc.definitions);
+
+  // A second, untouched parse of ours: `verifyMerge` needs our *original*
+  // property values to know what each side changed, and the working copy
+  // above no longer has them.
+  const O = indexElements(oursCheck.definitions);
+
+  const wDi = indexDi(oursDoc.definitions);
+  const tDi = indexDi(theirsDoc.definitions);
+
+  let fromTheirs = 0;
+  let fromOurs = 0;
+
+  try {
+    analysis.clean.forEach(entry => {
+      const id = entry.id;
+
+      if (entry.kind === 'add') {
+        if (entry.side === 'theirs') {
+          injectElement(id, T, W, tDi, wDi, oursDoc.definitions);
+          fromTheirs += 1;
+        } else {
+          fromOurs += 1;   // ours or both: already present in W
+        }
+
+        return;
+      }
+
+      if (entry.kind === 'remove') {
+        if (entry.side === 'theirs') {
+          removeElement(id, W, wDi);
+          fromTheirs += 1;
+        } else {
+          fromOurs += 1;   // ours or both: already gone from W
+        }
+
+        return;
+      }
+
+      if (entry.kind === 'change') {
+        if (entry.changes.some(c => c.side === 'theirs')) {
+          foldChanges(W.get(id), B.get(id), T.get(id), 0);
+          fromTheirs += 1;
+        } else {
+          fromOurs += 1;   // every changed property was ours; already in W
+        }
+      }
+    });
+  } catch (err) {
+    return {
+      combinable: false,
+      reason: `Automatic combine hit a case it could not do safely: ${err.message}`
+    };
+  }
+
+  const problem = verifyMerge(oursDoc.definitions, B, O, T);
+
+  if (problem) {
+    return {
+      combinable: false,
+      reason: `The automatic combine could not be verified (${problem}), ` +
+        `so choose a version instead.`
+    };
+  }
+
+  let xml;
+
+  try {
+    const out = await oursDoc.moddle.toXML(oursDoc.definitions, { format: true });
+    xml = out.xml;
+  } catch (err) {
+    return { combinable: false, reason: `The combined diagram could not be written: ${err.message}` };
+  }
+
+  return {
+    combinable: true,
+    xml,
+    applied: { fromOurs, fromTheirs, total: analysis.clean.length }
+  };
+}
+
 module.exports = {
   compare,
   merge,
+  mergeXml,
   indexElements,
   ownProperties,
   labelFor,

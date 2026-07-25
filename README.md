@@ -557,11 +557,32 @@ hand-merges `<bpmn:sequenceFlow>` hunks. So the only choices are:
 
 | Button | Effect |
 |---|---|
+| Combine both | Folds both sides into one diagram and stages it - only offered when the changes do not clash (see below) |
 | Show me both | Opens both versions rendered side by side (`ui/compare.html`) |
 | Keep mine | `checkout --ours` + stage |
 | Keep the team's | `checkout --theirs` + stage |
 | Finish | Commits the merge, using git's own MERGE_MSG |
 | Start over | `merge --abort` - the escape hatch; committed work is untouched |
+
+**"Combine both" is the answer to the lossy part of file-level resolution.**
+When two people change the same diagram *without clashing* - one renames a
+task, the other adds one, a third edits a different property of the same
+element - keeping either whole side silently discards the other's work.
+`diagram-diff-service.mergeXml` synthesises the union instead: it starts
+from a fresh parse of your version (so your layout and edits are already
+in place) and applies only what the analysis attributed to the other side
+- their added elements and their layout, their removals, the properties
+they changed.
+
+It is **correct-or-abstain**. Every result is verified element-by-element
+against what the clean merge must produce (`verifyMerge`); if the synthesis
+missed anything - a deep extension-element edit it did not know how to fold
+in - it returns `combinable: false` and the button is not offered, leaving
+the keep-a-side flow untouched. A combine that might be wrong is worse than
+no combine, because the entire reason it exists is that keep-a-side is lossy
+in a way nobody notices. Combining is offered only when *nothing* clashes;
+the moment any property is pulled two ways, the diagram is a keep-a-side
+decision again.
 
 Delete/modify conflicts are handled explicitly: `git checkout --ours` has
 no blob to check out when one side deleted the file, so

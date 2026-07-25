@@ -1,15 +1,20 @@
 /**
  * Conflict handling, designed for people who do not read git.
  *
- * The deliberate limitation here: resolution is *file-level only*. A BPMN
- * file is XML describing a graph, so a line-level three-way merge of two
- * diagrams produces something that is neither diagram and frequently is
- * not even valid XML. Nobody hand-merges `<bpmn:sequenceFlow>` hunks - not
- * analysts, not developers. So the only choices offered are "keep mine",
- * "keep theirs", and "show me both so I can decide".
+ * A *line-level* three-way merge of two diagrams is hopeless: a BPMN file is
+ * XML describing a graph, so merging hunks produces something that is
+ * neither diagram and frequently is not even valid XML. Nobody hand-merges
+ * `<bpmn:sequenceFlow>` text. So the baseline choices are whole-side ones -
+ * "keep mine", "keep theirs", and "show me both so I can decide".
  *
- * Anything more granular is a job for reopening the diagram and redoing
- * the change on top of the version that won.
+ * `combineFile` is the exception, and it does not work at the line level: it
+ * asks `diagram-diff-service.mergeXml` for a *semantic* union of the two
+ * sides and writes that, but only when the analysis says nothing clashes and
+ * the synthesis verifies. It is what stops keep-a-side from silently
+ * discarding one person's work when the two never actually collided.
+ *
+ * Anything a clash genuinely pulls two ways is still a job for reopening the
+ * diagram and redoing the change on top of the version that won.
  */
 
 'use strict';
@@ -23,6 +28,7 @@ const gitService = require('./git-service');
 const commandLog = require('./command-log');
 const configStore = require('./config-store');
 const naming = require('./naming');
+const diagramDiffService = require('./diagram-diff-service');
 
 // Release branches are not one of naming.js's work types, so `humanize()`
 // leaves the prefix on. Handled with three lines here rather than by
@@ -311,15 +317,51 @@ async function listConflicts() {
       deletedBy = 'both';
     }
 
+    const hasOurs = deletedBy !== 'us' && deletedBy !== 'both';
+    const hasTheirs = deletedBy !== 'them' && deletedBy !== 'both';
+
+    // Only BPMN can be combined semantically (bpmn-moddle understands it),
+    // and only when both sides still exist - a delete/keep clash is a
+    // whole-side decision, not a combine.
+    const combinable = /\.bpmn$/i.test(filePath) && hasOurs && hasTheirs
+      ? await isCombinable(filePath)
+      : false;
+
     return {
       path: filePath,
       name: path.basename(filePath),
       isDiagram: /\.(bpmn|dmn|form)$/i.test(filePath),
       deletedBy,
-      hasOurs: deletedBy !== 'us' && deletedBy !== 'both',
-      hasTheirs: deletedBy !== 'them' && deletedBy !== 'both'
+      hasOurs,
+      hasTheirs,
+      combinable
     };
   }));
+}
+
+/**
+ * Can this diagram's two sides be folded into one automatically?
+ *
+ * Runs the analysis only - the cheap classification, not the full
+ * synthesis - so listing conflicts stays light. `combineFile` re-checks by
+ * actually building and verifying the document, so a rare case that passes
+ * here but cannot be synthesised safely surfaces as a clear message rather
+ * than a silently wrong merge.
+ */
+async function isCombinable(filePath) {
+  try {
+    const { ours, theirs, base } = await getVersions(filePath);
+
+    if (!ours || !theirs || !base) {
+      return false;
+    }
+
+    const analysis = await diagramDiffService.merge(base, ours, theirs);
+
+    return !!(analysis.mergeable && analysis.summary && analysis.summary.combinesCleanly);
+  } catch (err) {
+    return false;
+  }
 }
 
 /**
@@ -423,6 +465,66 @@ async function resolveFile(filePath, keep) {
   await git.add([ filePath ]);
 
   return { path: filePath, kept: keep, outcome: 'kept' };
+}
+
+/**
+ * Resolve a conflict by *combining* both sides into one diagram, instead
+ * of keeping one and discarding the other.
+ *
+ * This is the whole point of the semantic merge: when two people changed
+ * the same diagram without actually clashing - a rename here, a new task
+ * there - keeping either side throws one person's work away silently.
+ * `mergeXml` builds the union and verifies it; only a verified document is
+ * ever written. Anything it will not vouch for raises, and the caller
+ * falls back to the keep-a-side buttons.
+ */
+async function combineFile(filePath) {
+  const entry = (await listConflicts()).find(c => c.path === filePath);
+
+  if (!entry) {
+    throw new Error(`"${filePath}" is not currently conflicted.`);
+  }
+
+  if (!/\.bpmn$/i.test(filePath)) {
+    throw new Error('Only BPMN diagrams can be combined automatically.');
+  }
+
+  if (!entry.hasOurs || !entry.hasTheirs) {
+    throw new Error(
+      'One side deleted this diagram, so there is nothing to combine - ' +
+      'keep a version instead.'
+    );
+  }
+
+  const { ours, theirs, base } = await getVersions(filePath);
+
+  if (!base) {
+    throw new Error(
+      'These versions have no common ancestor to combine against - ' +
+      'keep a version instead.'
+    );
+  }
+
+  const result = await diagramDiffService.mergeXml(base, ours, theirs);
+
+  if (!result.combinable) {
+    throw new Error(
+      result.reason ||
+      'These changes could not be combined automatically; choose a version instead.'
+    );
+  }
+
+  const git = gitService.getGit();
+  const rel = await gitService.toRepoRelativePath(
+    path.isAbsolute(filePath) ? filePath : path.join(gitService.getRepoPath(), filePath)
+  );
+
+  // Write the union into the working tree, then stage it - which is what
+  // marks the conflict resolved, exactly as keep-a-side does.
+  fs.writeFileSync(path.join(gitService.getRepoPath(), rel), result.xml, 'utf8');
+  await git.add([ filePath ]);
+
+  return { path: filePath, combined: true, applied: result.applied };
 }
 
 /**
@@ -531,6 +633,7 @@ module.exports = {
   listResolved,
   getVersions,
   resolveFile,
+  combineFile,
   undoResolution,
   stripComments,
   completeMerge,
