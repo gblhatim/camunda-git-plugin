@@ -1960,9 +1960,10 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
  * one-click new diagram in the repo. The element summary comes parsed from
  * the main process, so it always matches the file.
  */
-export function Catalog({ catalog, actions, busy, onOpen }) {
+export function Catalog({ catalog, actions, busy, onOpen, onInsert }) {
   const [ copiedId, setCopiedId ] = useState(null);
   const [ workingId, setWorkingId ] = useState(null);
+  const [ insertedId, setInsertedId ] = useState(null);
 
   if (!catalog) {
     return h('div', { className: 'cgp-panel' },
@@ -2007,9 +2008,16 @@ export function Catalog({ catalog, actions, busy, onOpen }) {
     if (res && res.path) onOpen(res.path);
   };
 
+  const addToEditor = entry => {
+    if (!onInsert) return;
+    onInsert(entry.xml);
+    setInsertedId(entry.id);
+    setTimeout(() => setInsertedId(c => (c === entry.id ? null : c)), 1500);
+  };
+
   return h('div', { className: 'cgp-panel' },
     h('p', { className: 'cgp-eyebrow' },
-      `${entries.length} ready-made pattern${entries.length === 1 ? '' : 's'} - copy the XML or start a new diagram`),
+      `${entries.length} ready-made pattern${entries.length === 1 ? '' : 's'} - preview it, drop it into the open diagram, or start a new one`),
 
     h('div', { className: 'cgp-cat__grid' },
       entries.map(entry => h('div', { key: entry.id, className: 'cgp-cat__card' },
@@ -2028,13 +2036,28 @@ export function Catalog({ catalog, actions, busy, onOpen }) {
             )))
           : null,
 
-        h('div', { className: 'cgp-field', style: { marginTop: '10px' } },
+        h('div', { className: 'cgp-cat__actions' },
           h('button', {
+            className: 'btn cgp-btn',
+            disabled: busy,
+            title: 'See this diagram in a viewer',
+            onClick: () => actions.catalogPreview(entry.id)
+          }, 'Preview'),
+
+          onInsert && h('button', {
             className: 'btn cgp-btn cgp-btn--primary',
+            disabled: busy,
+            title: 'Drop this straight into the diagram open in the editor',
+            onClick: () => addToEditor(entry)
+          }, insertedId === entry.id ? 'Added ✓' : 'Add to editor'),
+
+          h('button', {
+            className: 'btn cgp-btn',
             disabled: busy || workingId === entry.id,
             title: 'Add this as a new .bpmn in your project and open it',
             onClick: () => create(entry)
-          }, workingId === entry.id ? 'Creating…' : 'New diagram'),
+          }, workingId === entry.id ? 'Creating…' : 'New file'),
+
           h('button', {
             className: 'btn cgp-btn',
             disabled: busy,

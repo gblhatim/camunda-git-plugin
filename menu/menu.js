@@ -16,6 +16,7 @@ const conflictService = require('./conflict-service');
 const diagramDiffService = require('./diagram-diff-service');
 const mergeRequestService = require('./merge-request-service');
 const aiService = require('./ai-service');
+const catalogService = require('./catalog-service');
 const autoPull = require('./auto-pull');
 
 // This module is required once, in the main process, when Modeler loads the
@@ -132,6 +133,25 @@ bridgeServer.setReviewHandler(async ({ source, target }) => {
  * requests use - one file, the current diagram versus the AI's version, with
  * synced viewers and the element-level diff.
  */
+/**
+ * A read-only viewer for a catalog pattern, so it can be seen before it is
+ * copied or dropped into the editor.
+ */
+bridgeServer.setCatalogPreviewHandler(async id => {
+  const entry = catalogService.getEntry(id);
+
+  openWindow({
+    kind: 'catalog-preview',
+    title: `Catalog - ${entry.title}`,
+    htmlFile: 'catalog-preview.html',
+    width: 1100,
+    height: 720,
+    handlers: {
+      getDiagram: async () => ({ xml: entry.xml, title: entry.title })
+    }
+  });
+});
+
 bridgeServer.setAiReviewHandler(async ({ path: filePath }) => {
   const proposal = aiService.getProposal(filePath);
 

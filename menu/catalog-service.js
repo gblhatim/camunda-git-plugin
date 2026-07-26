@@ -117,8 +117,17 @@ async function createDiagram({ id, name }) {
   return { path: rel, name: path.basename(rel) };
 }
 
+/**
+ * One entry's title and full XML, for the preview window.
+ */
+function getEntry(id) {
+  const entry = findEntry(id);
+  return { id: entry.id, title: entry.title, xml: readXml(entry) };
+}
+
 module.exports = {
   list,
+  getEntry,
   createDiagram,
   readIndex,
   summarize

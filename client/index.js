@@ -19,6 +19,7 @@ import Fill from 'camunda-modeler-plugin-helpers/components/Fill.js';
 import { registerClientExtension, registerBpmnJSPlugin } from 'camunda-modeler-plugin-helpers';
 
 import TaskDetailsModule from './task-details.js';
+import CatalogInsertModule from './catalog-insert.js';
 
 import {
   Notice,
@@ -916,6 +917,7 @@ function GitPlugin(props) {
     catalogNew: (id, name) =>
       act('/catalog/new', { id, name }, 'New diagram created from the catalog.')
         .then(res => { loadTree(); return res; }),
+    catalogPreview: id => act('/catalog/preview', { id }),
 
     // --- AI edits ------------------------------------------------------
     aiPreview: (path, instruction) => act('/ai/edit/preview', { path, instruction }),
@@ -1475,7 +1477,12 @@ function GitPlugin(props) {
             catalog,
             actions,
             busy,
-            onOpen: relPath => openDiagram({ path: relPath })
+            onOpen: relPath => openDiagram({ path: relPath }),
+            // Reaches the active editor's bpmn-js module (catalog-insert.js)
+            // through Modeler's own action routing.
+            onInsert: typeof triggerAction === 'function'
+              ? xml => triggerAction('catalog.insert', { xml })
+              : null
           })
         )
       )
@@ -1558,3 +1565,4 @@ registerClientExtension(GitPlugin);
 // bottom panel: hover a task, see how it is configured. Registered as a
 // bpmn-js module so it has the editor's eventBus and overlays.
 registerBpmnJSPlugin(TaskDetailsModule);
+registerBpmnJSPlugin(CatalogInsertModule);

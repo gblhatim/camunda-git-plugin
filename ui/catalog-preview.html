@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Catalog preview</title>
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/diagram-js.css">
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/bpmn-js.css">
+<link rel="stylesheet" href="../node_modules/bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css">
+<script src="../node_modules/bpmn-js/dist/bpmn-navigated-viewer.production.min.js"></script>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    color: #1a1a1a; display: flex; flex-direction: column; background: #fff;
+  }
+  header { padding: 10px 16px; border-bottom: 1px solid #e2e2e5; background: #f7f7f8; }
+  h1 { font-size: 14px; margin: 0; }
+  header p { margin: 3px 0 0; font-size: 12px; color: #666; }
+  #canvas { flex: 1; min-height: 0; background: #fff; }
+  #error {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    color: #c62828; font-size: 13px; padding: 24px; text-align: center;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1 id="title">Catalog preview</h1>
+    <p>Drag to pan, scroll to zoom. Close this window when you are done.</p>
+  </header>
+  <div id="canvas"></div>
+<script src="catalog-preview.js"></script>
+</body>
+</html>

@@ -71,6 +71,13 @@ function setAiReviewHandler(fn) {
   showAiReview = fn;
 }
 
+// Set by menu.js: opens a read-only viewer for one catalog pattern.
+let showCatalogPreview = null;
+
+function setCatalogPreviewHandler(fn) {
+  showCatalogPreview = fn;
+}
+
 // Opens a URL in the user's browser; injected for the same reason.
 let openExternal = null;
 
@@ -382,6 +389,16 @@ const postRoutes = {
   // The models this key can use, so the UI offers real ids instead of a
   // guessed default that 404s.
   '/ai/models': async () => aiService.listModels(),
+
+  // Open a read-only viewer window for one catalog pattern.
+  '/catalog/preview': async body => {
+    if (!showCatalogPreview) {
+      throw new Error('The preview window is not available.');
+    }
+
+    await showCatalogPreview(body.id);
+    return { ok: true };
+  },
 
   // Start a new diagram from a catalog pattern: writes a unique .bpmn into
   // the repo and hands back its path and the refreshed tree so the panel can
@@ -890,5 +907,5 @@ function stop() {
 
 module.exports = {
   start, stop, setComparisonHandler, setReviewHandler, setAiReviewHandler,
-  setUrlOpener, setFolderPicker, PORT, HOST, TOKEN
+  setCatalogPreviewHandler, setUrlOpener, setFolderPicker, PORT, HOST, TOKEN
 };

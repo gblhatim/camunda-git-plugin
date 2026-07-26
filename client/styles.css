@@ -1501,6 +1501,13 @@ body.dark .cgp-panel,
 .cgp-cat__eltype { color: var(--cgp-muted); }
 .cgp-cat__elname { color: var(--cgp-fg); }
 
+.cgp-cat__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
 /* ---------------------------------------------------------------- split */
 
 /* The bottom panel is wide and short, unlike VS Code's tall sidebar, so the
