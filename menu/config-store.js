@@ -41,7 +41,8 @@ const SCHEMA_VERSION = 2;
 // about the person sitting at the machine, not about the project. An
 // analyst opening a developer's repo must not inherit their console.
 const GLOBAL_KEYS = [
-  'repoPath', 'githubToken', 'gitlabToken', 'vocabulary', 'developerMode'
+  'repoPath', 'githubToken', 'gitlabToken', 'vocabulary', 'developerMode',
+  'openRouterKey', 'openRouterModel'
 ];
 
 // Keys that are per-project but still personal - how often *I* want to pull.
