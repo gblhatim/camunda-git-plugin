@@ -41,7 +41,8 @@ import {
   Settings,
   ChangesPane,
   WorkHero,
-  MergeRequests
+  MergeRequests,
+  SearchDiagrams
 } from './components.js';
 
 import { History } from './history.js';
@@ -57,6 +58,7 @@ const SETTINGS_ID = 'git-settings';
 const HISTORY_ID = 'git-history';
 const RELEASES_ID = 'git-releases';
 const MERGE_REQUESTS_ID = 'git-merge-requests';
+const SEARCH_ID = 'git-search';
 const POLL_MS = 5000;
 
 // ---------------------------------------------------------------- bridge
@@ -860,6 +862,13 @@ function GitPlugin(props) {
     // resolver. On success the working tree is mid-merge, so the resolver
     // lives in Source Control - take the user there rather than leaving
     // them on the list wondering where the diagrams went.
+    // Semantic search across the whole corpus. Its own path rather than
+    // `act`, so typing does not raise the busy bar or a success notice; the
+    // Search component shows its own progress.
+    search: query =>
+      (bridge ? apiPost(bridge, '/search', { query })
+        : Promise.resolve({ groups: [], totalHits: 0, filesSearched: 0 })),
+
     refreshMergeRequests: () => loadMergeRequests(),
     // Opens the visual review window (all changed files, before/after,
     // synced zoom) in the main process.
@@ -1373,6 +1382,19 @@ function GitPlugin(props) {
           h(Releases, { release, changes: releaseChanges, actions, busy })
         )
       )
+    ),
+
+    // ---- search ----
+    //
+    // A find-across-everything tab: the point of the whole engine turned on
+    // the corpus rather than on a diff. Manages its own query and results.
+    h(Fill, {
+      slot: 'bottom-panel', id: SEARCH_ID, label: 'Search', layout, priority: 3
+    },
+      h(SearchDiagrams, {
+        search: actions.search,
+        onOpen: relPath => openDiagram({ path: relPath })
+      })
     ),
 
     // ---- merge requests ----

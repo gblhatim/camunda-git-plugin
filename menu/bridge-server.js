@@ -43,6 +43,7 @@ const historyService = require('./history-service');
 const nextAction = require('./next-action');
 const releaseService = require('./release-service');
 const mergeRequestService = require('./merge-request-service');
+const searchService = require('./search-service');
 
 // Set by menu.js, which owns the Electron windows. Kept as an injected
 // callback so this module stays testable outside Electron.
@@ -345,6 +346,13 @@ const postRoutes = {
   // in the panel. Returns the refreshed conflict shape so the panel can
   // switch straight into the resolver, exactly like /pull does when it
   // conflicts.
+  // Semantic search across every diagram. Read-only, but a POST because it
+  // takes a free-text query (GET handlers here do not receive the query
+  // string) and can walk the whole corpus.
+  '/search': async body => searchService.search(body.query || '', {
+    limit: Number(body.limit) || 300
+  }),
+
   // Open a host link (a merge request page) in the real browser. Restricted
   // to http(s) so the panel cannot be talked into opening a file: or other
   // scheme.

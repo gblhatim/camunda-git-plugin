@@ -12,7 +12,7 @@ import React from 'camunda-modeler-plugin-helpers/vendor/react.js';
 
 import { Icon } from './icons.js';
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 const h = React.createElement;
 
@@ -1659,6 +1659,128 @@ export function Releases({ release, changes, actions, busy }) {
           t.date && h('span', { className: 'cgp-tagchip__date' }, timeAgo(t.date))
         ))
       )
+    )
+  );
+}
+
+// -------------------------------------------------------------- search
+
+const TYPE_LABEL = t => String(t || '')
+  .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+  .replace(/^./, c => c.toUpperCase());
+
+/**
+ * Search across every diagram - by name, type, and the camunda:* config a
+ * raw grep never sees. Its own small state: the query, the debounce, and the
+ * last result, because a search box that lifts every keystroke into the app
+ * is a search box that stutters.
+ */
+export function SearchDiagrams({ search, onOpen }) {
+  const [ query, setQuery ] = useState('');
+  const [ result, setResult ] = useState(null);
+  const [ busy, setBusy ] = useState(false);
+
+  const timer = useRef(null);
+  const reqId = useRef(0);
+
+  useEffect(() => {
+    const q = query.trim();
+
+    if (timer.current) clearTimeout(timer.current);
+
+    if (q.length < 2) {
+      setResult(null);
+      setBusy(false);
+      return undefined;
+    }
+
+    setBusy(true);
+    const mine = ++reqId.current;
+
+    timer.current = setTimeout(async () => {
+      try {
+        const res = await search(q);
+        // Ignore a slow response overtaken by a newer keystroke.
+        if (mine === reqId.current) setResult(res);
+      } catch (err) {
+        if (mine === reqId.current) setResult({ error: err.message, groups: [] });
+      } finally {
+        if (mine === reqId.current) setBusy(false);
+      }
+    }, 250);
+
+    return () => { if (timer.current) clearTimeout(timer.current); };
+  }, [ query, search ]);
+
+  const groups = (result && result.groups) || [];
+
+  return h('div', { className: 'cgp-panel' },
+    h('div', { className: 'cgp-search__box' },
+      h('input', {
+        className: 'cgp-input cgp-search__input',
+        placeholder: 'Search every diagram - a name, or assignee:jdoe, calls:Invoice, type:userTask, timer',
+        value: query,
+        autoFocus: true,
+        onChange: e => setQuery(e.target.value)
+      }),
+      query && h('button', {
+        className: 'cgp-search__clear', title: 'Clear',
+        onClick: () => setQuery('')
+      }, '×')
+    ),
+
+    h('div', { className: 'cgp-search__hint' },
+      busy ? 'Searching…'
+        : result && !result.error
+          ? `${result.totalHits} match${result.totalHits === 1 ? '' : 'es'} in ` +
+            `${groups.length} diagram${groups.length === 1 ? '' : 's'}` +
+            ` · searched ${result.filesSearched}` +
+            (result.truncated ? ' · showing the first results, narrow the search' : '')
+          : query.trim().length < 2
+            ? 'Type at least two characters. Filters: assignee: group: calls: delegate: form: timer type:'
+            : ''
+    ),
+
+    result && result.error
+      ? h('p', { className: 'cgp-empty' }, result.error)
+      : query.trim().length >= 2 && !busy && !groups.length
+        ? h('p', { className: 'cgp-empty' }, `Nothing matches “${query.trim()}”.`)
+        : null,
+
+    h('ul', { className: 'cgp-search__results' },
+      groups.map(group => h('li', { key: group.path, className: 'cgp-search__group' },
+        h('div', {
+          className: 'cgp-search__file',
+          title: `Open ${group.path}`,
+          onClick: () => onOpen(group.path)
+        },
+          h('span', { className: 'cgp-search__filename' }, prettyName(group.name)),
+          h('span', { className: 'cgp-search__count' },
+            group.matchedName
+              ? 'name matches'
+              : `${group.hitCount} match${group.hitCount === 1 ? '' : 'es'}`)
+        ),
+
+        group.hits.length ? h('ul', { className: 'cgp-search__hits' },
+          group.hits.map((hit, i) => h('li', {
+            key: `${hit.id}-${i}`,
+            className: 'cgp-search__hit',
+            title: `Open ${group.name}`,
+            onClick: () => onOpen(group.path)
+          },
+            h('span', { className: 'cgp-search__el' },
+              h('span', { className: 'cgp-search__elname' }, hit.name || hit.id),
+              h('span', { className: 'cgp-search__eltype' }, TYPE_LABEL(hit.type))
+            ),
+            hit.matches.length ? h('div', { className: 'cgp-search__props' },
+              hit.matches.map((m, j) => h('span', { key: j, className: 'cgp-search__prop' },
+                h('span', { className: 'cgp-search__proplabel' }, `${m.label}: `),
+                h('span', { className: 'cgp-search__propval' }, m.value)
+              ))
+            ) : null
+          ))
+        ) : null
+      ))
     )
   );
 }

@@ -1320,6 +1320,89 @@ body.dark .cgp-panel,
   background: color-mix(in srgb, var(--cgp-added) 14%, transparent);
 }
 
+/* ---------------------------------------------------------------- search */
+
+.cgp-search__box { position: relative; margin-bottom: 8px; }
+
+.cgp-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 28px 7px 10px;
+  border: 1px solid var(--cgp-line);
+  border-radius: 6px;
+  background: var(--cgp-panel-bg, transparent);
+  color: var(--cgp-fg);
+}
+
+.cgp-input:focus {
+  outline: none;
+  border-color: var(--cgp-info);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cgp-info) 20%, transparent);
+}
+
+.cgp-search__clear {
+  position: absolute;
+  right: 6px; top: 50%; transform: translateY(-50%);
+  border: 0; background: transparent; cursor: pointer;
+  color: var(--cgp-faint); font-size: 16px; line-height: 1; padding: 2px 5px;
+}
+.cgp-search__clear:hover { color: var(--cgp-fg); }
+
+.cgp-search__hint {
+  font-size: 11px;
+  color: var(--cgp-faint);
+  margin-bottom: 8px;
+  min-height: 14px;
+}
+
+.cgp-search__results { list-style: none; margin: 0; padding: 0; }
+
+.cgp-search__group { margin-bottom: 10px; }
+
+.cgp-search__file {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 5px 6px; margin: 0 -6px;
+  border-radius: 4px; cursor: pointer;
+}
+.cgp-search__file:hover { background: var(--cgp-raised); }
+
+.cgp-search__filename { font-size: 12.5px; font-weight: 600; }
+.cgp-search__count { font-size: 10.5px; color: var(--cgp-faint); }
+
+.cgp-search__hits {
+  list-style: none; margin: 2px 0 0; padding: 0 0 0 10px;
+  border-left: 1px solid var(--cgp-line);
+}
+
+.cgp-search__hit {
+  padding: 5px 8px; border-radius: 4px; cursor: pointer;
+}
+.cgp-search__hit:hover { background: var(--cgp-raised); }
+
+.cgp-search__el { display: flex; align-items: baseline; gap: 7px; }
+.cgp-search__elname { font-size: 12px; }
+.cgp-search__eltype {
+  font-size: 10px; color: var(--cgp-muted);
+  padding: 0 5px; border-radius: 8px; border: 1px solid var(--cgp-line);
+}
+
+.cgp-search__props {
+  display: flex; flex-wrap: wrap; gap: 4px 10px;
+  margin: 3px 0 0;
+}
+.cgp-search__prop { font-size: 11px; }
+.cgp-search__proplabel { color: var(--cgp-faint); }
+.cgp-search__propval {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--cgp-info);
+  background: color-mix(in srgb, var(--cgp-info) 10%, transparent);
+  padding: 0 4px; border-radius: 3px;
+  word-break: break-all;
+}
+
 /* ---------------------------------------------------------------- split */
 
 /* The bottom panel is wide and short, unlike VS Code's tall sidebar, so the
