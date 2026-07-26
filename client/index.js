@@ -43,7 +43,8 @@ import {
   WorkHero,
   MergeRequests,
   SearchDiagrams,
-  AiEdit
+  AiEdit,
+  Catalog
 } from './components.js';
 
 import { History } from './history.js';
@@ -61,6 +62,7 @@ const RELEASES_ID = 'git-releases';
 const MERGE_REQUESTS_ID = 'git-merge-requests';
 const SEARCH_ID = 'git-search';
 const AI_EDIT_ID = 'git-ai-edit';
+const CATALOG_ID = 'git-catalog';
 
 /**
  * Flatten the diagram tree to the .bpmn files an AI edit can target.
@@ -277,6 +279,7 @@ const BUSY_LABELS = {
   },
   '/ai/edit/apply': { label: 'Applying the AI edit' },
   '/ai/edit/review': { label: 'Opening the before/after' },
+  '/catalog/new': { label: 'Creating the new diagram' },
   '/conflict/undo': { label: 'Putting that decision back' },
   '/conflict/compare': { label: 'Opening the two versions' },
   '/merge/complete': { label: 'Finishing up' },
@@ -376,6 +379,7 @@ function GitPlugin(props) {
   const [ release, setRelease ] = useState(null);
   const [ releaseChanges, setReleaseChanges ] = useState(null);
   const [ mergeRequests, setMergeRequests ] = useState(null);
+  const [ catalog, setCatalog ] = useState(null);
 
   // Which section the user opened, overriding whatever the lead suggests.
   // Null means "follow the lead" - so the panel reorganises itself as the
@@ -549,6 +553,21 @@ function GitPlugin(props) {
     }
   }, [ bridge ]);
 
+  /**
+   * The shipped BPMN patterns. Static, so it needs no repository - loaded
+   * once and on tab activation.
+   */
+  const loadCatalog = useCallback(async b => {
+    const target = b || bridge;
+    if (!target) return;
+    try {
+      setCatalog(await apiGet(target, '/catalog'));
+    } catch (err) {
+      console.error('[camunda-git-plugin] catalog fetch failed:', err);
+      setCatalog({ error: err.message, entries: [] });
+    }
+  }, [ bridge ]);
+
   const loadSettings = useCallback(async b => {
     const target = b || bridge;
     if (!target) return;
@@ -636,9 +655,10 @@ function GitPlugin(props) {
     // opened means the tab never appears to be opened in the first place.
     loadRelease(target);
     loadMergeRequests(target);
+    loadCatalog(target);
   }, [
     bridge, loadTree, loadHistory, loadSavePoints, loadWorkstreams,
-    loadActivity, loadContext, loadNext, loadRelease, loadMergeRequests
+    loadActivity, loadContext, loadNext, loadRelease, loadMergeRequests, loadCatalog
   ]);
 
   useEffect(() => {
@@ -738,6 +758,7 @@ function GitPlugin(props) {
       [HISTORY_ID]: () => loadHistory(bridge),
       [RELEASES_ID]: () => { refresh(bridge); loadRelease(bridge); },
       [MERGE_REQUESTS_ID]: () => { refresh(bridge); loadMergeRequests(bridge); },
+      [CATALOG_ID]: () => loadCatalog(bridge),
       [ACTIVITY_ID]: () => loadActivity(bridge),
       [SETTINGS_ID]: () => { loadSettings(bridge); loadContext(bridge); }
     }[activeTab];
@@ -890,6 +911,12 @@ function GitPlugin(props) {
     // resolver. On success the working tree is mid-merge, so the resolver
     // lives in Source Control - take the user there rather than leaving
     // them on the list wondering where the diagrams went.
+    // --- catalog -------------------------------------------------------
+    // Create returns the new file's path; the component opens it via onOpen.
+    catalogNew: (id, name) =>
+      act('/catalog/new', { id, name }, 'New diagram created from the catalog.')
+        .then(res => { loadTree(); return res; }),
+
     // --- AI edits ------------------------------------------------------
     aiPreview: (path, instruction) => act('/ai/edit/preview', { path, instruction }),
     aiApply: path =>
@@ -1434,6 +1461,24 @@ function GitPlugin(props) {
         search: actions.search,
         onOpen: relPath => openDiagram({ path: relPath })
       })
+    ),
+
+    // ---- catalog ----
+    h(Fill, {
+      slot: 'bottom-panel', id: CATALOG_ID, label: 'Catalog', layout, priority: 1
+    },
+      h('div', { className: 'cgp-panel' },
+        h(BusyBar, { pending }),
+        h('div', { className: busy ? 'cgp-busy' : '' },
+          h(Notice, { notice, busy, onFix: actions.applyFix }),
+          h(Catalog, {
+            catalog,
+            actions,
+            busy,
+            onOpen: relPath => openDiagram({ path: relPath })
+          })
+        )
+      )
     ),
 
     // ---- AI edit ----

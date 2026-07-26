@@ -1953,6 +1953,100 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
   );
 }
 
+// -------------------------------------------------------------- catalog
+
+/**
+ * The shipped BPMN patterns. Each card is copy-pasteable (the raw XML) or a
+ * one-click new diagram in the repo. The element summary comes parsed from
+ * the main process, so it always matches the file.
+ */
+export function Catalog({ catalog, actions, busy, onOpen }) {
+  const [ copiedId, setCopiedId ] = useState(null);
+  const [ workingId, setWorkingId ] = useState(null);
+
+  if (!catalog) {
+    return h('div', { className: 'cgp-panel' },
+      h('p', { className: 'cgp-empty' }, 'Loading the catalog...'));
+  }
+
+  if (catalog.error) {
+    return h('div', { className: 'cgp-panel' },
+      h('p', { className: 'cgp-empty' }, catalog.error));
+  }
+
+  const entries = catalog.entries || [];
+
+  if (!entries.length) {
+    return h('div', { className: 'cgp-panel' },
+      h('p', { className: 'cgp-empty' }, 'The catalog is empty.'));
+  }
+
+  const copy = async entry => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(entry.xml);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = entry.xml;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      setCopiedId(entry.id);
+      setTimeout(() => setCopiedId(c => (c === entry.id ? null : c)), 1500);
+    } catch (err) {
+      // Clipboard blocked; leave the button as-is rather than lying.
+    }
+  };
+
+  const create = async entry => {
+    setWorkingId(entry.id);
+    const res = await actions.catalogNew(entry.id, entry.title);
+    setWorkingId(null);
+    if (res && res.path) onOpen(res.path);
+  };
+
+  return h('div', { className: 'cgp-panel' },
+    h('p', { className: 'cgp-eyebrow' },
+      `${entries.length} ready-made pattern${entries.length === 1 ? '' : 's'} - copy the XML or start a new diagram`),
+
+    h('div', { className: 'cgp-cat__grid' },
+      entries.map(entry => h('div', { key: entry.id, className: 'cgp-cat__card' },
+        h('div', { className: 'cgp-cat__head' },
+          h('span', { className: 'cgp-cat__title' }, entry.title),
+          entry.category && h('span', { className: 'cgp-cat__cat' }, entry.category)
+        ),
+
+        h('p', { className: 'cgp-cat__desc' }, entry.description),
+
+        entry.elements && entry.elements.length
+          ? h('div', { className: 'cgp-cat__els' },
+            entry.elements.slice(0, 8).map((el, i) => h('span', { key: i, className: 'cgp-cat__el' },
+              h('span', { className: 'cgp-cat__eltype' }, TYPE_LABEL(el.type)),
+              el.name ? h('span', { className: 'cgp-cat__elname' }, ` “${el.name}”`) : null
+            )))
+          : null,
+
+        h('div', { className: 'cgp-field', style: { marginTop: '10px' } },
+          h('button', {
+            className: 'btn cgp-btn cgp-btn--primary',
+            disabled: busy || workingId === entry.id,
+            title: 'Add this as a new .bpmn in your project and open it',
+            onClick: () => create(entry)
+          }, workingId === entry.id ? 'Creating…' : 'New diagram'),
+          h('button', {
+            className: 'btn cgp-btn',
+            disabled: busy,
+            title: 'Copy the BPMN XML to the clipboard',
+            onClick: () => copy(entry)
+          }, copiedId === entry.id ? 'Copied!' : 'Copy XML')
+        )
+      ))
+    )
+  );
+}
+
 // -------------------------------------------------------- merge requests
 
 /**

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_parallel" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_parallel" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_1" name="Submitted">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:parallelGateway id="Split_1" name="Review in parallel">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_Legal</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Finance</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:userTask id="Task_Legal" name="Legal review">
+      <bpmn:incoming>Flow_Legal</bpmn:incoming>
+      <bpmn:outgoing>Flow_LegalDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_Finance" name="Finance review">
+      <bpmn:incoming>Flow_Finance</bpmn:incoming>
+      <bpmn:outgoing>Flow_FinanceDone</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:parallelGateway id="Join_1" name="Both done">
+      <bpmn:incoming>Flow_LegalDone</bpmn:incoming>
+      <bpmn:incoming>Flow_FinanceDone</bpmn:incoming>
+      <bpmn:outgoing>Flow_End</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="End_1" name="Complete">
+      <bpmn:incoming>Flow_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Split_1" />
+    <bpmn:sequenceFlow id="Flow_Legal" sourceRef="Split_1" targetRef="Task_Legal" />
+    <bpmn:sequenceFlow id="Flow_Finance" sourceRef="Split_1" targetRef="Task_Finance" />
+    <bpmn:sequenceFlow id="Flow_LegalDone" sourceRef="Task_Legal" targetRef="Join_1" />
+    <bpmn:sequenceFlow id="Flow_FinanceDone" sourceRef="Task_Finance" targetRef="Join_1" />
+    <bpmn:sequenceFlow id="Flow_End" sourceRef="Join_1" targetRef="End_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_parallel">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="156" y="140" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Split_1_di" bpmnElement="Split_1">
+        <dc:Bounds x="240" y="133" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Legal_di" bpmnElement="Task_Legal">
+        <dc:Bounds x="350" y="60" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Finance_di" bpmnElement="Task_Finance">
+        <dc:Bounds x="350" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Join_1_di" bpmnElement="Join_1">
+        <dc:Bounds x="520" y="133" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_1_di" bpmnElement="End_1">
+        <dc:Bounds x="620" y="140" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="192" y="158" />
+        <di:waypoint x="240" y="158" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Legal_di" bpmnElement="Flow_Legal">
+        <di:waypoint x="265" y="133" />
+        <di:waypoint x="265" y="100" />
+        <di:waypoint x="350" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Finance_di" bpmnElement="Flow_Finance">
+        <di:waypoint x="265" y="183" />
+        <di:waypoint x="265" y="218" />
+        <di:waypoint x="350" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_LegalDone_di" bpmnElement="Flow_LegalDone">
+        <di:waypoint x="450" y="100" />
+        <di:waypoint x="545" y="100" />
+        <di:waypoint x="545" y="133" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_FinanceDone_di" bpmnElement="Flow_FinanceDone">
+        <di:waypoint x="450" y="218" />
+        <di:waypoint x="545" y="218" />
+        <di:waypoint x="545" y="183" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_End_di" bpmnElement="Flow_End">
+        <di:waypoint x="570" y="158" />
+        <di:waypoint x="620" y="158" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

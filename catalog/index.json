@@ -1,0 +1,30 @@
+[
+  {
+    "id": "linear",
+    "title": "Linear process",
+    "category": "Skeleton",
+    "description": "A blank three-step flow to start from: start, two tasks, end.",
+    "file": "linear.bpmn"
+  },
+  {
+    "id": "approval",
+    "title": "Approval with decision",
+    "category": "Human workflow",
+    "description": "A review task feeding an approve / reject gateway to two outcomes.",
+    "file": "approval.bpmn"
+  },
+  {
+    "id": "payment-retry",
+    "title": "Payment with retry",
+    "category": "Automation",
+    "description": "A service task that loops back on failure until the payment succeeds.",
+    "file": "payment-retry.bpmn"
+  },
+  {
+    "id": "parallel-review",
+    "title": "Parallel review",
+    "category": "Human workflow",
+    "description": "Split into two reviews that run at once, then join before continuing.",
+    "file": "parallel-review.bpmn"
+  }
+]

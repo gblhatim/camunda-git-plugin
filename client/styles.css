@@ -1433,6 +1433,74 @@ body.dark .cgp-panel,
   text-decoration: line-through;
 }
 
+/* --------------------------------------------------------------- catalog */
+
+.cgp-cat__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.cgp-cat__card {
+  border: 1px solid var(--cgp-line);
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: var(--cgp-panel-bg, transparent);
+  display: flex;
+  flex-direction: column;
+}
+
+.cgp-cat__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cgp-cat__title { font-size: 13px; font-weight: 600; }
+
+.cgp-cat__cat {
+  flex: 0 0 auto;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--cgp-info);
+  background: color-mix(in srgb, var(--cgp-info) 12%, transparent);
+  padding: 1px 6px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.cgp-cat__desc {
+  margin: 6px 0 8px;
+  font-size: 11.5px;
+  color: var(--cgp-muted);
+  line-height: 1.4;
+}
+
+.cgp-cat__els {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.cgp-cat__el {
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--cgp-line);
+  background: var(--cgp-raised);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cgp-cat__eltype { color: var(--cgp-muted); }
+.cgp-cat__elname { color: var(--cgp-fg); }
+
 /* ---------------------------------------------------------------- split */
 
 /* The bottom panel is wide and short, unlike VS Code's tall sidebar, so the

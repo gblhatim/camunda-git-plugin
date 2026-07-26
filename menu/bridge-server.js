@@ -45,6 +45,7 @@ const releaseService = require('./release-service');
 const mergeRequestService = require('./merge-request-service');
 const searchService = require('./search-service');
 const aiService = require('./ai-service');
+const catalogService = require('./catalog-service');
 
 // Set by menu.js, which owns the Electron windows. Kept as an injected
 // callback so this module stays testable outside Electron.
@@ -226,7 +227,11 @@ const getRoutes = {
 
   // Deliberately does not need a working repository - it is what answers
   // "there isn't one yet".
-  '/setup': async () => setupService.inspect()
+  '/setup': async () => setupService.inspect(),
+
+  // The shipped BPMN patterns. Read from the plugin folder, so it needs no
+  // repository - the catalog is browsable before setup.
+  '/catalog': async () => catalogService.list()
 };
 
 /**
@@ -377,6 +382,18 @@ const postRoutes = {
   // The models this key can use, so the UI offers real ids instead of a
   // guessed default that 404s.
   '/ai/models': async () => aiService.listModels(),
+
+  // Start a new diagram from a catalog pattern: writes a unique .bpmn into
+  // the repo and hands back its path and the refreshed tree so the panel can
+  // open it.
+  '/catalog/new': async body => {
+    const created = await catalogService.createDiagram({ id: body.id, name: body.name });
+
+    return Object.assign(created, {
+      status: await readStatus(),
+      tree: await fileService.getTree({ diagramsOnly: true })
+    });
+  },
 
   '/ai/edit/review': async body => {
     if (!showAiReview) {
