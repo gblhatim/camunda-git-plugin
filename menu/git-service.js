@@ -315,5 +315,6 @@ module.exports = {
   pull,
   getRemoteUrl,
   toRepoRelativePath,
-  showFileAtHead
+  showFileAtHead,
+  assertSafeRelativePath
 };
