@@ -374,6 +374,10 @@ const postRoutes = {
 
   '/ai/edit/discard': async body => aiService.discard(body.path),
 
+  // The models this key can use, so the UI offers real ids instead of a
+  // guessed default that 404s.
+  '/ai/models': async () => aiService.listModels(),
+
   '/ai/edit/review': async body => {
     if (!showAiReview) {
       throw new Error('The review window is not available.');

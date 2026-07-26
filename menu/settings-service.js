@@ -22,7 +22,7 @@ const DEFAULTS = {
 
   // The OpenRouter model used for AI edits. A safe, widely-available
   // default; changeable in Settings, since OpenRouter's ids move over time.
-  openRouterModel: 'anthropic/claude-3.5-sonnet',
+  openRouterModel: 'anthropic/claude-sonnet-4.5',
 
   // Off by default. It turns the Activity tab into a git console, which is
   // wanted by developers and is a way for an analyst to destroy a week of

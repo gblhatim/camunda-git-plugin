@@ -1823,8 +1823,23 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
   const [ path, setPath ] = useState('');
   const [ instruction, setInstruction ] = useState('');
   const [ preview, setPreview ] = useState(null);
+  const [ models, setModels ] = useState(null);
+
+  // Load the real model catalogue once a key is present, so the picker
+  // offers ids that actually resolve rather than a guessed default.
+  useEffect(() => {
+    if (!hasKey) return undefined;
+
+    let alive = true;
+    actions.aiModels()
+      .then(res => { if (alive && res && res.models) setModels(res.models); })
+      .catch(() => { if (alive) setModels([]); });
+
+    return () => { alive = false; };
+  }, [ hasKey, actions ]);
 
   const target = path || (list[0] && list[0].path) || '';
+  const currentModel = (settings && settings.openRouterModel) || '';
 
   if (!hasKey) {
     return h('div', { className: 'cgp-panel' },
@@ -1863,6 +1878,28 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
             className: 'cgp-input', value: target, disabled: busy,
             onChange: e => { setPath(e.target.value); setPreview(null); }
           }, list.map(d => h('option', { key: d.path, value: d.path }, d.title)))
+        ),
+
+        h('div', { className: 'cgp-field', style: { marginBottom: '8px' } },
+          h('span', { className: 'cgp-row__meta', style: { minWidth: '64px' } }, 'Model'),
+          models && models.length
+            ? h('select', {
+              className: 'cgp-input', value: currentModel, disabled: busy,
+              onChange: e => actions.setModel(e.target.value)
+            },
+              // Keep the current value selectable even if the catalogue does
+              // not list it, so the box never shows blank.
+              (models.some(m => m.id === currentModel)
+                ? models
+                : [ { id: currentModel, name: `${currentModel} (current)` } ].concat(models)
+              ).map(m => h('option', { key: m.id, value: m.id }, m.id))
+            )
+            : h('input', {
+              className: 'cgp-input', type: 'text', defaultValue: currentModel, disabled: busy,
+              placeholder: 'anthropic/claude-sonnet-4.5',
+              title: models === null ? 'Loading the model list…' : 'Could not load the model list - type an id, saved when you click away',
+              onBlur: e => { if (e.target.value !== currentModel) actions.setModel(e.target.value); }
+            })
         ),
 
         h('textarea', {
@@ -2861,7 +2898,7 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, 'Model'),
         h('input', {
           type: 'text', className: 'cgp-input',
-          placeholder: 'anthropic/claude-3.5-sonnet',
+          placeholder: 'anthropic/claude-sonnet-4.5',
           value: value.openRouterModel || '', disabled: busy,
           onChange: e => change({ openRouterModel: e.target.value })
         })

@@ -897,6 +897,9 @@ function GitPlugin(props) {
         .then(res => { loadTree(); return res; }),
     aiReview: path => act('/ai/edit/review', { path }),
     aiDiscard: path => (bridge ? apiPost(bridge, '/ai/edit/discard', { path }) : Promise.resolve()),
+    aiModels: () => (bridge ? apiPost(bridge, '/ai/models', {}) : Promise.resolve({ models: [] })),
+    setModel: model =>
+      act('/settings', { openRouterModel: model }, 'Model saved.').then(() => loadSettings()),
 
     // Semantic search across the whole corpus. Its own path rather than
     // `act`, so typing does not raise the busy bar or a success notice; the

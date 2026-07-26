@@ -24,7 +24,7 @@ const gitService = require('./git-service');
 const diagramDiffService = require('./diagram-diff-service');
 
 const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'anthropic/claude-3.5-sonnet';
+const DEFAULT_MODEL = 'anthropic/claude-sonnet-4.5';
 
 const SYSTEM_PROMPT = [
   'You are an expert editor of Camunda BPMN 2.0 XML.',
@@ -113,6 +113,12 @@ async function callOpenRouter(instruction, xml) {
     if (res.status === 401) throw new Error('OpenRouter rejected the API key. Check it in Git Settings.');
     if (res.status === 402) throw new Error('OpenRouter reports no credit on this key.');
     if (res.status === 429) throw new Error('OpenRouter is rate-limiting; wait a moment and try again.');
+    if (res.status === 404) {
+      throw new Error(
+        `The model "${model()}" is not available on OpenRouter. Pick another ` +
+        'from the Model list in the AI Edit tab (or Git Settings).'
+      );
+    }
 
     throw new Error(`OpenRouter error ${res.status}: ${body.slice(0, 300)}`);
   }
@@ -205,6 +211,42 @@ async function editPreview({ path: rel, instruction }) {
 }
 
 /**
+ * The models this key can actually use, so the UI can offer real ids rather
+ * than a guessed default that 404s. Anthropic first (the plugin's default
+ * house), then the rest alphabetically.
+ */
+async function listModels() {
+  const fetch = require('node-fetch');
+
+  let res;
+  try {
+    res = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: { 'Authorization': `Bearer ${apiKey()}` }
+    });
+  } catch (err) {
+    throw new Error(`Could not reach OpenRouter: ${err.message}`);
+  }
+
+  if (!res.ok) {
+    throw new Error(`Could not load the model list (OpenRouter ${res.status}).`);
+  }
+
+  const data = await res.json();
+
+  const models = (data.data || [])
+    .map(m => ({ id: m.id, name: m.name || m.id }))
+    .filter(m => m.id)
+    .sort((a, b) => {
+      const aAnthropic = a.id.startsWith('anthropic/');
+      const bAnthropic = b.id.startsWith('anthropic/');
+      if (aAnthropic !== bAnthropic) return aAnthropic ? -1 : 1;
+      return a.id.localeCompare(b.id);
+    });
+
+  return { models, current: model() };
+}
+
+/**
  * The held proposal for a file, for the before/after review window.
  */
 function getProposal(rel) {
@@ -241,6 +283,7 @@ module.exports = {
   editPreview,
   editApply,
   getProposal,
+  listModels,
   discard,
   extractXml
 };
