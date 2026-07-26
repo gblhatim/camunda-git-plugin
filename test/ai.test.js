@@ -11,13 +11,21 @@
 'use strict';
 
 const assert = require('assert');
-const { extractXml } = require('../menu/ai-service');
+const { extractXml, assertOpenable } = require('../menu/ai-service');
+const { parse } = require('../menu/diagram-diff-service');
 
 const results = [];
 function test(name, fn) {
   try { fn(); results.push({ name, ok: true }); }
   catch (err) { results.push({ name, ok: false, err }); }
 }
+async function testAsync(name, fn) {
+  try { await fn(); results.push({ name, ok: true }); }
+  catch (err) { results.push({ name, ok: false, err }); }
+}
+
+const NS = 'xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"';
+const wrap = inner => `<?xml version="1.0"?><bpmn:definitions ${NS} targetNamespace="x"><bpmn:process id="P">${inner}</bpmn:process></bpmn:definitions>`;
 
 const DOC = '<?xml version="1.0"?><bpmn:definitions><bpmn:process id="P"/></bpmn:definitions>';
 
@@ -46,10 +54,33 @@ test('surrounding whitespace is trimmed', () => {
   assert.strictEqual(extractXml('\n\n  ' + DOC + '  \n'), DOC);
 });
 
-const failed = results.filter(r => !r.ok);
-results.forEach(r => {
-  console.log(`${r.ok ? 'ok  ' : 'FAIL'} ${r.name}`);
-  if (!r.ok) console.log(`     ${r.err.message}`);
-});
-console.log(`\n${results.length - failed.length}/${results.length} passed`);
-if (failed.length) process.exit(1);
+async function run() {
+  await testAsync('assertOpenable accepts a fully-connected flow', async () => {
+    const root = await parse(wrap(
+      '<bpmn:task id="A"/><bpmn:task id="B"/>' +
+      '<bpmn:sequenceFlow id="F" sourceRef="A" targetRef="B"/>'));
+    assert.doesNotThrow(() => assertOpenable(root));
+  });
+
+  await testAsync('assertOpenable rejects a flow with no target (the Modeler crash)', async () => {
+    const root = await parse(wrap(
+      '<bpmn:task id="A"/><bpmn:sequenceFlow id="F" sourceRef="A"/>'));
+    assert.throws(() => assertOpenable(root), /no target/);
+  });
+
+  await testAsync('assertOpenable rejects a flow with no source', async () => {
+    const root = await parse(wrap(
+      '<bpmn:task id="B"/><bpmn:sequenceFlow id="F" targetRef="B"/>'));
+    assert.throws(() => assertOpenable(root), /no source/);
+  });
+
+  const failed = results.filter(r => !r.ok);
+  results.forEach(r => {
+    console.log(`${r.ok ? 'ok  ' : 'FAIL'} ${r.name}`);
+    if (!r.ok) console.log(`     ${r.err.message}`);
+  });
+  console.log(`\n${results.length - failed.length}/${results.length} passed`);
+  if (failed.length) process.exit(1);
+}
+
+run();

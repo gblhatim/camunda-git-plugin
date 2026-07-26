@@ -695,7 +695,7 @@ function GitPlugin(props) {
       await Promise.all([
         loadWorkstreams(b), loadTree(b), loadSettings(b),
         loadActivity(b), loadHistory(b), loadContext(b), loadSavePoints(b),
-        loadNext(b), loadRelease(b), loadMergeRequests(b)
+        loadNext(b), loadRelease(b), loadMergeRequests(b), loadCatalog(b)
       ]);
 
       timer = setInterval(() => refresh(b), POLL_MS);

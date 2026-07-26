@@ -35,6 +35,8 @@ const SYSTEM_PROMPT = [
   '- Keep every existing element id unchanged, unless the instruction requires removing that element.',
   '- Preserve the diagram interchange (bpmndi:/dc:/di:) layout for every element you keep, and add reasonable coordinates for any element you add so it renders on the canvas.',
   '- Make only the change described; leave everything else exactly as it was.',
+  '- Every sequence flow must have both a sourceRef and a targetRef, each pointing at an element that exists; never leave a flow dangling.',
+  '- Give every new element a BPMNShape (or BPMNEdge for a flow) in the diagram, or it will not appear.',
   '- The result must be valid BPMN 2.0 that Camunda Modeler can open.'
 ].join('\n');
 
@@ -140,6 +142,24 @@ function absFor(rel) {
 }
 
 /**
+ * A document can parse and still be un-openable. bpmn-moddle accepts a flow
+ * with a missing end without complaint, but bpmn-js refuses to import it
+ * ("targetRef not specified") - so Modeler shows an error, not a diagram.
+ * A parse that succeeds is not proof of an openable file; this catches the
+ * gap the model most often falls into.
+ */
+function assertOpenable(root) {
+  const byId = diagramDiffService.indexElements(root);
+
+  for (const el of byId.values()) {
+    if (/:(SequenceFlow|MessageFlow)$/.test(String(el.$type || ''))) {
+      if (!el.sourceRef) throw new Error(`flow ${el.id} has no source`);
+      if (!el.targetRef) throw new Error(`flow ${el.id} has no target`);
+    }
+  }
+}
+
+/**
  * Ask the model for an edit and return the change for review. Writes
  * nothing; the proposal is held until `apply` or the next preview.
  */
@@ -177,13 +197,15 @@ async function editPreview({ path: rel, instruction }) {
   const raw = await callOpenRouter(text, before);
   const after = extractXml(raw);
 
-  // The core safety gate: unparseable output never becomes a proposal.
+  // The core safety gate: output that will not parse *or* will not open in
+  // Modeler never becomes a proposal.
   try {
-    await diagramDiffService.parse(after);
+    const afterRoot = await diagramDiffService.parse(after);
+    assertOpenable(afterRoot);
   } catch (err) {
     throw new Error(
-      'The AI returned something that is not valid BPMN, so nothing was changed. ' +
-      'Try rewording the instruction.'
+      `The AI produced a diagram that would not open in Modeler (${err.message}), ` +
+      'so nothing was changed. Try rewording the instruction.'
     );
   }
 
@@ -285,5 +307,6 @@ module.exports = {
   getProposal,
   listModels,
   discard,
-  extractXml
+  extractXml,
+  assertOpenable
 };
