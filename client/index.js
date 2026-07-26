@@ -42,7 +42,8 @@ import {
   ChangesPane,
   WorkHero,
   MergeRequests,
-  SearchDiagrams
+  SearchDiagrams,
+  AiEdit
 } from './components.js';
 
 import { History } from './history.js';
@@ -59,6 +60,27 @@ const HISTORY_ID = 'git-history';
 const RELEASES_ID = 'git-releases';
 const MERGE_REQUESTS_ID = 'git-merge-requests';
 const SEARCH_ID = 'git-search';
+const AI_EDIT_ID = 'git-ai-edit';
+
+/**
+ * Flatten the diagram tree to the .bpmn files an AI edit can target.
+ */
+function flattenDiagrams(treeData) {
+  if (!treeData || !treeData.tree) return [];
+
+  const out = [];
+  const walk = node => {
+    (node.files || []).forEach(f => {
+      if (/\.bpmn$/i.test(f.path)) {
+        out.push({ path: f.path, title: f.title || f.path.split('/').pop() });
+      }
+    });
+    (node.folders || []).forEach(walk);
+  };
+
+  walk(treeData.tree);
+  return out.sort((a, b) => a.path.localeCompare(b.path));
+}
 const POLL_MS = 5000;
 
 // ---------------------------------------------------------------- bridge
@@ -249,6 +271,12 @@ const BUSY_LABELS = {
     label: 'Opening the review',
     slow: 'Still going - this fetches the two branches to compare them.'
   },
+  '/ai/edit/preview': {
+    label: 'Asking the AI for an edit',
+    slow: 'Still thinking - the model is rewriting the diagram.'
+  },
+  '/ai/edit/apply': { label: 'Applying the AI edit' },
+  '/ai/edit/review': { label: 'Opening the before/after' },
   '/conflict/undo': { label: 'Putting that decision back' },
   '/conflict/compare': { label: 'Opening the two versions' },
   '/merge/complete': { label: 'Finishing up' },
@@ -862,6 +890,14 @@ function GitPlugin(props) {
     // resolver. On success the working tree is mid-merge, so the resolver
     // lives in Source Control - take the user there rather than leaving
     // them on the list wondering where the diagrams went.
+    // --- AI edits ------------------------------------------------------
+    aiPreview: (path, instruction) => act('/ai/edit/preview', { path, instruction }),
+    aiApply: path =>
+      act('/ai/edit/apply', { path }, 'Applied - saved as a change in Source Control.')
+        .then(res => { loadTree(); return res; }),
+    aiReview: path => act('/ai/edit/review', { path }),
+    aiDiscard: path => (bridge ? apiPost(bridge, '/ai/edit/discard', { path }) : Promise.resolve()),
+
     // Semantic search across the whole corpus. Its own path rather than
     // `act`, so typing does not raise the busy bar or a success notice; the
     // Search component shows its own progress.
@@ -1395,6 +1431,24 @@ function GitPlugin(props) {
         search: actions.search,
         onOpen: relPath => openDiagram({ path: relPath })
       })
+    ),
+
+    // ---- AI edit ----
+    h(Fill, {
+      slot: 'bottom-panel', id: AI_EDIT_ID, label: 'AI Edit', layout, priority: 2
+    },
+      h('div', { className: 'cgp-panel' },
+        h(BusyBar, { pending }),
+        h('div', { className: busy ? 'cgp-busy' : '' },
+          h(Notice, { notice, busy, onFix: actions.applyFix }),
+          h(AiEdit, {
+            diagrams: flattenDiagrams(tree),
+            settings,
+            actions,
+            busy
+          })
+        )
+      )
     ),
 
     // ---- merge requests ----

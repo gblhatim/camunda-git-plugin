@@ -44,6 +44,7 @@ const nextAction = require('./next-action');
 const releaseService = require('./release-service');
 const mergeRequestService = require('./merge-request-service');
 const searchService = require('./search-service');
+const aiService = require('./ai-service');
 
 // Set by menu.js, which owns the Electron windows. Kept as an injected
 // callback so this module stays testable outside Electron.
@@ -59,6 +60,14 @@ let showReview = null;
 
 function setReviewHandler(fn) {
   showReview = fn;
+}
+
+// Set by menu.js: opens the before/after window for a held AI proposal,
+// reusing the same review window the merge requests use.
+let showAiReview = null;
+
+function setAiReviewHandler(fn) {
+  showAiReview = fn;
 }
 
 // Opens a URL in the user's browser; injected for the same reason.
@@ -346,6 +355,34 @@ const postRoutes = {
   // in the panel. Returns the refreshed conflict shape so the panel can
   // switch straight into the resolver, exactly like /pull does when it
   // conflicts.
+  // --- AI edits (OpenRouter) ------------------------------------------
+  //
+  // Preview asks the model and holds the proposal without writing anything;
+  // apply writes the approved proposal and stages it; review opens the
+  // before/after window. Nothing here ever commits.
+  '/ai/edit/preview': async body =>
+    aiService.editPreview({ path: body.path, instruction: body.instruction }),
+
+  '/ai/edit/apply': async body => {
+    const result = await aiService.editApply({ path: body.path });
+
+    return Object.assign(result, {
+      status: await readStatus(),
+      tree: await fileService.getTree({ diagramsOnly: true })
+    });
+  },
+
+  '/ai/edit/discard': async body => aiService.discard(body.path),
+
+  '/ai/edit/review': async body => {
+    if (!showAiReview) {
+      throw new Error('The review window is not available.');
+    }
+
+    await showAiReview({ path: body.path });
+    return { ok: true };
+  },
+
   // Semantic search across every diagram. Read-only, but a POST because it
   // takes a free-text query (GET handlers here do not receive the query
   // string) and can walk the whole corpus.
@@ -831,6 +868,6 @@ function stop() {
 }
 
 module.exports = {
-  start, stop, setComparisonHandler, setReviewHandler,
+  start, stop, setComparisonHandler, setReviewHandler, setAiReviewHandler,
   setUrlOpener, setFolderPicker, PORT, HOST, TOKEN
 };

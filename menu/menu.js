@@ -15,6 +15,7 @@ const bridgeServer = require('./bridge-server');
 const conflictService = require('./conflict-service');
 const diagramDiffService = require('./diagram-diff-service');
 const mergeRequestService = require('./merge-request-service');
+const aiService = require('./ai-service');
 const autoPull = require('./auto-pull');
 
 // This module is required once, in the main process, when Modeler loads the
@@ -122,6 +123,50 @@ bridgeServer.setReviewHandler(async ({ source, target }) => {
       getReview: async () => overview,
       getFile: async filePath =>
         mergeRequestService.reviewFile({ source, target, path: filePath })
+    }
+  });
+});
+
+/**
+ * Preview a held AI proposal in the same before/after window the merge
+ * requests use - one file, the current diagram versus the AI's version, with
+ * synced viewers and the element-level diff.
+ */
+bridgeServer.setAiReviewHandler(async ({ path: filePath }) => {
+  const proposal = aiService.getProposal(filePath);
+
+  if (!proposal) {
+    throw new Error('There is no AI edit to preview - run one first.');
+  }
+
+  openWindow({
+    kind: 'ai-review',
+    title: `AI edit - ${proposal.name}`,
+    htmlFile: 'mr-review.html',
+    width: 1500,
+    height: 900,
+    handlers: {
+      getReview: async () => ({
+        source: 'current diagram',
+        target: 'AI proposal',
+        base: null,
+        fileCount: 1,
+        diagramCount: 1,
+        files: [ {
+          status: 'M', path: filePath, from: null,
+          name: proposal.name, isDiagram: true
+        } ]
+      }),
+      getFile: async () => ({
+        path: filePath,
+        name: proposal.name,
+        status: 'M',
+        from: null,
+        isDiagram: true,
+        before: proposal.before,
+        after: proposal.after,
+        diff: proposal.diff
+      })
     }
   });
 });

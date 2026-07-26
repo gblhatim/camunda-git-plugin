@@ -1403,6 +1403,36 @@ body.dark .cgp-panel,
   word-break: break-all;
 }
 
+/* --------------------------------------------------------------- ai edit */
+
+.cgp-ai__prompt {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 56px;
+  line-height: 1.4;
+  font-family: inherit;
+}
+
+.cgp-ai__result {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--cgp-line);
+}
+
+.cgp-ai__summary {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cgp-fg);
+}
+
+.cgp-ai__from {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 10.5px;
+  color: var(--cgp-deleted);
+  text-decoration: line-through;
+}
+
 /* ---------------------------------------------------------------- split */
 
 /* The bottom panel is wide and short, unlike VS Code's tall sidebar, so the

@@ -1785,6 +1785,137 @@ export function SearchDiagrams({ search, onOpen }) {
   );
 }
 
+// -------------------------------------------------------------- ai edit
+
+function aiChangeRow(entry, kind) {
+  const tag = kind === 'changed' ? 'edited' : kind === 'added' ? 'added' : 'deleted';
+
+  return h('li', { key: `${kind}-${entry.id}`, className: 'cgp-search__hit' },
+    h('div', { className: 'cgp-search__el' },
+      h('span', { className: `cgp-tag cgp-tag--${tag}` }, kind.toUpperCase()),
+      h('span', { className: 'cgp-search__elname' }, entry.name || entry.id),
+      entry.type && h('span', { className: 'cgp-search__eltype' }, entry.type)
+    ),
+    entry.changes && entry.changes.length
+      ? h('div', { className: 'cgp-search__props' },
+        entry.changes.map((ch, i) => h('span', { key: i, className: 'cgp-search__prop' },
+          h('span', { className: 'cgp-search__proplabel' }, `${ch.label}: `),
+          ch.from !== null && ch.from !== undefined && ch.from !== ''
+            ? h('span', { className: 'cgp-ai__from' }, `${ch.from} → `) : null,
+          h('span', { className: 'cgp-search__propval' },
+            ch.to === null || ch.to === undefined ? '(removed)' : ch.to)
+        )))
+      : null
+  );
+}
+
+/**
+ * AI edits, preview-then-apply. Describe a change; the model rewrites the
+ * diagram; the result is validated as real BPMN, diffed, and only written
+ * when the user accepts - the same contract the routines follow, applied to
+ * something a lot less predictable.
+ */
+export function AiEdit({ diagrams, settings, actions, busy }) {
+  const hasKey = !!(settings && settings.hasOpenRouterKey);
+  const modelName = (settings && settings.openRouterModel) || 'the configured model';
+  const list = diagrams || [];
+
+  const [ path, setPath ] = useState('');
+  const [ instruction, setInstruction ] = useState('');
+  const [ preview, setPreview ] = useState(null);
+
+  const target = path || (list[0] && list[0].path) || '';
+
+  if (!hasKey) {
+    return h('div', { className: 'cgp-panel' },
+      h('div', { className: 'cgp-notice cgp-notice--warn' },
+        h('div', { className: 'cgp-notice__title' }, 'AI edits need an OpenRouter key'),
+        h('div', { className: 'cgp-notice__body' },
+          'Add your OpenRouter API key under Git Settings. Then describe a change ' +
+          'here and it is applied to a diagram - with a before/after preview, and ' +
+          'nothing saved until you accept.')));
+  }
+
+  const runPreview = async () => {
+    setPreview(null);
+    const res = await actions.aiPreview(target, instruction);
+    if (res && res.ok) setPreview(res);
+  };
+
+  const apply = async () => {
+    const res = await actions.aiApply(target);
+    if (res) { setPreview(null); setInstruction(''); }
+  };
+
+  const discard = () => { actions.aiDiscard(target); setPreview(null); };
+
+  const canRun = !busy && !!target && instruction.trim().length > 0;
+  const diff = (preview && preview.diff) || {};
+  const s = diff.summary || {};
+
+  return h('div', { className: 'cgp-panel' },
+    !list.length
+      ? h('p', { className: 'cgp-empty' }, 'No BPMN diagrams in this project yet.')
+      : h('div', null,
+        h('div', { className: 'cgp-field', style: { marginBottom: '8px' } },
+          h('span', { className: 'cgp-row__meta', style: { minWidth: '64px' } }, 'Diagram'),
+          h('select', {
+            className: 'cgp-input', value: target, disabled: busy,
+            onChange: e => { setPath(e.target.value); setPreview(null); }
+          }, list.map(d => h('option', { key: d.path, value: d.path }, d.title)))
+        ),
+
+        h('textarea', {
+          className: 'cgp-input cgp-ai__prompt', rows: 3,
+          placeholder: 'Describe the change - e.g. "add a 2-day timer boundary event on Approve invoice", or "make Charge card asynchronous before"',
+          value: instruction, disabled: busy,
+          onChange: e => setInstruction(e.target.value)
+        }),
+
+        h('div', { className: 'cgp-field', style: { marginTop: '8px' } },
+          h('button', {
+            className: 'btn cgp-btn cgp-btn--primary', disabled: !canRun, onClick: runPreview
+          }, 'Preview edit'),
+          h('span', { className: 'cgp-sub' }, `Sends this diagram to ${modelName}`)
+        ),
+
+        preview && !preview.hasChanges && h('div', {
+          className: 'cgp-notice cgp-notice--warn', style: { marginTop: '10px' }
+        },
+          h('div', { className: 'cgp-notice__title' }, 'No change'),
+          h('div', { className: 'cgp-notice__body' },
+            'The AI did not change anything. Try a more specific instruction.')),
+
+        preview && preview.hasChanges && h('div', { className: 'cgp-ai__result' },
+          h('div', { className: 'cgp-ai__summary' },
+            `${s.added || 0} added · ${s.changed || 0} changed · ${s.removed || 0} removed`),
+
+          h('ul', { className: 'cgp-search__results', style: { marginTop: '4px' } },
+            (diff.changed || []).map(c => aiChangeRow(c, 'changed'))
+              .concat((diff.added || []).map(c => aiChangeRow(c, 'added')))
+              .concat((diff.removed || []).map(c => aiChangeRow(c, 'removed')))
+          ),
+
+          h('div', { className: 'cgp-field', style: { marginTop: '10px' } },
+            h('button', {
+              className: 'btn cgp-btn', disabled: busy, onClick: () => actions.aiReview(target)
+            }, 'See before / after'),
+            h('button', {
+              className: 'btn cgp-btn cgp-btn--primary', disabled: busy, onClick: apply
+            }, 'Apply'),
+            h('button', {
+              className: 'btn cgp-btn', disabled: busy, onClick: discard
+            }, 'Discard')
+          ),
+
+          h('p', { className: 'cgp-sub', style: { marginTop: '6px' } },
+            'Apply saves it as an unstaged change in Source Control - review it there, ' +
+            'or reopen the diagram, before making a save point.')
+        )
+      )
+  );
+}
+
 // -------------------------------------------------------- merge requests
 
 /**
@@ -2546,6 +2677,7 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
   const [ draft, setDraft ] = useState(null);
   const [ githubToken, setGithubToken ] = useState('');
   const [ gitlabToken, setGitlabToken ] = useState('');
+  const [ openRouterKey, setOpenRouterKey ] = useState('');
 
   if (!settings) {
     return h('div', { className: 'cgp-panel' },
@@ -2569,14 +2701,16 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
     // never clear a stored token.
     if (githubToken) payload.githubToken = githubToken;
     if (gitlabToken) payload.gitlabToken = gitlabToken;
+    if (openRouterKey) payload.openRouterKey = openRouterKey;
 
     actions.saveSettings(payload);
     setDraft(null);
     setGithubToken('');
     setGitlabToken('');
+    setOpenRouterKey('');
   };
 
-  const dirty = !!draft || !!githubToken || !!gitlabToken;
+  const dirty = !!draft || !!githubToken || !!gitlabToken || !!openRouterKey;
 
   return h('div', { className: `cgp-panel ${busy ? 'cgp-busy' : ''}` },
 
@@ -2712,13 +2846,41 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         'text in your home folder - treat them as low-value tokens.')
     ),
 
+    h('div', { className: 'cgp-block' },
+      h('p', { className: 'cgp-block__title' }, 'AI edits (OpenRouter)'),
+      h('div', { className: 'cgp-field', style: { marginBottom: '8px' } },
+        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, 'API key'),
+        h('input', {
+          type: 'password', className: 'cgp-input',
+          placeholder: settings.hasOpenRouterKey ? 'saved' : 'not set',
+          value: openRouterKey, disabled: busy,
+          onChange: e => setOpenRouterKey(e.target.value)
+        })
+      ),
+      h('div', { className: 'cgp-field' },
+        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, 'Model'),
+        h('input', {
+          type: 'text', className: 'cgp-input',
+          placeholder: 'anthropic/claude-3.5-sonnet',
+          value: value.openRouterModel || '', disabled: busy,
+          onChange: e => change({ openRouterModel: e.target.value })
+        })
+      ),
+      h('p', { className: 'cgp-sub' },
+        'Used by the AI Edit tab. Your diagram and instruction are sent to ' +
+        'OpenRouter when you preview an edit. The key is stored in plain text ' +
+        'in your home folder, like the tokens above.')
+    ),
+
     h('div', { className: 'cgp-field' },
       h('button', {
         className: 'btn cgp-btn cgp-btn--primary', disabled: busy || !dirty, onClick: save
       }, 'Save settings'),
       dirty && h('button', {
         className: 'btn cgp-btn', disabled: busy,
-        onClick: () => { setDraft(null); setGithubToken(''); setGitlabToken(''); }
+        onClick: () => {
+          setDraft(null); setGithubToken(''); setGitlabToken(''); setOpenRouterKey('');
+        }
       }, 'Discard')
     )
   );

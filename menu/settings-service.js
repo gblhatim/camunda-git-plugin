@@ -20,6 +20,10 @@ const DEFAULTS = {
   gitlabHost: 'gitlab.com',
   mergePolicy: 'review',
 
+  // The OpenRouter model used for AI edits. A safe, widely-available
+  // default; changeable in Settings, since OpenRouter's ids move over time.
+  openRouterModel: 'anthropic/claude-3.5-sonnet',
+
   // Off by default. It turns the Activity tab into a git console, which is
   // wanted by developers and is a way for an analyst to destroy a week of
   // work by pasting something from a search result.
@@ -51,7 +55,11 @@ function read() {
 
     // Presence only - never the value.
     hasGithubToken: !!config.githubToken,
-    hasGitlabToken: !!config.gitlabToken
+    hasGitlabToken: !!config.gitlabToken,
+
+    // The AI edit model is not a secret; the key is (presence only).
+    openRouterModel: config.openRouterModel || DEFAULTS.openRouterModel,
+    hasOpenRouterKey: !!config.openRouterKey
   };
 }
 
@@ -107,6 +115,14 @@ function update(patch = {}) {
   }
   if (typeof patch.gitlabToken === 'string') {
     next.gitlabToken = patch.gitlabToken;
+  }
+
+  // Same write-only rule as the tokens: an empty string clears the key.
+  if (typeof patch.openRouterKey === 'string') {
+    next.openRouterKey = patch.openRouterKey;
+  }
+  if (typeof patch.openRouterModel === 'string') {
+    next.openRouterModel = patch.openRouterModel.trim() || DEFAULTS.openRouterModel;
   }
 
   configStore.update(next);
