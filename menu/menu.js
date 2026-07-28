@@ -27,6 +27,10 @@ bridgeServer.start();
 // so this module injects the two things that need it.
 bridgeServer.setUrlOpener(url => shell.openExternal(url));
 
+// Opens the support .eml draft in the user's mail client. `openPath`
+// resolves to '' on success or an error string, which the route relays.
+bridgeServer.setFileOpener(filePath => shell.openPath(filePath));
+
 bridgeServer.setFolderPicker(async () => {
   const picked = await dialog.showOpenDialog({
     title: 'Select the folder your diagrams live in',

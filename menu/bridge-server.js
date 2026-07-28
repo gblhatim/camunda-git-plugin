@@ -46,6 +46,7 @@ const mergeRequestService = require('./merge-request-service');
 const searchService = require('./search-service');
 const aiService = require('./ai-service');
 const catalogService = require('./catalog-service');
+const supportService = require('./support-service');
 
 // Set by menu.js, which owns the Electron windows. Kept as an injected
 // callback so this module stays testable outside Electron.
@@ -90,6 +91,14 @@ let pickFolder = null;
 
 function setFolderPicker(fn) {
   pickFolder = fn;
+}
+
+// Opens a file with its OS default app (the .eml draft in the mail client);
+// injected so this module stays free of Electron.
+let openFile = null;
+
+function setFileOpener(fn) {
+  openFile = fn;
 }
 
 // Fixed port by default; the client learns it from bridge.js either way,
@@ -389,6 +398,23 @@ const postRoutes = {
   // The models this key can use, so the UI offers real ids instead of a
   // guessed default that 404s.
   '/ai/models': async () => aiService.listModels(),
+
+  // Compile a support bundle and open it as a mail draft. Never sends -
+  // drafts and opens for the user to review and send.
+  '/support/report': async () => {
+    const report = await supportService.buildReport();
+
+    let openError = null;
+    if (openFile) {
+      // shell.openPath resolves to '' on success or an error string.
+      openError = (await openFile(report.emlPath)) || null;
+    }
+
+    return Object.assign(report, {
+      opened: !openError,
+      openError
+    });
+  },
 
   // Open a read-only viewer window for one catalog pattern.
   '/catalog/preview': async body => {
@@ -907,5 +933,6 @@ function stop() {
 
 module.exports = {
   start, stop, setComparisonHandler, setReviewHandler, setAiReviewHandler,
-  setCatalogPreviewHandler, setUrlOpener, setFolderPicker, PORT, HOST, TOKEN
+  setCatalogPreviewHandler, setUrlOpener, setFolderPicker, setFileOpener,
+  PORT, HOST, TOKEN
 };

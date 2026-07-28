@@ -3026,6 +3026,18 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         'in your home folder, like the tokens above.')
     ),
 
+    h('div', { className: 'cgp-block' },
+      h('p', { className: 'cgp-block__title' }, 'Support'),
+      h('p', { className: 'cgp-sub', style: { marginBottom: '8px' } },
+        'Stuck? This gathers a summary, your recent git activity, the ' +
+        'environment, and a secret-free copy of these settings into an email ' +
+        'draft with the files attached - for you to review and send. Nothing ' +
+        'is sent automatically.'),
+      h('button', {
+        className: 'btn cgp-btn', disabled: busy, onClick: () => actions.reportProblem()
+      }, 'Report a problem')
+    ),
+
     h('div', { className: 'cgp-field' },
       h('button', {
         className: 'btn cgp-btn cgp-btn--primary', disabled: busy || !dirty, onClick: save

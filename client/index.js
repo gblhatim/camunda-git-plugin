@@ -281,6 +281,7 @@ const BUSY_LABELS = {
   '/ai/edit/apply': { label: 'Applying the AI edit' },
   '/ai/edit/review': { label: 'Opening the before/after' },
   '/catalog/new': { label: 'Creating the new diagram' },
+  '/support/report': { label: 'Compiling the problem report' },
   '/conflict/undo': { label: 'Putting that decision back' },
   '/conflict/compare': { label: 'Opening the two versions' },
   '/merge/complete': { label: 'Finishing up' },
@@ -918,6 +919,22 @@ function GitPlugin(props) {
       act('/catalog/new', { id, name }, 'New diagram created from the catalog.')
         .then(res => { loadTree(); return res; }),
     catalogPreview: id => act('/catalog/preview', { id }),
+
+    // --- support -------------------------------------------------------
+    // Drafts a mail with logs attached and opens it; never sends.
+    reportProblem: async () => {
+      const res = await act('/support/report');
+      if (res) {
+        setNotice({
+          type: 'success',
+          text: res.opened
+            ? 'A problem report opened in your mail client with the logs attached - review it and send.'
+            : `A problem report was saved to ${res.dir}. Your mail client did not open automatically; ` +
+              'attach those files to an email yourself.'
+        });
+      }
+      return res;
+    },
 
     // --- AI edits ------------------------------------------------------
     aiPreview: (path, instruction) => act('/ai/edit/preview', { path, instruction }),
