@@ -1433,6 +1433,42 @@ body.dark .cgp-panel,
   text-decoration: line-through;
 }
 
+.cgp-chat {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--cgp-line);
+  border-radius: 8px;
+  padding: 8px;
+  margin: 4px 0 8px;
+  background: var(--cgp-raised);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cgp-chat__msg {
+  font-size: 12px;
+  line-height: 1.45;
+  padding: 6px 9px;
+  border-radius: 8px;
+  max-width: 88%;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cgp-chat__msg--user {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--cgp-info) 16%, transparent);
+  color: var(--cgp-fg);
+}
+
+.cgp-chat__msg--assistant {
+  align-self: flex-start;
+  background: var(--cgp-panel-bg, #fff);
+  border: 1px solid var(--cgp-line);
+  color: var(--cgp-fg);
+}
+
 /* --------------------------------------------------------------- catalog */
 
 .cgp-cat__grid {

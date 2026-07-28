@@ -170,6 +170,59 @@ function apiPost({ host, port, token }, route, body) {
   });
 }
 
+/**
+ * POST that reads a server-sent event stream, calling `onDelta` with each
+ * token. Used for the AI chat, so questions appear as they are written. A
+ * failure before the stream opens comes back as JSON and is thrown.
+ */
+async function apiStream({ host, port, token }, route, body, onDelta) {
+  const res = await fetch(`http://${host}:${port}${route}?token=${encodeURIComponent(token)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body || {})
+  });
+
+  const contentType = res.headers.get('Content-Type') || '';
+
+  if (!contentType.includes('event-stream')) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `the chat could not start (${res.status})`);
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let full = '';
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();   // keep the last, possibly-partial line
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data:')) continue;
+
+      const payload = trimmed.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+
+      try {
+        const json = JSON.parse(payload);
+        const delta = json.choices && json.choices[0] &&
+          json.choices[0].delta && json.choices[0].delta.content;
+        if (delta) { full += delta; if (onDelta) onDelta(full); }
+      } catch (err) {
+        // A frame split across chunks completes on the next read.
+      }
+    }
+  }
+
+  return full;
+}
+
 // ------------------------------------------------------------ status bar
 
 function statusLabel(status) {
@@ -279,6 +332,10 @@ const BUSY_LABELS = {
     slow: 'Still thinking - the model is rewriting the diagram.'
   },
   '/ai/edit/apply': { label: 'Applying the AI edit' },
+  '/ai/edit/from-chat': {
+    label: 'Generating the edit from your conversation',
+    slow: 'Still going - the model is writing the whole diagram.'
+  },
   '/ai/edit/review': { label: 'Opening the before/after' },
   '/catalog/new': { label: 'Creating the new diagram' },
   '/support/report': { label: 'Compiling the problem report' },
@@ -938,6 +995,13 @@ function GitPlugin(props) {
 
     // --- AI edits ------------------------------------------------------
     aiPreview: (path, instruction) => act('/ai/edit/preview', { path, instruction }),
+    // The guiding-questions chat, streamed. onDelta gets the full text so far.
+    aiChat: (path, conversation, onDelta) =>
+      (bridge
+        ? apiStream(bridge, '/ai/chat/stream', { path, conversation }, onDelta)
+        : Promise.reject(new Error('Not connected.'))),
+    // Turn the conversation into an edit and preview it.
+    aiGenerate: (path, messages) => act('/ai/edit/from-chat', { path, messages }),
     aiApply: path =>
       act('/ai/edit/apply', { path }, 'Applied - saved as a change in Source Control.')
         .then(res => { loadTree(); return res; }),

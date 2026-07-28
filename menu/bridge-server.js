@@ -384,6 +384,12 @@ const postRoutes = {
   '/ai/edit/preview': async body =>
     aiService.editPreview({ path: body.path, instruction: body.instruction }),
 
+  // Generate an edit from a finished chat, then preview it (same parse /
+  // openable / diff gate as a one-line edit). Streaming is only for the chat
+  // questions; the generated diagram must be complete before it can be shown.
+  '/ai/edit/from-chat': async body =>
+    aiService.editFromChat({ path: body.path, messages: body.messages }),
+
   '/ai/edit/apply': async body => {
     const result = await aiService.editApply({ path: body.path });
 
@@ -794,6 +800,50 @@ function send(res, code, body) {
   res.end(payload);
 }
 
+/**
+ * Proxy the guiding-questions chat as a server-sent event stream: ask
+ * OpenRouter with streaming on, and pipe its SSE straight through to the
+ * client. A failure before the stream opens is still reported as ordinary
+ * JSON, so the panel can show the reason.
+ */
+async function handleChatStream(req, res) {
+  let body;
+  try {
+    body = await readBody(req);
+  } catch (err) {
+    return send(res, 400, { error: err.message });
+  }
+
+  let upstream;
+  try {
+    upstream = await aiService.chatStream({
+      path: body.path,
+      conversation: body.conversation
+    });
+  } catch (err) {
+    return send(res, 200, { error: gitErrors.translate(err).title || err.message });
+  }
+
+  if (!upstream.ok) {
+    const text = await upstream.text().catch(() => '');
+    return send(res, 200, { error: `OpenRouter ${upstream.status}: ${text.slice(0, 200)}` });
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*'
+  });
+
+  upstream.body.on('data', chunk => res.write(chunk));
+  upstream.body.on('end', () => res.end());
+  upstream.body.on('error', () => { try { res.end(); } catch (e) { /* gone */ } });
+
+  // If the client goes away, stop pulling from OpenRouter.
+  req.on('close', () => { try { upstream.body.destroy(); } catch (e) { /* gone */ } });
+}
+
 async function handle(req, res) {
   const url = new URL(req.url, `http://${HOST}:${PORT}`);
 
@@ -807,6 +857,13 @@ async function handle(req, res) {
 
   if (token !== TOKEN) {
     return send(res, 403, { error: 'bad or missing token' });
+  }
+
+  // Streaming is handled apart from the JSON route table: it must not be
+  // buffered into one response, so the model's words reach the panel as they
+  // arrive.
+  if (req.method === 'POST' && url.pathname === '/ai/chat/stream') {
+    return handleChatStream(req, res);
   }
 
   const isPost = req.method === 'POST';

@@ -160,10 +160,11 @@ function assertOpenable(root) {
 }
 
 /**
- * Ask the model for an edit and return the change for review. Writes
- * nothing; the proposal is held until `apply` or the next preview.
+ * The current, valid BPMN of a diagram - the starting point for a chat or an
+ * edit. Rejects a non-diagram, an unreadable file, or one that is already not
+ * valid BPMN, so the model is never asked to work on something broken.
  */
-async function editPreview({ path: rel, instruction }) {
+async function readDiagram(rel) {
   if (!rel) {
     throw new Error('Choose a diagram to edit.');
   }
@@ -172,27 +173,98 @@ async function editPreview({ path: rel, instruction }) {
     throw new Error('AI edits work on BPMN diagrams (.bpmn).');
   }
 
-  const text = String(instruction || '').trim();
-  if (!text) {
-    throw new Error('Describe the change you want.');
-  }
-
-  const abs = absFor(rel);
-
   let before;
   try {
-    before = fs.readFileSync(abs, 'utf8');
+    before = fs.readFileSync(absFor(rel), 'utf8');
   } catch (err) {
     throw new Error(`Could not read ${rel}: ${err.message}`);
   }
 
-  // Reject a starting file that is not valid BPMN, rather than asking the
-  // model to edit something that will not diff.
   try {
     await diagramDiffService.parse(before);
   } catch (err) {
     throw new Error(`${rel} is not valid BPMN, so it cannot be edited: ${err.message}`);
   }
+
+  return before;
+}
+
+// The consultant that asks before it models. Deliberately forbidden from
+// emitting BPMN: this phase is for understanding the change, not making it.
+const CHAT_SYSTEM_PROMPT = [
+  'You are a BPMN modelling consultant for Camunda.',
+  'You are shown a BPMN 2.0 diagram and the user wants to change it.',
+  'Before any modelling, ask a few concise, specific guiding questions to pin down exactly what they want - who does what, which paths exist, what the conditions and outcomes are.',
+  'Ask only what you actually need; keep every reply short - a sentence or a short list.',
+  'Do NOT output BPMN, XML, or a full design. When the user tells you to go ahead, briefly confirm what you will do in one line.'
+].join('\n');
+
+function sanitizeConversation(conversation) {
+  return (Array.isArray(conversation) ? conversation : [])
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .map(m => ({ role: m.role, content: m.content }));
+}
+
+/**
+ * The guiding-questions phase, streamed. Returns the raw node-fetch Response
+ * (an SSE stream) for the bridge to pipe to the client, so the model's
+ * questions appear as they are written instead of after a long pause.
+ */
+async function chatStream({ path: rel, conversation }) {
+  const before = await readDiagram(rel);
+  const fetch = require('node-fetch');
+
+  const messages = [
+    { role: 'system', content: CHAT_SYSTEM_PROMPT },
+    { role: 'user', content: `Here is the current diagram (BPMN 2.0 XML):\n\n${before}` },
+    ...sanitizeConversation(conversation)
+  ];
+
+  return fetch(ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey()}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://camunda.org',
+      'X-Title': 'Camunda Git Plugin'
+    },
+    body: JSON.stringify({ model: model(), temperature: 0.3, stream: true, messages })
+  });
+}
+
+/**
+ * Turn a finished conversation into an edit: fold the discussion into a
+ * single instruction and run the ordinary preview - so the same parse /
+ * openable / diff gate applies to a chat-driven edit as to a one-line one.
+ */
+async function editFromChat({ path: rel, messages }) {
+  const convo = sanitizeConversation(messages);
+
+  if (!convo.length) {
+    throw new Error('Have a short conversation first, then generate.');
+  }
+
+  const transcript = convo
+    .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n\n');
+
+  return editPreview({
+    path: rel,
+    instruction: `Apply the change agreed in this conversation to the diagram.\n\n${transcript}`
+  });
+}
+
+/**
+ * Ask the model for an edit and return the change for review. Writes
+ * nothing; the proposal is held until `apply` or the next preview.
+ */
+async function editPreview({ path: rel, instruction }) {
+  const text = String(instruction || '').trim();
+  if (!text) {
+    throw new Error('Describe the change you want.');
+  }
+
+  const before = await readDiagram(rel);
 
   const raw = await callOpenRouter(text, before);
   const after = extractXml(raw);
@@ -303,6 +375,8 @@ function discard(rel) {
 
 module.exports = {
   editPreview,
+  editFromChat,
+  chatStream,
   editApply,
   getProposal,
   listModels,

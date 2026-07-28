@@ -1821,9 +1821,14 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
   const list = diagrams || [];
 
   const [ path, setPath ] = useState('');
-  const [ instruction, setInstruction ] = useState('');
   const [ preview, setPreview ] = useState(null);
   const [ models, setModels ] = useState(null);
+  const [ messages, setMessages ] = useState([]);
+  const [ input, setInput ] = useState('');
+  const [ streaming, setStreaming ] = useState(false);
+  const [ streamText, setStreamText ] = useState('');
+  const [ chatError, setChatError ] = useState(null);
+  const bottomRef = useRef(null);
 
   // Load the real model catalogue once a key is present, so the picker
   // offers ids that actually resolve rather than a guessed default.
@@ -1838,6 +1843,13 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
     return () => { alive = false; };
   }, [ hasKey, actions ]);
 
+  // Keep the newest message in view as the conversation grows and streams.
+  useEffect(() => {
+    if (bottomRef.current && bottomRef.current.scrollIntoView) {
+      bottomRef.current.scrollIntoView({ block: 'end' });
+    }
+  }, [ messages, streamText ]);
+
   const target = path || (list[0] && list[0].path) || '';
   const currentModel = (settings && settings.openRouterModel) || '';
 
@@ -1851,20 +1863,46 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
           'nothing saved until you accept.')));
   }
 
-  const runPreview = async () => {
+  const send = async () => {
+    const text = input.trim();
+    if (!text || streaming || !target) return;
+
+    const next = messages.concat({ role: 'user', content: text });
+    setMessages(next);
+    setInput('');
     setPreview(null);
-    const res = await actions.aiPreview(target, instruction);
+    setChatError(null);
+    setStreaming(true);
+    setStreamText('');
+
+    try {
+      const full = await actions.aiChat(target, next, partial => setStreamText(partial));
+      setMessages(next.concat({ role: 'assistant', content: full || '(no reply)' }));
+    } catch (err) {
+      setChatError(err.message);
+    } finally {
+      setStreaming(false);
+      setStreamText('');
+    }
+  };
+
+  const generate = async () => {
+    setPreview(null);
+    const res = await actions.aiGenerate(target, messages);
     if (res && res.ok) setPreview(res);
   };
 
   const apply = async () => {
     const res = await actions.aiApply(target);
-    if (res) { setPreview(null); setInstruction(''); }
+    if (res) { setPreview(null); setMessages([]); }
   };
 
   const discard = () => { actions.aiDiscard(target); setPreview(null); };
 
-  const canRun = !busy && !!target && instruction.trim().length > 0;
+  const startOver = () => { setMessages([]); setPreview(null); setChatError(null); };
+
+  const canSend = !busy && !streaming && !!target && input.trim().length > 0;
+  const canGenerate = !busy && !streaming && !!target && messages.length > 0;
   const diff = (preview && preview.diff) || {};
   const s = diff.summary || {};
 
@@ -1902,18 +1940,51 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
             })
         ),
 
+        // The conversation: the model asks guiding questions before it models.
+        (messages.length || streaming)
+          ? h('div', { className: 'cgp-chat' },
+            messages.map((m, i) => h('div', {
+              key: i, className: `cgp-chat__msg cgp-chat__msg--${m.role}`
+            }, m.content)),
+            streaming
+              ? h('div', { className: 'cgp-chat__msg cgp-chat__msg--assistant' },
+                streamText || '…')
+              : null,
+            h('div', { ref: bottomRef })
+          )
+          : h('p', { className: 'cgp-sub', style: { margin: '2px 0 8px' } },
+            `Describe what you want changed. ${modelName.split('/').pop()} asks a few ` +
+            'guiding questions first, then generates the edit for you to review.'),
+
+        chatError
+          ? h('div', { className: 'cgp-notice cgp-notice--warn', style: { marginBottom: '8px' } },
+            h('div', { className: 'cgp-notice__body' }, chatError))
+          : null,
+
         h('textarea', {
-          className: 'cgp-input cgp-ai__prompt', rows: 3,
-          placeholder: 'Describe the change - e.g. "add a 2-day timer boundary event on Approve invoice", or "make Charge card asynchronous before"',
-          value: instruction, disabled: busy,
-          onChange: e => setInstruction(e.target.value)
+          className: 'cgp-input cgp-ai__prompt', rows: 2,
+          placeholder: messages.length
+            ? 'Answer, or say "go ahead" when ready…'
+            : 'e.g. "add a 2-day timer boundary event on Approve invoice"',
+          value: input, disabled: busy || streaming,
+          onChange: e => setInput(e.target.value),
+          onKeyDown: e => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); }
+          }
         }),
 
         h('div', { className: 'cgp-field', style: { marginTop: '8px' } },
           h('button', {
-            className: 'btn cgp-btn cgp-btn--primary', disabled: !canRun, onClick: runPreview
-          }, 'Preview edit'),
-          h('span', { className: 'cgp-sub' }, `Sends this diagram to ${modelName}`)
+            className: 'btn cgp-btn', disabled: !canSend, onClick: send
+          }, streaming ? 'Thinking…' : 'Send'),
+          h('button', {
+            className: 'btn cgp-btn cgp-btn--primary', disabled: !canGenerate, onClick: generate,
+            title: 'Turn the conversation into an edit and preview it'
+          }, 'Generate the edit'),
+          messages.length
+            ? h('button', { className: 'btn cgp-btn', disabled: busy || streaming, onClick: startOver }, 'Start over')
+            : null,
+          h('span', { className: 'cgp-sub' }, 'Ctrl+Enter sends')
         ),
 
         preview && !preview.hasChanges && h('div', {
