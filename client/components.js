@@ -18,6 +18,28 @@ const h = React.createElement;
 
 // --------------------------------------------------------------- helpers
 
+/**
+ * The pill row that switches sections inside an area (My Work, Team,
+ * Diagrams). Each item is `{ id, label, badge? }`; a numeric badge shows a
+ * count, and zero or null hides it so an empty area is not advertised.
+ */
+export function SubNav({ items, active, onSelect }) {
+  return h('div', { className: 'cgp-subnav', role: 'tablist' },
+    items.map(it => h('button', {
+      key: it.id,
+      type: 'button',
+      role: 'tab',
+      'aria-selected': it.id === active,
+      className: 'cgp-subnav__pill' + (it.id === active ? ' cgp-subnav__pill--on' : ''),
+      onClick: () => onSelect(it.id)
+    },
+      it.label,
+      (it.badge !== null && it.badge !== undefined && it.badge !== 0)
+        && h('span', { className: 'cgp-subnav__badge' }, it.badge)
+    ))
+  );
+}
+
 const DIAGRAM_EXT = /\.(bpmn|dmn|form|xml)$/i;
 
 export function prettyName(fileName) {
@@ -2148,6 +2170,35 @@ export function Catalog({ catalog, actions, busy, onOpen, onInsert }) {
  * a one-click path into resolving them *here* rather than in the host's web
  * conflict editor - which cannot show a diagram at all.
  */
+/**
+ * "opened 3 days ago", or "opened today" - the age a review board leads
+ * with. Null age (a host that did not report a date) shows nothing.
+ */
+function openedAgo(days) {
+  if (days === null || days === undefined) return null;
+  if (days <= 0) return 'opened today';
+  if (days === 1) return 'opened yesterday';
+  return `opened ${days} days ago`;
+}
+
+/**
+ * The review-state chip, in the same red/green/muted vocabulary the rest of
+ * the panel uses. 'none' and unknown show nothing rather than a chip that
+ * says "no news", which is noise on a busy board.
+ */
+function reviewChip(state) {
+  if (state === 'changes_requested') {
+    return h('span', { className: 'cgp-tag cgp-tag--deleted' }, 'CHANGES REQUESTED');
+  }
+  if (state === 'approved') {
+    return h('span', { className: 'cgp-tag cgp-tag--added' }, 'APPROVED');
+  }
+  if (state === 'review_requested') {
+    return h('span', { className: 'cgp-tag cgp-tag--muted' }, 'NEEDS REVIEW');
+  }
+  return null;
+}
+
 export function MergeRequests({ data, actions, busy }) {
   if (!data) {
     return h('div', { className: 'cgp-panel' },
@@ -2173,11 +2224,23 @@ export function MergeRequests({ data, actions, busy }) {
   const items = data.items || [];
   const provider = data.provider || 'the server';
 
+  // A one-line read on the board's health, so what needs attention is
+  // countable before scrolling. Only the non-zero attention counts show.
+  const conflicting = items.filter(mr => mr.hasConflicts === true).length;
+  const stale = items.filter(mr => mr.stale).length;
+  const drafts = items.filter(mr => mr.draft).length;
+
+  const attention = [
+    conflicting && `${conflicting} conflicting`,
+    stale && `${stale} stale`,
+    drafts && `${drafts} draft`
+  ].filter(Boolean).join(' · ');
+
   return h('div', { className: 'cgp-panel' },
     h('div', { className: 'cgp-toolbar' },
       h('span', { className: 'cgp-eyebrow' },
         items.length
-          ? `${items.length} open on ${provider}`
+          ? `${items.length} open on ${provider}${attention ? ` — ${attention}` : ''}`
           : `Nothing open on ${provider}`),
       h('span', { className: 'cgp-toolbar__spacer' }),
       h('button', {
@@ -2198,7 +2261,10 @@ export function MergeRequests({ data, actions, busy }) {
               title: 'See every changed file, before and after',
               onClick: () => actions.reviewMr(mr.source, mr.target)
             }, mr.title),
-            mr.draft && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Draft')
+            mr.draft && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Draft'),
+            // Sitting too long. Loud on purpose - it is the reason a review
+            // board exists over the host's own list.
+            mr.stale && h('span', { className: 'cgp-chip cgp-chip--warn' }, 'Stale')
           ),
 
           h('div', { className: 'cgp-mr__meta' },
@@ -2207,7 +2273,8 @@ export function MergeRequests({ data, actions, busy }) {
               ' → ',
               h('span', { className: 'cgp-mono' }, mr.target)),
             mr.isCurrent && h('span', { className: 'cgp-chip cgp-chip--current' }, 'You are here'),
-            mr.author && h('span', { className: 'cgp-sub' }, `by ${mr.author}`)
+            mr.author && h('span', { className: 'cgp-sub' }, `by ${mr.author}`),
+            openedAgo(mr.ageDays) && h('span', { className: 'cgp-sub' }, openedAgo(mr.ageDays))
           ),
 
           h('div', { className: 'cgp-mr__foot' },
@@ -2217,6 +2284,9 @@ export function MergeRequests({ data, actions, busy }) {
               : mr.hasConflicts === false
                 ? h('span', { className: 'cgp-tag cgp-tag--added' }, 'MERGEABLE')
                 : h('span', { className: 'cgp-tag cgp-tag--muted' }, 'UNKNOWN'),
+
+            // Where the review itself stands, when the host told us.
+            reviewChip(mr.reviewState),
 
             h('span', { className: 'cgp-toolbar__spacer' }),
 
@@ -2242,6 +2312,146 @@ export function MergeRequests({ data, actions, busy }) {
               title: `Open this on ${provider}`,
               onClick: () => actions.openUrl(mr.url)
             }, `Open on ${provider}`)
+          )
+        ))
+      )
+  );
+}
+
+// --------------------------------------------------------------- overview
+
+/**
+ * How recently a workstream was touched, in the panel's plain voice. Null
+ * (a branch with no date) shows nothing rather than a guess.
+ */
+function activityLabel(days) {
+  if (days === null || days === undefined) return null;
+  if (days <= 0) return 'active today';
+  if (days === 1) return 'active yesterday';
+  return `quiet for ${days} days`;
+}
+
+/**
+ * The team on one screen: every workstream, its owner, how far it has run
+ * from the shared branch, its open request, and whether it has gone quiet.
+ *
+ * Read-only by design - it opens reviews and links but never checks anything
+ * out or merges, so it is safe for someone coordinating rather than coding.
+ */
+export function Overview({ data, actions, busy, onOpenTicket }) {
+  if (!data) {
+    return h('div', { className: 'cgp-panel' },
+      h('p', { className: 'cgp-empty' }, 'Loading the team overview...'));
+  }
+
+  if (data.error) {
+    return h('div', { className: 'cgp-panel' },
+      h('div', { className: 'cgp-notice cgp-notice--warn' },
+        h('div', { className: 'cgp-notice__title' }, 'Could not load the overview'),
+        h('div', { className: 'cgp-notice__body' }, data.error)));
+  }
+
+  const rows = data.rows || [];
+  const s = data.summary || {};
+  const base = data.base || 'the shared branch';
+
+  // What needs a coordinator's attention, countable before scrolling.
+  const attention = [
+    s.conflicting && `${s.conflicting} conflicting`,
+    s.stale && `${s.stale} gone quiet`,
+    s.unsent && `${s.unsent} only local`
+  ].filter(Boolean).join(' · ');
+
+  // Why the request column might be blank, said once at the top rather than
+  // on every row.
+  const mrNote = data.mr && !data.mr.supported
+    ? (data.mr.error || 'This project has no GitHub/GitLab server, so there are no requests to show.')
+    : null;
+
+  return h('div', { className: 'cgp-panel' },
+    h('div', { className: 'cgp-toolbar' },
+      h('span', { className: 'cgp-eyebrow' },
+        rows.length
+          ? `${rows.length} active workstream${rows.length === 1 ? '' : 's'}${attention ? ` — ${attention}` : ''}`
+          : 'No active workstreams'),
+      h('span', { className: 'cgp-toolbar__spacer' }),
+      h('button', {
+        className: 'btn cgp-btn', disabled: busy, onClick: actions.refreshOverview
+      }, h(Icon, { name: 'Renew', size: 13 }), ' Refresh')
+    ),
+
+    h('p', { className: 'cgp-sub' },
+      `Measured against "${base}"`,
+      data.release ? ` · release line "${data.release}"` : ''),
+
+    mrNote && h('p', { className: 'cgp-sub cgp-sub--muted' }, mrNote),
+
+    !rows.length
+      ? h('p', { className: 'cgp-empty' },
+        'Nobody has a workstream open right now - everything is on the shared version.')
+      : h('ul', { className: 'cgp-mr-list' },
+        rows.map(r => h('li', { key: r.name, className: 'cgp-mr' },
+
+          h('div', { className: 'cgp-mr__top' },
+            h('span', {
+              className: 'cgp-mr__title',
+              title: r.lastMessage || r.name
+            }, r.title),
+            r.isCurrent && h('span', { className: 'cgp-chip cgp-chip--current' }, 'You are here'),
+            r.ticket && (r.ticketUrl
+              ? h('span', {
+                className: 'cgp-chip',
+                title: `Open ${r.ticket}`,
+                onClick: () => onOpenTicket && onOpenTicket(r.ticketUrl)
+              }, r.ticket)
+              : h('span', { className: 'cgp-chip cgp-chip--muted' }, r.ticket)),
+            r.stale && h('span', { className: 'cgp-chip cgp-chip--warn' }, 'Gone quiet')
+          ),
+
+          h('div', { className: 'cgp-mr__meta' },
+            r.owner && h('span', { className: 'cgp-sub' }, `last by ${r.owner}`),
+            activityLabel(r.ageDays) && h('span', { className: 'cgp-sub' }, activityLabel(r.ageDays)),
+            r.localOnly && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Not sent yet'),
+
+            // The distance from the shared branch, the two numbers that say
+            // whether finishing this later will be small or large.
+            (r.ahead || r.behind)
+              ? h('span', { className: 'cgp-sub' },
+                [
+                  r.ahead ? `${r.ahead} to merge` : null,
+                  r.behind ? `${r.behind} behind ${base}` : null
+                ].filter(Boolean).join(' · '))
+              : h('span', { className: 'cgp-sub cgp-sub--muted' }, `in step with ${base}`)
+          ),
+
+          h('div', { className: 'cgp-mr__foot' },
+            r.mr
+              ? h(React.Fragment, null,
+                h('span', { className: 'cgp-sub cgp-mono' }, `#${r.mr.number}`),
+                r.mr.hasConflicts === true
+                  ? h('span', { className: 'cgp-tag cgp-tag--deleted' }, 'CONFLICTS')
+                  : r.mr.hasConflicts === false
+                    ? h('span', { className: 'cgp-tag cgp-tag--added' }, 'MERGEABLE')
+                    : null,
+                reviewChip(r.mr.reviewState),
+                r.mr.draft && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Draft'),
+
+                h('span', { className: 'cgp-toolbar__spacer' }),
+
+                r.mr.target && h('button', {
+                  className: 'btn cgp-btn',
+                  disabled: busy,
+                  title: 'See every changed file, before and after',
+                  onClick: () => actions.reviewMr(r.name, r.mr.target)
+                }, 'Review'),
+                h('button', {
+                  className: 'btn cgp-btn',
+                  disabled: busy,
+                  title: 'Open this request in the browser',
+                  onClick: () => actions.openUrl(r.mr.url)
+                }, 'Open')
+              )
+              : h('span', { className: 'cgp-sub cgp-sub--muted' }, 'No open request')
           )
         ))
       )

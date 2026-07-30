@@ -388,14 +388,27 @@ function renderCard(details) {
     card.appendChild(el('div', 'cgp-taskcard__doc', details.documentation));
   }
 
+  // A card that stays has to say how to make it go. Quiet, and last, because
+  // it is the least interesting line on it - but without it the reader's only
+  // model of the card is "it appeared and now it will not leave".
+  card.appendChild(el('div', 'cgp-taskcard__dismiss', 'Click or press Esc to close'));
+
   return card;
 }
 
 // ------------------------------------------------------- the bpmn-js module
 
-// Long enough not to flicker while the mouse crosses the canvas, short
-// enough to feel like a tooltip rather than a wait.
-const HOVER_DELAY_MS = 350;
+/**
+ * How long the pointer has to rest on an element before its card appears.
+ *
+ * Longer than a tooltip's, deliberately, because the card *stays* once it is
+ * up: it is dismissed by a click, by Escape, or by resting on something else,
+ * not by the mouse wandering off. A short dwell plus that persistence would
+ * strew cards across the diagram as somebody swept the mouse over it, so the
+ * two settings belong together - asking for a deliberate pause is what earns
+ * the right to stay put.
+ */
+const HOVER_DELAY_MS = 600;
 
 function TaskDetailsOverlay(eventBus, overlays, elementRegistry) {
   let timer = null;
@@ -455,11 +468,40 @@ function TaskDetailsOverlay(eventBus, overlays, elementRegistry) {
     timer = setTimeout(() => show(element), HOVER_DELAY_MS);
   });
 
-  eventBus.on('element.out', () => hide());
+  /**
+   * Leaving the element cancels a card that has not appeared yet, but never
+   * takes away one that has.
+   *
+   * This is the whole point of the card: the configuration it lists is there
+   * to be *read*, and a card that vanished the instant the pointer drifted
+   * off the shape could not be. Compare a value against another element,
+   * glance at the properties panel, look away and back - the card is still
+   * there. It goes when it is genuinely finished with: a click, Escape, a
+   * pause on something else, or an edit that could have changed what it says.
+   */
+  eventBus.on('element.out', clearTimer);
 
   // Any edit or navigation should not leave a stale card floating: the model
   // may have just changed under it.
   eventBus.on([ 'element.click', 'commandStack.changed', 'canvas.viewbox.changing' ], hide);
+
+  // Escape, the dismissal every floating thing is expected to answer to. On
+  // the document because the canvas does not always hold focus - somebody
+  // who has just clicked the properties panel still means this card.
+  const onKeyDown = event => {
+    if (event.key === 'Escape' && shownFor) {
+      hide();
+    }
+  };
+
+  document.addEventListener('keydown', onKeyDown, true);
+
+  // The editor outlives no listener of ours: a diagram closed with a card up
+  // would otherwise leak this handler for the life of the window.
+  eventBus.on('diagram.destroy', () => {
+    document.removeEventListener('keydown', onKeyDown, true);
+    hide();
+  });
 }
 
 TaskDetailsOverlay.$inject = [ 'eventBus', 'overlays', 'elementRegistry' ];

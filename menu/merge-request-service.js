@@ -27,6 +27,42 @@ const conflictService = require('./conflict-service');
 const diagramDiffService = require('./diagram-diff-service');
 
 /**
+ * A merge request open longer than this, and not a draft, is flagged as
+ * stale - the review board's way of saying "this has been sitting". Seven
+ * days is a sprint week: long enough that a healthy request would have
+ * moved, short enough to catch one that stalled.
+ */
+const STALE_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Add the derived, host-independent fields the board sorts and labels by:
+ * how many days a request has been open, and whether that makes it stale.
+ *
+ * Pure and exported so it can be tested without a network: give it items,
+ * a reference time, and the threshold, and it returns the same items with
+ * `ageDays` and `stale` filled in. A request with no creation date (an old
+ * cache, a host that omitted it) gets `ageDays: null` and is never stale -
+ * the safe direction, since a false "stale" is a false alarm.
+ */
+function decorateItems(items, now, staleDays) {
+  const at = (now instanceof Date ? now : new Date(now)).getTime();
+  const limit = (typeof staleDays === 'number' ? staleDays : STALE_DAYS);
+
+  return (items || []).map(mr => {
+    const created = mr.createdAt ? new Date(mr.createdAt).getTime() : NaN;
+    const ageDays = Number.isNaN(created)
+      ? null
+      : Math.max(0, Math.floor((at - created) / DAY_MS));
+
+    return Object.assign({}, mr, {
+      ageDays,
+      stale: ageDays !== null && ageDays >= limit && !mr.draft
+    });
+  });
+}
+
+/**
  * The parsed origin, or a clear reason there are no merge requests to show.
  */
 async function resolveHost() {
@@ -82,12 +118,14 @@ async function list() {
   const { status } = await gitService.getStatus();
   const current = status.current;
 
+  items = decorateItems(items, new Date(), STALE_DAYS);
   items.forEach(mr => { mr.isCurrent = !!current && mr.source === current; });
 
-  // Conflicting ones first, then the branch you are on, so the list opens
-  // on what actually needs doing.
+  // What needs attention rises to the top: conflicting first, then stale,
+  // then the branch you are on, then by number so the order is stable.
   items.sort((a, b) =>
     (b.hasConflicts === true) - (a.hasConflicts === true) ||
+    (b.stale === true) - (a.stale === true) ||
     (b.isCurrent - a.isCurrent) ||
     a.number - b.number
   );
@@ -97,6 +135,7 @@ async function list() {
     provider: info.isGitHub ? 'GitHub' : 'GitLab',
     host: info.host,
     currentBranch: current,
+    staleDays: STALE_DAYS,
     items
   };
 }
@@ -347,7 +386,9 @@ async function reviewFile({ source, target, path: rel }) {
 
 module.exports = {
   list,
+  decorateItems,
   startResolution,
   reviewChanges,
-  reviewFile
+  reviewFile,
+  STALE_DAYS
 };

@@ -43,27 +43,73 @@ import {
   ChangesPane,
   WorkHero,
   MergeRequests,
+  Overview,
   SearchDiagrams,
   AiEdit,
-  Catalog
+  Catalog,
+  SubNav
 } from './components.js';
 
 import { History } from './history.js';
+import { Icon } from './icons.js';
 
 const { useState, useEffect, useCallback, useMemo } = React;
 const h = React.createElement;
 
-const PANEL_ID = 'source-control';
-const ROUTINES_ID = 'git-routines';
-const EXPLORER_ID = 'diagrams';
+// Six areas, not eleven flat tabs. Three of them (My Work, Team, Diagrams)
+// host a sub-nav; the rest are single-purpose. See the render for the map of
+// which old tab became which section.
+const MY_WORK_ID = 'git-my-work';   // Now · Changes · History
+const TEAM_ID = 'git-team';         // Overview · Requests · Releases
+const DIAGRAMS_ID = 'git-diagrams'; // Files · Search · Catalog
+const AI_ID = 'git-ai';
 const ACTIVITY_ID = 'git-activity';
 const SETTINGS_ID = 'git-settings';
-const HISTORY_ID = 'git-history';
-const RELEASES_ID = 'git-releases';
-const MERGE_REQUESTS_ID = 'git-merge-requests';
-const SEARCH_ID = 'git-search';
-const AI_EDIT_ID = 'git-ai-edit';
-const CATALOG_ID = 'git-catalog';
+
+/**
+ * The tab labels, icon and all.
+ *
+ * Modeler renders a bottom-panel tab's `label` as a React child - it is
+ * `<span className="panel__link-label">{ label }</span>` in its Panel.Tab -
+ * so a label can be an element rather than a string, which is how these get
+ * icons matching Modeler's own Carbon set.
+ *
+ * They are built **once, at module scope, on purpose**. Modeler feeds `label`
+ * into a `useMemo` whose result drives an `addTab`/`removeTab` effect, so a
+ * label element rebuilt on every render would deregister and re-register the
+ * tab on every render. A stable identity keeps that effect quiet.
+ *
+ * `cgp-tablabel` marks these as ours: every stylesheet rule that touches
+ * Modeler's tab chrome is scoped through it with `:has()`, so the host's own
+ * panels keep their appearance.
+ */
+function tabLabel(icon, text, extraClass) {
+  return h('span', {
+    className: `cgp-tablabel${extraClass ? ` ${extraClass}` : ''}`
+  },
+    h(Icon, { name: icon, size: 15 }),
+    text && h('span', { className: 'cgp-tablabel__text' }, text)
+  );
+}
+
+const TAB_LABELS = {
+  myWork: tabLabel('Branch', 'My Work'),
+  team: tabLabel('Group', 'Team'),
+  diagrams: tabLabel('Document', 'Diagrams'),
+  ai: tabLabel('MagicWand', 'AI'),
+
+  // From here the tabs sit at the right-hand end of the strip - they are
+  // reference and configuration, not the work itself.
+  activity: tabLabel('Activity', 'Activity', 'cgp-tablabel--end'),
+
+  // Icon only: it is configured once and recognised by its gear, so the word
+  // is spent screen width. The title carries the name for a screen reader.
+  settings: h('span', {
+    className: 'cgp-tablabel cgp-tablabel--icon',
+    title: 'Git settings',
+    'aria-label': 'Git settings'
+  }, h(Icon, { name: 'Settings', size: 15 }))
+};
 
 /**
  * Flatten the diagram tree to the .bpmn files an AI edit can target.
@@ -151,12 +197,29 @@ function readHandshake() {
   });
 }
 
-function apiGet({ host, port, token }, route) {
-  return fetch(`http://${host}:${port}${route}?token=${encodeURIComponent(token)}`)
+function apiGet({ host, port, token }, route, { timeoutMs } = {}) {
+  // An optional client-side deadline. The bridge routes are time-bounded on
+  // their own, but a request that hangs below that - a wedged socket, a
+  // main process mid-crash - would otherwise leave a tab on "Loading"
+  // forever. Aborting turns that into an error the panel can show.
+  const controller = timeoutMs ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+  return fetch(
+    `http://${host}:${port}${route}?token=${encodeURIComponent(token)}`,
+    controller ? { signal: controller.signal } : undefined
+  )
     .then(res => {
       if (!res.ok) throw new Error(`bridge returned ${res.status}`);
       return res.json();
-    });
+    })
+    .catch(err => {
+      if (err.name === 'AbortError') {
+        throw new Error('This took too long and was stopped. The team server may be unreachable.');
+      }
+      throw err;
+    })
+    .finally(() => { if (timer) clearTimeout(timer); });
 }
 
 function apiPost({ host, port, token }, route, body) {
@@ -438,12 +501,18 @@ function GitPlugin(props) {
   const [ release, setRelease ] = useState(null);
   const [ releaseChanges, setReleaseChanges ] = useState(null);
   const [ mergeRequests, setMergeRequests ] = useState(null);
+  const [ overview, setOverview ] = useState(null);
   const [ catalog, setCatalog ] = useState(null);
 
   // Which section the user opened, overriding whatever the lead suggests.
   // Null means "follow the lead" - so the panel reorganises itself as the
   // repository changes until somebody says otherwise, and then stays put.
   const [ openSection, setOpenSection ] = useState(null);
+
+  // The sub-nav position inside each of the three multi-section areas.
+  const [ workTab, setWorkTab ] = useState('now');
+  const [ teamTab, setTeamTab ] = useState('overview');
+  const [ diagramsTab, setDiagramsTab ] = useState('files');
 
   const busy = !!pending;
 
@@ -613,6 +682,26 @@ function GitPlugin(props) {
   }, [ bridge ]);
 
   /**
+   * The team overview. Makes a network call (the merge-request list) and a
+   * count per workstream, so it loads on the repository change and on tab
+   * activation, never on the status poll.
+   */
+  const loadOverview = useCallback(async b => {
+    const target = b || bridge;
+    if (!target) return;
+
+    try {
+      // 25s: comfortably past the server's own 12s backstop, so a normal
+      // slow-but-working response is never cut off, but a true hang still
+      // ends in a visible error instead of an endless spinner.
+      setOverview(await apiGet(target, '/overview', { timeoutMs: 25000 }));
+    } catch (err) {
+      console.error('[camunda-git-plugin] overview fetch failed:', err);
+      setOverview({ error: err.message, rows: [] });
+    }
+  }, [ bridge ]);
+
+  /**
    * The shipped BPMN patterns. Static, so it needs no repository - loaded
    * once and on tab activation.
    */
@@ -714,10 +803,12 @@ function GitPlugin(props) {
     // opened means the tab never appears to be opened in the first place.
     loadRelease(target);
     loadMergeRequests(target);
+    loadOverview(target);
     loadCatalog(target);
   }, [
     bridge, loadTree, loadHistory, loadSavePoints, loadWorkstreams,
-    loadActivity, loadContext, loadNext, loadRelease, loadMergeRequests, loadCatalog
+    loadActivity, loadContext, loadNext, loadRelease, loadMergeRequests,
+    loadOverview, loadCatalog
   ]);
 
   useEffect(() => {
@@ -754,7 +845,8 @@ function GitPlugin(props) {
       await Promise.all([
         loadWorkstreams(b), loadTree(b), loadSettings(b),
         loadActivity(b), loadHistory(b), loadContext(b), loadSavePoints(b),
-        loadNext(b), loadRelease(b), loadMergeRequests(b), loadCatalog(b)
+        loadNext(b), loadRelease(b), loadMergeRequests(b), loadOverview(b),
+        loadCatalog(b)
       ]);
 
       timer = setInterval(() => refresh(b), POLL_MS);
@@ -808,16 +900,14 @@ function GitPlugin(props) {
     if (!bridge || !panelOpen) return;
 
     const load = {
-      [PANEL_ID]: () => { refresh(bridge); loadWorkstreams(bridge); loadHistory(bridge); },
-      [ROUTINES_ID]: () => {
+      [MY_WORK_ID]: () => {
         refresh(bridge); loadWorkstreams(bridge); loadContext(bridge);
-        loadSavePoints(bridge); loadNext(bridge);
+        loadSavePoints(bridge); loadNext(bridge); loadHistory(bridge);
       },
-      [EXPLORER_ID]: () => loadTree(bridge),
-      [HISTORY_ID]: () => loadHistory(bridge),
-      [RELEASES_ID]: () => { refresh(bridge); loadRelease(bridge); },
-      [MERGE_REQUESTS_ID]: () => { refresh(bridge); loadMergeRequests(bridge); },
-      [CATALOG_ID]: () => loadCatalog(bridge),
+      [TEAM_ID]: () => {
+        refresh(bridge); loadOverview(bridge); loadMergeRequests(bridge); loadRelease(bridge);
+      },
+      [DIAGRAMS_ID]: () => { loadTree(bridge); loadCatalog(bridge); },
       [ACTIVITY_ID]: () => loadActivity(bridge),
       [SETTINGS_ID]: () => { loadSettings(bridge); loadContext(bridge); }
     }[activeTab];
@@ -1019,6 +1109,7 @@ function GitPlugin(props) {
         : Promise.resolve({ groups: [], totalHits: 0, filesSearched: 0 })),
 
     refreshMergeRequests: () => loadMergeRequests(),
+    refreshOverview: () => loadOverview(),
     // Opens the visual review window (all changed files, before/after,
     // synced zoom) in the main process.
     reviewMr: (source, target) => act('/merge-request/review', { source, target }),
@@ -1040,7 +1131,7 @@ function GitPlugin(props) {
         });
 
         if (typeof triggerAction === 'function') {
-          triggerAction('open-panel', { tab: PANEL_ID });
+          triggerAction('open-panel', { tab: MY_WORK_ID });
         }
       } else if (res.upToDate) {
         setNotice({
@@ -1201,7 +1292,7 @@ function GitPlugin(props) {
   }), [
     act, peek, bridge, reloadAll, adoptSetup, pickFolderPath,
     loadTree, loadSettings, loadActivity, loadWorkstreams, loadHistory,
-    loadContext, loadSetup, loadSavePoints, loadMergeRequests, triggerAction
+    loadContext, loadSetup, loadSavePoints, loadMergeRequests, loadOverview, triggerAction
   ]);
 
   const openDiagram = useCallback(file => {
@@ -1227,15 +1318,13 @@ function GitPlugin(props) {
 
   const merging = !!(status && status.merging);
   const files = (status && status.files) || [];
-  const staged = files.filter(f => f.staged);
-  const unstaged = files.filter(f => !f.staged);
 
   const openPanel = useCallback(() => {
     if (typeof triggerAction !== 'function') {
       console.error('[camunda-git-plugin] no triggerAction prop - cannot open the panel');
       return;
     }
-    triggerAction('open-panel', { tab: PANEL_ID });
+    triggerAction('open-panel', { tab: MY_WORK_ID });
   }, [ triggerAction ]);
 
   const text = statusLabel(status);
@@ -1315,6 +1404,75 @@ function GitPlugin(props) {
     ].filter(Boolean).join(' · ');
   })();
 
+  // --- sub-nav within the three multi-section areas --------------------
+
+  const workItems = [
+    { id: 'now', label: 'Now' },
+    { id: 'changes', label: 'Changes', badge: files.length || null },
+    { id: 'history', label: 'History' }
+  ];
+
+  // The Releases section only exists for a project with a release train;
+  // when there is none the pill is dropped and a stray `teamTab === 'releases'`
+  // falls back to Overview rather than showing an empty tab.
+  const releaseApplicable = !!(release && release.applicable);
+  const mrCount = mergeRequests && mergeRequests.items ? mergeRequests.items.length : null;
+
+  const teamItems = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'requests', label: 'Requests', badge: mrCount }
+  ].concat(releaseApplicable ? [ { id: 'releases', label: 'Releases' } ] : []);
+
+  const teamSection = (teamTab === 'releases' && !releaseApplicable) ? 'overview' : teamTab;
+
+  // What the Team tab's badge counts: the things a coordinator has to act on.
+  const teamAttention = (() => {
+    const s = overview && overview.summary;
+    if (!s) return 0;
+
+    return (s.conflicting || 0) + (s.stale || 0);
+  })();
+
+  const diagramsItems = [
+    { id: 'files', label: 'Files' },
+    { id: 'search', label: 'Search' },
+    { id: 'catalog', label: 'Catalog' }
+  ];
+
+  // Switching a sub-tab refreshes just that section's data, so a section the
+  // user has not looked at in a while is current the moment they open it.
+  const selectWorkTab = id => {
+    setWorkTab(id);
+    if (id === 'history') loadHistory();
+    else if (id === 'now') { refresh(bridge); loadNext(); loadWorkstreams(); loadSavePoints(); }
+    else if (id === 'changes') { refresh(bridge); loadContext(); }
+  };
+
+  const selectTeamTab = id => {
+    setTeamTab(id);
+    if (id === 'overview') loadOverview();
+    else if (id === 'requests') loadMergeRequests();
+    else if (id === 'releases') loadRelease();
+  };
+
+  const selectDiagramsTab = id => {
+    setDiagramsTab(id);
+    if (id === 'files') loadTree();
+    else if (id === 'catalog') loadCatalog();
+  };
+
+  const currentWorkTitle = (() => {
+    const cur = workstreams && (workstreams.streams || []).find(s => s.isCurrent);
+    if (cur) return cur.title;
+    const branch = status && status.current;
+    return branch && branch !== 'HEAD' ? branch : 'an old version';
+  })();
+
+  // The notice, shown once in an area's fixed strip above its sub-nav body.
+  const noticeStrip = notice && h('div', { className: 'cgp-area__notice' },
+    h(Notice, { notice, busy, onFix: actions.applyFix })
+  );
+
   return h(React.Fragment, null,
 
     // ---- status bar ----
@@ -1337,241 +1495,253 @@ function GitPlugin(props) {
         : (text ? `⎇ ${text}` : (error ? '⎇ Not set up' : '⎇ …')))
     ),
 
-    // ---- source control ----
+    // =====================================================================
+    // Six areas, not eleven tabs.
+    //
+    //   My Work    Now · Changes · History     (was: My work + Source Control)
+    //   Team       Overview · Requests · Releases
+    //   Diagrams   Files · Search · Catalog
+    //   AI, Activity, Settings                 (single-purpose)
+    //
+    // The three multi-section areas share one shape: a fixed strip (busy
+    // bar, sub-nav, notice) above a single scrolling section. Priorities
+    // descend by ten so the order is explicit and leaves room to insert.
+    // =====================================================================
+
+    // ---- My Work ----
+    //
+    // The individual's daily loop. Setup and a half-finished merge each take
+    // over the whole area: offering "Save my work" mid-conflict is how people
+    // get truly stuck, and this is the area they land on.
     h(Fill, {
-      slot: 'bottom-panel', id: PANEL_ID, label: 'Source Control', layout, priority: 7
+      slot: 'bottom-panel', id: MY_WORK_ID, label: TAB_LABELS.myWork, layout,
+      priority: 60,
+      // Modeler draws this as its own badge next to the label.
+      number: files.length || undefined
     },
-      h('div', { className: 'cgp-panel' },
-
-        // Outside the faded region on purpose: `.cgp-busy` dims and disables
-        // everything under it, and the one thing that must stay legible
-        // while git runs is the notice saying that git is running.
-        h(BusyBar, { pending }),
-
-        h('div', { className: busy ? 'cgp-busy' : '' },
-          h(Notice, { notice, busy, onFix: actions.applyFix }),
-          h(DetachedNotice, { status, actions, busy }),
-
-          // Source Control needs a working project too; point at the tab
-          // that can actually fix it rather than restating the error.
-          !setupReady && h('div', { className: 'cgp-block' },
-            h('p', { className: 'cgp-block__title' }, 'This project is not set up yet'),
-            h('p', { className: 'cgp-sub' },
-              'Open the "My work" tab - it walks through the few things needed ' +
-              'to get started.'
-            )
-          ),
-
-          merging && h(ConflictResolver, {
-            conflicts, resolved: resolvedFiles, actions, busy, context: conflictContext
+      h('div', { className: 'cgp-area' },
+        h('div', { className: 'cgp-area__top' },
+          h(BusyBar, { pending }),
+          setupReady && !merging && h(SubNav, {
+            items: workItems, active: workTab, onSelect: selectWorkTab
           }),
+          noticeStrip
+        ),
 
-          !merging && !error && setupReady && status && h('div', { className: 'cgp-split' },
+        h('div', { className: 'cgp-area__body' + (busy ? ' cgp-busy' : '') },
+          !setupReady
+            ? h('div', { className: 'cgp-panel' }, h(Setup, { setup, actions, busy }))
 
-            // Left: where you are, then the VS Code-style file list. The
-            // routines moved to their own tab - this one is now about the
-            // files, which is what someone opening "Source Control" wants.
-            h('div', { className: 'cgp-split__main' },
+            : merging
+              ? h('div', { className: 'cgp-panel' },
+                h(ConflictResolver, {
+                  conflicts, resolved: resolvedFiles, actions, busy, context: conflictContext
+                })
+              )
 
-              h(WorkHero, {
-                label: 'On this workstream',
-                title: status.current && status.current !== 'HEAD' ? status.current : 'an old version',
-                status
-              }),
+              : workTab === 'changes'
+                ? h('div', { className: 'cgp-panel' },
+                  h(DetachedNotice, { status, actions, busy }),
 
-              h(RepoContext, { context, busy, onRefresh: () => loadContext() }),
+                  // Say why the list is empty rather than showing a blank
+                  // tab: without this an unreadable repository looks like a
+                  // project with no changes in it.
+                  error && h('div', { className: 'cgp-notice cgp-notice--warn' },
+                    h('div', { className: 'cgp-notice__title' }, 'Could not read your changes'),
+                    h('div', { className: 'cgp-notice__body' }, error)
+                  ),
 
-              h('div', { className: 'cgp-toolbar' },
-                h('span', { className: 'cgp-toolbar__spacer' }),
-                h('button', {
-                  className: 'btn cgp-btn', disabled: busy,
-                  title: status.behind
-                    ? `Download ${status.behind} update(s) from the team`
-                    : 'Check for updates from the team',
-                  onClick: actions.pull
-                }, status.behind ? `Get updates (${status.behind})` : 'Get updates'),
-                h('button', {
-                  className: 'btn cgp-btn', disabled: busy,
-                  title: status.ahead
-                    ? `Send ${status.ahead} save point(s) to the team`
-                    : 'Send your save points to the team',
-                  onClick: actions.push
-                }, status.ahead ? `Send (${status.ahead})` : 'Send')
-              ),
+                  !error && status && h(React.Fragment, null,
+                    h(RepoContext, { context, busy, onRefresh: () => loadContext() }),
 
-              h('hr', { className: 'cgp-divider' }),
-              h(ChangesPane, { status, actions, busy })
-            ),
+                    h('div', { className: 'cgp-toolbar' },
+                      h('span', { className: 'cgp-toolbar__spacer' }),
+                      h('button', {
+                        className: 'btn cgp-btn', disabled: busy,
+                        title: status.behind
+                          ? `Download ${status.behind} update(s) from the team`
+                          : 'Check for updates from the team',
+                        onClick: actions.pull
+                      }, status.behind ? `Get updates (${status.behind})` : 'Get updates'),
+                      h('button', {
+                        className: 'btn cgp-btn', disabled: busy,
+                        title: status.ahead
+                          ? `Send ${status.ahead} save point(s) to the team`
+                          : 'Send your save points to the team',
+                        onClick: actions.push
+                      }, status.ahead ? `Send (${status.ahead})` : 'Send')
+                    ),
 
-            // Right: the branch graph, in the width the bottom panel gives us.
-            h('div', { className: 'cgp-split__aside' },
-              h('p', { className: 'cgp-split__title' }, 'History'),
-              h(History, { history, busy, onRefresh: () => loadHistory(), fetchCommit })
-            )
-          )
+                    h('hr', { className: 'cgp-divider' }),
+                    h(ChangesPane, { status, actions, busy })
+                  )
+                )
+
+                : workTab === 'history'
+                  ? h('div', { className: 'cgp-panel' },
+                    h(History, { history, busy, onRefresh: () => loadHistory(), fetchCommit })
+                  )
+
+                  // 'now' - the lead action and everything it opens, with the
+                  // workstream's story in the aside the wide panel affords.
+                  : h('div', { className: 'cgp-panel' },
+                    h('div', { className: 'cgp-split cgp-split--work' },
+                      h('div', { className: 'cgp-split__main' },
+                        h(DetachedNotice, { status, actions, busy }),
+
+                        h(WorkHero, {
+                          label: "You're working on",
+                          title: currentWorkTitle,
+                          status
+                        }),
+
+                        h(NextAction, {
+                          next, busy, chosen: section, onChoose: chooseSection
+                        }),
+
+                        h(Fold, {
+                          title: 'Save my work',
+                          summary: files.length
+                            ? `${files.length} unsaved ${files.length === 1 ? 'change' : 'changes'}`
+                            : 'nothing to save',
+                          open: section === 'save',
+                          onToggle: () => toggleSection('save')
+                        }, h(SaveMyWork, { actions, busy, disabled: !files.length })),
+
+                        h(Fold, {
+                          title: 'Get in step with the team',
+                          summary: syncSummary,
+                          open: section === 'sync',
+                          onToggle: () => toggleSection('sync')
+                        }, h(SyncWork, { actions, busy })),
+
+                        h(Fold, {
+                          title: 'Workstreams',
+                          summary: workstreamSummary,
+                          open: section === 'start',
+                          onToggle: () => toggleSection('start')
+                        }, h(Workstreams, { workstreams, actions, busy })),
+
+                        h(Fold, {
+                          title: 'Finish this workstream',
+                          summary: next && next.facts && next.facts.unmerged
+                            ? `${next.facts.unmerged} save point(s) to hand over`
+                            : 'nothing to hand over yet',
+                          open: section === 'finish',
+                          onToggle: () => toggleSection('finish')
+                        }, h(FinishWork, { actions, busy, workstreams }))
+                      ),
+
+                      h('div', { className: 'cgp-split__aside' },
+                        h('p', { className: 'cgp-split__title' }, 'Earlier versions'),
+                        h(SavePoints, { savePoints, actions, busy })
+                      )
+                    )
+                  )
         )
       )
     ),
 
-    // ---- routines ----
-    // Their own tab because they are the point of the plugin for a
-    // non-technical user, and they were previously buried above a file
-    // list they mostly do not need to look at.
+    // ---- Team ----
+    //
+    // The coordinator's space. Overview and Requests are two views of one
+    // thing - workstream-centric and request-centric - which is why they are
+    // sections here rather than the rival top-level tabs they used to be.
     h(Fill, {
-      slot: 'bottom-panel', id: ROUTINES_ID, label: 'My work', layout, priority: 6
+      slot: 'bottom-panel', id: TEAM_ID, label: TAB_LABELS.team, layout,
+      priority: 50,
+      // What needs a coordinator, not how much exists: a conflicting request
+      // or a workstream that has gone quiet. A badge that only ever counted
+      // open requests would sit at a permanent non-zero for a busy team and
+      // stop meaning anything.
+      number: teamAttention || undefined
     },
-      h('div', { className: 'cgp-panel' },
-        h(BusyBar, { pending }),
+      h('div', { className: 'cgp-area' },
+        h('div', { className: 'cgp-area__top' },
+          h(BusyBar, { pending }),
+          h(SubNav, { items: teamItems, active: teamSection, onSelect: selectTeamTab }),
+          noticeStrip
+        ),
 
-        h('div', { className: busy ? 'cgp-busy' : '' },
-          h(Notice, { notice, busy, onFix: actions.applyFix }),
+        h('div', { className: 'cgp-area__body' + (busy ? ' cgp-busy' : '') },
+          teamSection === 'requests'
+            ? h('div', { className: 'cgp-panel' },
+              // An ordinary git remote (or none) has no requests to list, so
+              // this says why rather than rendering an empty board.
+              mergeRequests && !mergeRequests.supported && !mergeRequests.error
+                ? h('p', { className: 'cgp-empty' },
+                  `The team server (${mergeRequests.host || 'this host'}) is not GitHub or ` +
+                  'GitLab, so merge requests are not available here.')
+                : h(MergeRequests, { data: mergeRequests, actions, busy })
+            )
 
-          // Until the project is usable, this tab *is* the setup checklist.
-          // The old behaviour here was an error telling the reader to go to
-          // another tab and fix something the plugin could do for them.
-          !setupReady
-            ? h(Setup, { setup, actions, busy })
+            : teamSection === 'releases'
+              ? h('div', { className: 'cgp-panel' },
+                h(Releases, { release, changes: releaseChanges, actions, busy })
+              )
 
-            // Mid-conflict it shows the resolver and nothing else. Offering
-            // "Save my work" while a merge is half-finished is how people get
-            // truly stuck, and this is the tab they land on.
-            : merging
-              ? h(ConflictResolver, {
-                conflicts, resolved: resolvedFiles, actions, busy, context: conflictContext
-              })
-              : h('div', { className: 'cgp-split cgp-split--work' },
-
-                // Left: the one thing worth doing, and the section it opens.
-                // Everything else folds down to a labelled line, so the
-                // column stays one screen tall however much is going on.
-                h('div', { className: 'cgp-split__main' },
-                  h(DetachedNotice, { status, actions, busy }),
-
-                  h(WorkHero, {
-                    label: "You're working on",
-                    title: (() => {
-                      const cur = workstreams && (workstreams.streams || []).find(s => s.isCurrent);
-
-                      if (cur) {
-                        return cur.title;
-                      }
-
-                      // `status` is null until the first poll comes back.
-                      const branch = status && status.current;
-
-                      return branch && branch !== 'HEAD' ? branch : 'an old version';
-                    })(),
-                    status
-                  }),
-
-                  h(NextAction, {
-                    next, busy, chosen: section,
-                    onChoose: chooseSection
-                  }),
-
-                  h(Fold, {
-                    title: 'Save my work',
-                    summary: files.length
-                      ? `${files.length} unsaved ${files.length === 1 ? 'change' : 'changes'}`
-                      : 'nothing to save',
-                    open: section === 'save',
-                    onToggle: () => toggleSection('save')
-                  }, h(SaveMyWork, { actions, busy, disabled: !files.length })),
-
-                  h(Fold, {
-                    title: 'Get in step with the team',
-                    summary: syncSummary,
-                    open: section === 'sync',
-                    onToggle: () => toggleSection('sync')
-                  }, h(SyncWork, { actions, busy })),
-
-                  h(Fold, {
-                    title: 'Workstreams',
-                    summary: workstreamSummary,
-                    open: section === 'start',
-                    onToggle: () => toggleSection('start')
-                  }, h(Workstreams, { workstreams, actions, busy })),
-
-                  h(Fold, {
-                    title: 'Finish this workstream',
-                    summary: next && next.facts && next.facts.unmerged
-                      ? `${next.facts.unmerged} save point(s) to hand over`
-                      : 'nothing to hand over yet',
-                    open: section === 'finish',
-                    onToggle: () => toggleSection('finish')
-                  }, h(FinishWork, { actions, busy, workstreams }))
-                ),
-
-                // Right: the story of this workstream so far. It earns the
-                // aside rather than a fold because it is the one thing here
-                // worth *reading* rather than acting on, and the bottom
-                // panel is wide - this column was empty space before.
-                h('div', { className: 'cgp-split__aside' },
-                  h('p', { className: 'cgp-split__title' }, 'Earlier versions'),
-                  h(SavePoints, { savePoints, actions, busy })
-                )
+              : h('div', { className: 'cgp-panel' },
+                h(Overview, {
+                  data: overview,
+                  actions,
+                  busy,
+                  onOpenTicket: url => actions.openUrl(url)
+                })
               )
         )
       )
     ),
 
-    // ---- releases ----
+    // ---- Diagrams ----
     //
-    // Registered only for a project that actually has a release train.
-    // Under a single-branch model every control in it would be inert, and a
-    // permanently inapplicable tab is worse than no tab - it is a promise
-    // the plugin cannot keep for that project.
-    release && release.applicable && h(Fill, {
-      slot: 'bottom-panel', id: RELEASES_ID, label: 'Releases', layout, priority: 5
+    // Find one, search inside them all, or start a new one from a pattern:
+    // three tabs that were always the same job.
+    h(Fill, {
+      slot: 'bottom-panel', id: DIAGRAMS_ID, label: TAB_LABELS.diagrams, layout,
+      priority: 40
     },
-      h('div', { className: 'cgp-panel' },
-        h(BusyBar, { pending }),
-        h('div', { className: busy ? 'cgp-busy' : '' },
-          h(Notice, { notice, busy, onFix: actions.applyFix }),
-          h(Releases, { release, changes: releaseChanges, actions, busy })
+      h('div', { className: 'cgp-area' },
+        h('div', { className: 'cgp-area__top' },
+          h(BusyBar, { pending }),
+          h(SubNav, { items: diagramsItems, active: diagramsTab, onSelect: selectDiagramsTab }),
+          noticeStrip
+        ),
+
+        h('div', { className: 'cgp-area__body' + (busy ? ' cgp-busy' : '') },
+          diagramsTab === 'search'
+            ? h(SearchDiagrams, {
+              search: actions.search,
+              onOpen: relPath => openDiagram({ path: relPath })
+            })
+
+            : diagramsTab === 'catalog'
+              ? h('div', { className: 'cgp-panel' },
+                h(Catalog, {
+                  catalog,
+                  actions,
+                  busy,
+                  onOpen: relPath => openDiagram({ path: relPath }),
+                  // Reaches the active editor's bpmn-js module
+                  // (catalog-insert.js) through Modeler's action routing.
+                  onInsert: typeof triggerAction === 'function'
+                    ? xml => triggerAction('catalog.insert', { xml })
+                    : null
+                })
+              )
+
+              : h(Explorer, {
+                tree,
+                busy,
+                onOpen: openDiagram,
+                onRefresh: () => loadTree()
+              })
         )
       )
     ),
 
-    // ---- search ----
-    //
-    // A find-across-everything tab: the point of the whole engine turned on
-    // the corpus rather than on a diff. Manages its own query and results.
+    // ---- AI ----
     h(Fill, {
-      slot: 'bottom-panel', id: SEARCH_ID, label: 'Search', layout, priority: 3
-    },
-      h(SearchDiagrams, {
-        search: actions.search,
-        onOpen: relPath => openDiagram({ path: relPath })
-      })
-    ),
-
-    // ---- catalog ----
-    h(Fill, {
-      slot: 'bottom-panel', id: CATALOG_ID, label: 'Catalog', layout, priority: 1
-    },
-      h('div', { className: 'cgp-panel' },
-        h(BusyBar, { pending }),
-        h('div', { className: busy ? 'cgp-busy' : '' },
-          h(Notice, { notice, busy, onFix: actions.applyFix }),
-          h(Catalog, {
-            catalog,
-            actions,
-            busy,
-            onOpen: relPath => openDiagram({ path: relPath }),
-            // Reaches the active editor's bpmn-js module (catalog-insert.js)
-            // through Modeler's own action routing.
-            onInsert: typeof triggerAction === 'function'
-              ? xml => triggerAction('catalog.insert', { xml })
-              : null
-          })
-        )
-      )
-    ),
-
-    // ---- AI edit ----
-    h(Fill, {
-      slot: 'bottom-panel', id: AI_EDIT_ID, label: 'AI Edit', layout, priority: 2
+      slot: 'bottom-panel', id: AI_ID, label: TAB_LABELS.ai, layout, priority: 30
     },
       h('div', { className: 'cgp-panel' },
         h(BusyBar, { pending }),
@@ -1587,25 +1757,9 @@ function GitPlugin(props) {
       )
     ),
 
-    // ---- merge requests ----
-    //
-    // Only appears once we know the server is a host we can talk to; an
-    // ordinary git remote (or none) has no merge requests to show.
-    mergeRequests && mergeRequests.supported && h(Fill, {
-      slot: 'bottom-panel', id: MERGE_REQUESTS_ID, label: 'Merge Requests', layout, priority: 4
-    },
-      h('div', { className: 'cgp-panel' },
-        h(BusyBar, { pending }),
-        h('div', { className: busy ? 'cgp-busy' : '' },
-          h(Notice, { notice, busy, onFix: actions.applyFix }),
-          h(MergeRequests, { data: mergeRequests, actions, busy })
-        )
-      )
-    ),
-
-    // ---- activity ----
+    // ---- Activity ----
     h(Fill, {
-      slot: 'bottom-panel', id: ACTIVITY_ID, label: 'Activity', layout, priority: 9
+      slot: 'bottom-panel', id: ACTIVITY_ID, label: TAB_LABELS.activity, layout, priority: 20
     },
       h(Activity, {
         entries: activity,
@@ -1617,24 +1771,14 @@ function GitPlugin(props) {
       })
     ),
 
-    // ---- settings ----
+    // ---- Settings ----
+    //
+    // Last, and deliberately quiet: it is configured once, not operated.
     h(Fill, {
-      slot: 'bottom-panel', id: SETTINGS_ID, label: 'Git Settings', layout, priority: 10
+      slot: 'bottom-panel', id: SETTINGS_ID, label: TAB_LABELS.settings, layout, priority: 10
     },
       h(Settings, {
         settings, projectSetup, autoPull: autoPullState, blockedReason, actions, busy
-      })
-    ),
-
-    // ---- explorer ----
-    h(Fill, {
-      slot: 'bottom-panel', id: EXPLORER_ID, label: 'Diagrams', layout, priority: 8
-    },
-      h(Explorer, {
-        tree,
-        busy,
-        onOpen: openDiagram,
-        onRefresh: () => loadTree()
       })
     )
   );

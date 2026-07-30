@@ -43,6 +43,7 @@ const historyService = require('./history-service');
 const nextAction = require('./next-action');
 const releaseService = require('./release-service');
 const mergeRequestService = require('./merge-request-service');
+const overviewService = require('./overview-service');
 const searchService = require('./search-service');
 const aiService = require('./ai-service');
 const catalogService = require('./catalog-service');
@@ -240,6 +241,11 @@ const getRoutes = {
   // Open pull/merge requests from the team server, flagged with which ones
   // conflict. Read-only; the resolving happens on a POST below.
   '/merge-requests': async () => mergeRequestService.list(),
+
+  // The whole team on one screen: every workstream with its owner, how far
+  // ahead/behind it is, its open request, and whether it has gone quiet.
+  // Read-only, and it degrades to just the workstreams when there is no host.
+  '/overview': async () => overviewService.get(),
 
   // Deliberately does not need a working repository - it is what answers
   // "there isn't one yet".

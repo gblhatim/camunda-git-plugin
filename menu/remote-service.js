@@ -6,7 +6,21 @@
 
 'use strict';
 
-const fetch = require('node-fetch');
+const nodeFetch = require('node-fetch');
+
+/**
+ * Every host call is time-bounded. `node-fetch` with no timeout waits on the
+ * socket forever, and a request that never resolves *and never rejects* is
+ * the worst failure mode here: the caller (the merge-request list, the team
+ * overview) hangs on "Loading" with no error to show and no way to recover
+ * short of a restart. A slow or unreachable server must surface as a failure,
+ * not a freeze, so ten seconds is the ceiling for any one request.
+ */
+const FETCH_TIMEOUT_MS = 10000;
+
+function fetch(url, options) {
+  return nodeFetch(url, Object.assign({ timeout: FETCH_TIMEOUT_MS }, options));
+}
 
 /**
  * Parse a git remote URL (ssh or https form) into { host, path, isGitHub, isGitLab }.
@@ -137,14 +151,50 @@ async function listGitLabIssues({ host, path }, token) {
 }
 
 /**
+ * A single review decision from a list of GitHub reviews and the set of
+ * still-requested reviewers, reduced to the vocabulary the panel shows:
+ *
+ *   changes_requested - someone asked for changes and has not cleared it
+ *   approved          - at least one approval, nobody blocking
+ *   review_requested  - a review is pending on someone
+ *   none              - nobody has been asked and nobody has weighed in
+ *
+ * Only the *latest* review per person counts, and COMMENTED / DISMISSED
+ * reviews are not a verdict - a stale "changes requested" that the reviewer
+ * later approved must not keep the PR red. GitHub returns reviews oldest
+ * first, so the last one seen per login wins.
+ */
+function computeGitHubReviewState(reviews, requestedCount) {
+  const latest = new Map();
+
+  (reviews || []).forEach(r => {
+    const who = r.user && r.user.login;
+    if (!who) return;
+    if (r.state === 'APPROVED' || r.state === 'CHANGES_REQUESTED') {
+      latest.set(who, r.state);
+    }
+  });
+
+  const verdicts = Array.from(latest.values());
+
+  if (verdicts.includes('CHANGES_REQUESTED')) return 'changes_requested';
+  if (verdicts.includes('APPROVED')) return 'approved';
+  if (requestedCount > 0) return 'review_requested';
+
+  return 'none';
+}
+
+/**
  * Open pull requests, in the same shape as GitLab's merge requests below,
  * so the caller does not care which host it is.
  *
  * Mergeability is the point of the list here - it is what says which ones
  * need conflicts resolved - but GitHub's *list* endpoint never includes it;
- * only the single-PR endpoint computes it. So each is enriched with one
- * extra call, capped, because a large backlog should not turn one refresh
- * into a hundred API requests.
+ * only the single-PR endpoint computes it. The same call carries the
+ * requested reviewers, and one more gets the reviews, so the panel can show
+ * where each request stands. Both are capped, because a large backlog
+ * should not turn one refresh into a hundred API requests - past the cap
+ * these stay null, which the UI reads as "unknown" and shows honestly.
  */
 async function listGitHubPulls({ host, path }, token) {
   const server = host === 'github.com' ? 'api.github.com' : `${host}/api/v3`;
@@ -172,32 +222,40 @@ async function listGitHubPulls({ host, path }, token) {
     source: pr.head && pr.head.ref,
     target: pr.base && pr.base.ref,
     draft: !!pr.draft,
-    hasConflicts: null   // filled in below where the budget allows
+    createdAt: pr.created_at,
+    updatedAt: pr.updated_at,
+    hasConflicts: null,   // filled in below where the budget allows
+    reviewState: null
   }));
 
   const ENRICH_LIMIT = 20;
 
   await Promise.all(items.slice(0, ENRICH_LIMIT).map(async mr => {
     try {
-      const one = await fetch(
-        `https://${server}/repos/${path}/pulls/${mr.number}`, { headers }
-      );
+      const [ one, reviewsRes ] = await Promise.all([
+        fetch(`https://${server}/repos/${path}/pulls/${mr.number}`, { headers }),
+        fetch(`https://${server}/repos/${path}/pulls/${mr.number}/reviews?per_page=100`, { headers })
+      ]);
 
-      if (!one.ok) {
-        return;
-      }
+      if (one.ok) {
+        const detail = await one.json();
 
-      const detail = await one.json();
+        // `mergeable` is null while GitHub is still computing it; the
+        // definitive "has conflicts" is `mergeable_state === 'dirty'`.
+        if (detail.mergeable_state === 'dirty' || detail.mergeable === false) {
+          mr.hasConflicts = true;
+        } else if (detail.mergeable === true) {
+          mr.hasConflicts = false;
+        }
 
-      // `mergeable` is null while GitHub is still computing it; the
-      // definitive "has conflicts" is `mergeable_state === 'dirty'`.
-      if (detail.mergeable_state === 'dirty' || detail.mergeable === false) {
-        mr.hasConflicts = true;
-      } else if (detail.mergeable === true) {
-        mr.hasConflicts = false;
+        const requested = (detail.requested_reviewers || []).length +
+          (detail.requested_teams || []).length;
+        const reviews = reviewsRes.ok ? await reviewsRes.json() : [];
+
+        mr.reviewState = computeGitHubReviewState(reviews, requested);
       }
     } catch (err) {
-      // Leave hasConflicts null - "unknown", which the UI shows honestly.
+      // Leave the unknowns null, which the UI shows honestly.
     }
   }));
 
@@ -234,9 +292,22 @@ async function listGitLabMergeRequests({ host, path }, token) {
     source: mr.source_branch,
     target: mr.target_branch,
     draft: !!mr.draft || !!mr.work_in_progress,
+    createdAt: mr.created_at,
+    updatedAt: mr.updated_at,
     hasConflicts: typeof mr.has_conflicts === 'boolean'
       ? mr.has_conflicts
-      : (mr.merge_status === 'cannot_be_merged' ? true : null)
+      : (mr.merge_status === 'cannot_be_merged' ? true : null),
+
+    // Derived from what the list already carries, so no extra call per MR.
+    // Thumbs-down is the clearest "blocked" signal GitLab exposes here;
+    // thumbs-up stands in for an approval, and named reviewers with neither
+    // yet mean a review is still pending. It is a proxy, not GitLab's formal
+    // approval rules, but it is honest about where a request stands.
+    reviewState: (mr.downvotes > 0)
+      ? 'changes_requested'
+      : (mr.upvotes > 0)
+        ? 'approved'
+        : ((mr.reviewers && mr.reviewers.length) ? 'review_requested' : 'none')
   }));
 }
 

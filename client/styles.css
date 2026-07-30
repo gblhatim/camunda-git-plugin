@@ -10,7 +10,8 @@
  * theme is a single override block rather than conditionals in JS.
  */
 
-.cgp-panel {
+.cgp-panel,
+.cgp-area {
   --cgp-fg: #1a1a1a;
   --cgp-muted: rgba(26, 26, 26, .62);
   --cgp-faint: rgba(26, 26, 26, .38);
@@ -30,10 +31,119 @@
   line-height: 1.45;
 }
 
+/* An area is a tab that hosts a sub-nav: a fixed strip (busy bar, pills,
+   notice) above one scrolling section. It carries the tokens but not the
+   panel's own padding/scroll - the section inside it owns those. */
+.cgp-area {
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.cgp-area__top { flex: none; }
+
+.cgp-area__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+/* The one section on show fills the body and owns the scroll. */
+.cgp-area__body > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cgp-subnav {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--cgp-line);
+}
+
+.cgp-subnav__pill {
+  appearance: none;
+  border: 1px solid transparent;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--cgp-muted);
+  padding: 3px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cgp-subnav__pill:hover { color: var(--cgp-fg); background: var(--cgp-raised); }
+
+.cgp-subnav__pill--on {
+  color: var(--cgp-fg);
+  background: var(--cgp-raised);
+  border-color: var(--cgp-line);
+}
+
+.cgp-subnav__badge {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  background: var(--cgp-info);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 5px;
+  min-width: 15px;
+  text-align: center;
+}
+
+/* The notice, when it lives in an area's fixed strip rather than a panel. */
+.cgp-area__notice { padding: 8px 14px 0; }
+
+/* ------------------------------------------------- the host's tab strip
+ *
+ * This stylesheet is injected into the whole renderer, so these rules could
+ * reach Modeler's own bottom-panel tabs. Every one of them is scoped through
+ * `:has(.cgp-tablabel)` - the marker this plugin puts on the labels it
+ * renders - so the host's panels keep exactly the chrome they shipped with.
+ * Modeler's Panel.Tab renders `label` as a child, which is what makes an
+ * element-with-an-icon possible in the first place; see index.js TAB_LABELS.
+ */
+
+.cgp-tablabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cgp-tablabel .cgp-icon { flex: none; opacity: .85; }
+
+/* The label span Modeler wraps ours in lays out inline; make it a flex line
+   so the icon and text sit on a shared baseline box. */
+.panel__link:has(.cgp-tablabel) .panel__link-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.panel__link--active:has(.cgp-tablabel) .cgp-icon { opacity: 1; }
+
+/* Reference and configuration sit at the right-hand end, away from the work.
+   `margin-left: auto` on the first of them pushes it and everything after. */
+.panel__link:has(.cgp-tablabel--end) { margin-left: auto; }
+
+/* Settings is its gear alone - it carries no text node at all, so the tab
+   needs no width for a word. Its title/aria-label carries the name, and this
+   keeps the gear from sitting hard against the tab edge. */
+.panel__link:has(.cgp-tablabel--icon) { padding-left: 10px; padding-right: 10px; }
+
 /* Modeler switches its Carbon theme class on the body/root for dark mode. */
 body.dark .cgp-panel,
+body.dark .cgp-area,
 .dark .cgp-panel,
-[data-theme="dark"] .cgp-panel {
+.dark .cgp-area,
+[data-theme="dark"] .cgp-panel,
+[data-theme="dark"] .cgp-area {
   --cgp-fg: #e8e8e8;
   --cgp-muted: rgba(232, 232, 232, .66);
   --cgp-faint: rgba(232, 232, 232, .4);
@@ -87,6 +197,8 @@ body.dark .cgp-panel,
   color: var(--cgp-muted);
   margin: 2px 0 0;
 }
+
+.cgp-sub--muted { color: var(--cgp-faint); }
 
 .cgp-divider {
   border: 0;
@@ -582,6 +694,18 @@ body.dark .cgp-panel,
   color: var(--cgp-muted, #555);
   font-style: italic;
   white-space: pre-wrap;
+}
+
+/* How to dismiss a card that no longer leaves on its own. Deliberately the
+   quietest line on it: needed once, then never read again. */
+.cgp-taskcard__dismiss {
+  margin-top: 7px;
+  padding-top: 5px;
+  border-top: 1px solid var(--cgp-line, rgba(0,0,0,.1));
+  color: var(--cgp-faint, rgba(0,0,0,.4));
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
 }
 
 /* -------------------------------------------------------- save points */
@@ -1318,6 +1442,11 @@ body.dark .cgp-panel,
 .cgp-chip--current {
   color: var(--cgp-added);
   background: color-mix(in srgb, var(--cgp-added) 14%, transparent);
+}
+
+.cgp-chip--warn {
+  color: var(--cgp-edited);
+  background: color-mix(in srgb, var(--cgp-edited) 16%, transparent);
 }
 
 /* ---------------------------------------------------------------- search */

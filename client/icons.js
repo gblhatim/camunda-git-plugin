@@ -42,6 +42,11 @@ const FALLBACK = {
   Renew: '↻',
   Settings: '⚙',
   Terminal: '>',
+
+  // The bottom-panel tab icons.
+  Group: '⚇',
+  MagicWand: '✦',
+  Activity: '∿',
   Warning: '!',
   CheckmarkFilled: '✓',
   CloseFilled: '✕',
