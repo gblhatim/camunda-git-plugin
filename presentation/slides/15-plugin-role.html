@@ -1,0 +1,89 @@
+<section class="slide" id="s-plugin-role" data-section="Plugin" data-accent="plugin" data-title="Le rôle du plugin">
+  <p class="kicker">Le plugin</p>
+  <h2>Rendre les piliers utilisables sans terminal</h2>
+  <p class="lede">
+    Gitflow, la CI/CD et la porte de qualité existent avec ou sans le plugin. Ce que le plugin change, c'est
+    <strong>qui peut s'en servir</strong> : un auteur de méthode qui n'ouvrira jamais une ligne de commande.
+  </p>
+
+  <div class="body">
+    <div class="cols c-2" style="height:100%">
+      <div class="stack">
+        <div class="card hi">
+          <h3>Conception et Git dans les mêmes panneaux</h3>
+          <p>Statut, diff visuel, commit, push, Merge Request, résolution de conflit — au même endroit que le diagramme,
+             dans le style d'un éditeur de code moderne. Pas d'aller-retour vers un autre outil.</p>
+        </div>
+        <div class="card hi">
+          <h3>Un vocabulaire qui n'est pas celui de git</h3>
+          <p>« Point de sauvegarde » plutôt que commit, « sujet de travail » plutôt que branche, MODIFIÉ plutôt que <span class="mono">M</span>.
+             Le nom technique reste accessible en infobulle pour ceux qui le veulent.</p>
+        </div>
+        <div class="card hi">
+          <h3>Des refus explicites</h3>
+          <p>Pas de bouton pour supprimer un travail non commité, pas de force-push, pas de reset automatique,
+             jamais de push direct vers <span class="mono">main</span> en modèle Gitflow. Ce que le plugin ne fait pas est aussi une décision de conception.</p>
+        </div>
+        <div class="callout">
+          <strong>Construit avec Claude Code.</strong> Suite de tests couvrant fusion, MR, revue de MR, conflits,
+          IA, catalogue, recherche et support — <span class="mono">npm test</span>.
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" style="flex:1;display:flex;flex-direction:column">
+          <div class="code-title">Architecture technique — deux moitiés qui ne peuvent pas se parler</div>
+          <svg class="arch" viewBox="0 0 540 320" preserveAspectRatio="xMidYMid meet" style="flex:1">
+            <defs>
+              <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M1 1 L9 5 L1 9" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </marker>
+            </defs>
+
+            <g class="a-node">
+              <rect class="a-box" x="20" y="30" width="210" height="76" rx="9"/>
+              <text class="a-t" x="36" y="58">Renderer</text>
+              <text class="a-s" x="36" y="78">Panneaux : statut, diff, commit, MR</text>
+              <text class="a-owner" x="36" y="96">SANDBOXÉ — PAS D'ACCÈS DISQUE</text>
+            </g>
+
+            <g class="a-node">
+              <rect class="a-box" x="310" y="30" width="210" height="76" rx="9"/>
+              <text class="a-t" x="326" y="58">Processus principal</text>
+              <text class="a-s" x="326" y="78">bridge.js — accès Node complet</text>
+              <text class="a-owner" x="326" y="96">EXÉCUTE LES COMMANDES GIT</text>
+            </g>
+
+            <path class="a-arr auto flowing" d="M232 60 L306 60" marker-end="url(#ah2)"/>
+            <path class="a-arr auto flowing" d="M306 82 L232 82" marker-end="url(#ah2)"/>
+            <text class="a-s" x="270" y="132" text-anchor="middle" style="font-size:10px">API HTTP en boucle locale</text>
+            <text class="a-owner" x="270" y="148" text-anchor="middle">127.0.0.1:45678 · JETON PAR LANCEMENT</text>
+
+            <g class="a-node">
+              <rect class="a-box" x="310" y="180" width="210" height="60" rx="9"/>
+              <text class="a-t" x="326" y="206">git — simple-git</text>
+              <text class="a-s" x="326" y="226">Chaque commande tracée et chronométrée</text>
+            </g>
+            <path class="a-arr" d="M415 110 L415 176" marker-end="url(#ah2)"/>
+
+            <g class="a-node">
+              <rect class="a-box" x="20" y="180" width="210" height="60" rx="9"/>
+              <text class="a-t" x="36" y="206">API GitLab</text>
+              <text class="a-s" x="36" y="226">Merge Requests, issues</text>
+            </g>
+            <path class="a-arr" d="M340 210 L236 210" marker-end="url(#ah2)"/>
+
+            <rect class="a-zone" x="20" y="266" width="500" height="44" rx="9"/>
+            <text class="a-s" x="270" y="284" text-anchor="middle" style="font-size:10.5px">L'allowlist IPC de Camunda Modeler est figée : les deux moitiés</text>
+            <text class="a-s" x="270" y="299" text-anchor="middle" style="font-size:10.5px">ne peuvent pas communiquer directement. D'où le serveur local.</text>
+          </svg>
+        </div>
+
+        <div class="callout" style="flex:none">
+          <strong>Déploiement : aucun build côté utilisateur.</strong> Copier le dossier dans le répertoire plugins de
+          Camunda Modeler, puis <span class="mono">npm install</span>. Webpack ne sert qu'à produire le bundle du renderer en amont.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

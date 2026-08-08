@@ -1,0 +1,75 @@
+<section class="slide" id="s-adoption" data-section="Organisation" data-accent="adopt" data-title="Adoption">
+  <p class="kicker">Organisation · adoption</p>
+  <h2>Un atelier en deux temps, un déploiement en trois vagues</h2>
+  <p class="lede">
+    L'outil est prêt. Ce qui reste à organiser, c'est le passage de main : former sur un cas réel,
+    puis élargir progressivement plutôt que basculer toute l'équipe d'un coup.
+  </p>
+
+  <div class="body">
+    <div class="cols c-2" style="height:100%">
+      <div class="stack">
+        <div class="card" style="flex:1">
+          <div class="code-title">Plan de formation</div>
+          <table class="t compact" style="margin-top:10px">
+            <thead><tr><th style="width:32%">Public</th><th>Contenu</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Tout le monde</strong></td>
+                <td>Concepts, puis prise en main guidée du plugin sur un <strong>cas réel</strong> :
+                    checklist « Mon travail », premier point de sauvegarde, puis le flux quotidien
+                    sujet&nbsp;→&nbsp;enregistrement&nbsp;→&nbsp;push&nbsp;→&nbsp;Merge Request.</td>
+              </tr>
+              <tr>
+                <td><strong>Futurs intégrateurs</strong></td>
+                <td>Release et hotfix, résolution de conflits, mode développeur. C'est le module qui répartit
+                    le rôle d'Intégrateur au-delà d'une seule personne.</td>
+              </tr>
+              <tr>
+                <td><strong>Support</strong></td>
+                <td>Fiche mémo, plus un créneau de questions après la formation — au moment où les vraies
+                    questions apparaissent, pas pendant l'atelier.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout ok">
+          <strong>Aucun build côté utilisateur.</strong> Le plugin tourne dans le processus principal d'Electron :
+          copier le dossier dans le répertoire plugins de Camunda Modeler, puis <span class="mono">npm install</span>.
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" style="flex:1">
+          <div class="code-title">Déploiement — trois vagues</div>
+          <div class="tl" style="margin-top:18px">
+            <div class="tl-item">
+              <h3>Vague 1 — Pilote</h3>
+              <p>Un à deux volontaires, sur de vraies méthodes. L'objectif n'est pas de valider l'outil
+                 mais de trouver ce qui coince dans le contexte réel de l'équipe.</p>
+            </div>
+            <div class="tl-item">
+              <h3>Vague 2 — Ajustements</h3>
+              <p>Corrections issues du pilote, sur le plugin comme sur la configuration partagée du projet.
+                 C'est aussi là que le vocabulaire de l'interface se cale sur celui de l'équipe.</p>
+            </div>
+            <div class="tl-item">
+              <h3>Vague 3 — Généralisation</h3>
+              <p>Déploiement à toute l'équipe, accompagné de la formation. Les pilotes deviennent
+                 les premiers relais de support.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card pad-sm">
+          <div class="cols c-3" style="text-align:center">
+            <div class="metric"><div class="val sm">1-2</div><div class="lbl">pilotes</div></div>
+            <div class="metric"><div class="val sm">2</div><div class="lbl">modules</div></div>
+            <div class="metric"><div class="val sm">0</div><div class="lbl">build utilisateur</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

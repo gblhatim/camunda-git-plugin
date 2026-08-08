@@ -1,0 +1,113 @@
+<section class="slide" id="s-architecture" data-section="Après" data-accent="brand" data-title="Architecture cible">
+  <p class="kicker">Après · architecture</p>
+  <h2>Du poste de l'auteur jusqu'à la production</h2>
+  <p class="lede">
+    Neuf étapes, trois zones. Ce qui est <span class="accent">en pointillé animé</span> se déclenche tout seul.
+    Survolez une étape pour son détail.
+  </p>
+
+  <div class="body">
+    <div class="cols c-3-2" style="height:100%">
+      <div class="card" style="padding:10px 14px">
+        <svg id="arch-svg" class="arch" viewBox="0 0 740 460" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M1 1 L9 5 L1 9" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <rect class="a-zone" x="22" y="30" width="696" height="122" rx="10"/>
+          <text class="a-zt" x="26" y="22">Sur le poste de l'auteur</text>
+          <rect class="a-zone" x="22" y="175" width="696" height="122" rx="10"/>
+          <text class="a-zt" x="26" y="167">Sur le serveur d'équipe</text>
+          <rect class="a-zone" x="22" y="320" width="696" height="122" rx="10"/>
+          <text class="a-zt" x="26" y="312">Vers la production</text>
+
+          <path class="a-arr" d="M222 91 L272 91" marker-end="url(#ah)"/>
+          <path class="a-arr" d="M462 91 L512 91" marker-end="url(#ah)"/>
+          <path class="a-arr" d="M610 136 L610 187" marker-end="url(#ah)"/>
+          <path class="a-arr auto flowing" d="M518 236 L468 236" marker-end="url(#ah)"/>
+          <path class="a-arr auto flowing" d="M278 236 L228 236" marker-end="url(#ah)"/>
+          <path class="a-arr" d="M130 279 L130 332" marker-end="url(#ah)"/>
+          <path class="a-arr auto flowing" d="M222 381 L272 381" marker-end="url(#ah)"/>
+          <path class="a-arr auto flowing" d="M462 381 L512 381" marker-end="url(#ah)"/>
+
+          <g class="a-node" data-k="poste">
+            <rect class="a-box" x="40" y="48" width="180" height="86" rx="9"/>
+            <text class="a-t" x="56" y="76">Poste de travail</text>
+            <text class="a-s" x="56" y="96">Camunda Modeler + plugin</text>
+            <text class="a-owner" x="56" y="118">AUTEUR MÉTHODE</text>
+          </g>
+          <g class="a-node" data-k="local">
+            <rect class="a-box" x="280" y="48" width="180" height="86" rx="9"/>
+            <text class="a-t" x="296" y="76">Environnement local</text>
+            <text class="a-s" x="296" y="96">Exécuter avant de pousser</text>
+            <text class="a-owner" x="296" y="118">AUTEUR MÉTHODE</text>
+          </g>
+          <g class="a-node" data-k="git">
+            <rect class="a-box" x="520" y="48" width="180" height="86" rx="9"/>
+            <text class="a-t" x="536" y="76">Dépôt Git local</text>
+            <text class="a-s" x="536" y="96">Branches, historique complet</text>
+            <text class="a-owner" x="536" y="118">AUTEUR MÉTHODE</text>
+          </g>
+
+          <g class="a-node" data-k="gitlab">
+            <rect class="a-box" x="520" y="193" width="180" height="86" rx="9"/>
+            <text class="a-t" x="536" y="221">Remote GitLab</text>
+            <text class="a-s" x="536" y="241">Merge Request, issues</text>
+            <text class="a-owner" x="536" y="263">AUTEUR + RELECTEUR</text>
+          </g>
+          <g class="a-node" data-k="ci1">
+            <rect class="a-box" x="280" y="193" width="180" height="86" rx="9"/>
+            <text class="a-t" x="296" y="221">Pipeline (develop)</text>
+            <text class="a-s" x="296" y="241">Build · tests · SonarQube</text>
+            <text class="a-owner" x="296" y="263">AUTOMATIQUE</text>
+          </g>
+          <g class="a-node" data-k="preprod">
+            <rect class="a-box" x="40" y="193" width="180" height="86" rx="9"/>
+            <text class="a-t" x="56" y="221">Préproduction</text>
+            <text class="a-s" x="56" y="241">Revue fonctionnelle</text>
+            <text class="a-owner" x="56" y="263">AUTEUR + ÉQUIPE</text>
+          </g>
+
+          <g class="a-node" data-k="promo">
+            <rect class="a-box" x="40" y="338" width="180" height="86" rx="9"/>
+            <text class="a-t" x="56" y="366">Promotion vers main</text>
+            <text class="a-s" x="56" y="386">Porte de qualité</text>
+            <text class="a-owner" x="56" y="408">INTÉGRATEUR</text>
+          </g>
+          <g class="a-node" data-k="ci2">
+            <rect class="a-box" x="280" y="338" width="180" height="86" rx="9"/>
+            <text class="a-t" x="296" y="366">Pipeline (main)</text>
+            <text class="a-s" x="296" y="386">Build · tests · déploiement</text>
+            <text class="a-owner" x="296" y="408">AUTOMATIQUE</text>
+          </g>
+          <g class="a-node" data-k="prod">
+            <rect class="a-box" x="520" y="338" width="180" height="86" rx="9"/>
+            <text class="a-t" x="536" y="366">Production</text>
+            <text class="a-s" x="536" y="386">Moteur Camunda · rFlow</text>
+            <text class="a-owner" x="536" y="408">INTÉGRATEUR / ADMIN</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="stack">
+        <div class="card hi" id="arch-detail" style="min-height:190px"></div>
+        <div class="card pad-sm">
+          <div class="code-title">Configuration partagée · committée avec le projet</div>
+          <div class="code"><span class="c">// .camunda-git.json — écrite une fois pour toute l'équipe</span>
+{
+  <span class="k">"branchModel"</span>: <span class="s">"gitflow"</span>,
+  <span class="k">"baseBranch"</span>: <span class="s">"develop"</span>,
+  <span class="k">"releaseBranch"</span>: <span class="s">"main"</span>,
+  <span class="k">"mergePolicy"</span>: <span class="s">"merge-request"</span>,
+  <span class="k">"jiraProjectKey"</span>: <span class="s">"BDM"</span>
+}</div>
+        </div>
+        <div class="callout" style="font-size:12.5px">
+          <strong>ModOp ↔ Confluence ↔ Airflow reste hors scope</strong> de BDM 2.0.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

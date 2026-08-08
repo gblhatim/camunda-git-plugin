@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Avant" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_Avant">
+    <bpmn:participant id="Participant_Avant" name="Bureau de Méthode — fonctionnement actuel" processRef="Process_Avant" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_Avant" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_Avant">
+      <bpmn:lane id="Lane_Auteur" name="Auteur Méthode">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Copie</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_UploadTest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_1</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Validateur" name="Validateur / Technique">
+        <bpmn:flowNodeRef>Task_Recette</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NonRegProd</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Resp" name="Responsable mise en prod">
+        <bpmn:flowNodeRef>Task_UploadProd</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_1" name="Besoin de modifier une méthode">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_Copie" name="Copier dans « En rédaction » + ajouter nom &#38; date">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_UploadTest" name="Upload manuel vers l'environnement de test">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Recette" name="Recette manuelle — non-régression">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_UploadProd" name="Upload manuel vers la production">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_NonRegProd" name="Non-régression refaite en production">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_1" name="Méthode en ligne">
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_Copie" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_Copie" targetRef="Task_UploadTest" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_UploadTest" targetRef="Task_Recette" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_Recette" targetRef="Task_UploadProd" />
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_UploadProd" targetRef="Task_NonRegProd" />
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_NonRegProd" targetRef="EndEvent_1" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_Avant">
+      <bpmndi:BPMNShape id="Participant_Avant_di" bpmnElement="Participant_Avant" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1200" height="480" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Auteur_di" bpmnElement="Lane_Auteur" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1170" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Validateur_di" bpmnElement="Lane_Validateur" isHorizontal="true">
+        <dc:Bounds x="190" y="280" width="1170" height="140" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Resp_di" bpmnElement="Lane_Resp" isHorizontal="true">
+        <dc:Bounds x="190" y="420" width="1170" height="140" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="222" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="204" y="205" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Copie_di" bpmnElement="Task_Copie">
+        <dc:Bounds x="290" y="140" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_UploadTest_di" bpmnElement="Task_UploadTest">
+        <dc:Bounds x="480" y="140" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Recette_di" bpmnElement="Task_Recette">
+        <dc:Bounds x="670" y="310" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_UploadProd_di" bpmnElement="Task_UploadProd">
+        <dc:Bounds x="860" y="450" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_NonRegProd_di" bpmnElement="Task_NonRegProd">
+        <dc:Bounds x="1050" y="310" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="1250" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1234" y="205" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="258" y="180" />
+        <di:waypoint x="290" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="430" y="180" />
+        <di:waypoint x="480" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="620" y="180" />
+        <di:waypoint x="645" y="180" />
+        <di:waypoint x="645" y="350" />
+        <di:waypoint x="670" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="810" y="350" />
+        <di:waypoint x="835" y="350" />
+        <di:waypoint x="835" y="490" />
+        <di:waypoint x="860" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
+        <di:waypoint x="1000" y="490" />
+        <di:waypoint x="1025" y="490" />
+        <di:waypoint x="1025" y="350" />
+        <di:waypoint x="1050" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
+        <di:waypoint x="1190" y="350" />
+        <di:waypoint x="1220" y="350" />
+        <di:waypoint x="1220" y="180" />
+        <di:waypoint x="1250" y="180" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

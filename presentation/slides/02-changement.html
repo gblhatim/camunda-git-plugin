@@ -1,0 +1,44 @@
+<section class="slide" id="s-changement" data-section="Contexte" data-accent="brand" data-title="Le changement en une phrase">
+  <p class="kicker">Le changement</p>
+  <h2>Ce qui change, en une ligne par sujet</h2>
+  <p class="lede">
+    BDM&nbsp;2.0 ne change pas ce que produit l'équipe. Il change <strong>comment</strong> elle le produit :
+    le support, la trace, le déploiement et la façon de travailler à plusieurs.
+  </p>
+
+  <div class="body">
+    <div class="cols c-2" style="height:100%">
+      <div class="card" style="background:color-mix(in srgb, var(--bad) 6%, var(--panel))">
+        <div class="row" style="margin-bottom:14px">
+          <span class="badge b-bad">Avant</span>
+          <span class="dimmer small">le fonctionnement actuel</span>
+        </div>
+        <ul class="clean con">
+          <li><strong>Drive partagé</strong> — un dossier « Univers », deux sous-dossiers, la concurrence gérée à la main avec son nom et la date.</li>
+          <li><strong>Aucun historique</strong> — impossible de savoir qui a changé quoi, ni de revenir en arrière.</li>
+          <li><strong>Déploiement manuel</strong> — deux uploads successifs sur rFlow, sans contrôle automatisé.</li>
+          <li><strong>Conflits et écrasements</strong> — pas d'isolation entre auteurs sur l'environnement de test.</li>
+          <li><strong>Pas d'environnement de développement</strong> — la première exécution réelle d'un processus a lieu sur l'environnement partagé.</li>
+        </ul>
+      </div>
+
+      <div class="card hi" style="background:color-mix(in srgb, var(--ok) 6%, var(--panel))">
+        <div class="row" style="margin-bottom:14px">
+          <span class="badge b-ok">Après</span>
+          <span class="dimmer small">BDM 2.0</span>
+        </div>
+        <ul class="clean pro">
+          <li><strong>Git</strong> — versioning complet, branches isolées par sujet de travail.</li>
+          <li><strong>Historique Git complet</strong> — chaque changement daté, attribué, réversible.</li>
+          <li><strong>Pipeline CI/CD</strong> — build, tests et déploiement déclenchés par un push.</li>
+          <li><strong>Merge Request</strong> — la revue devient une étape du processus, pas une bonne volonté.</li>
+          <li><strong>Environnement local complet</strong> — front/back rFlow et moteur Camunda sur le poste de l'auteur.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Le point important : c'est une limite de <strong style="color:var(--ink)">processus</strong>, pas des personnes qui l'exécutent aujourd'hui avec les moyens du bord.
+  </div>
+</section>

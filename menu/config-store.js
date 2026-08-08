@@ -40,18 +40,26 @@ const SCHEMA_VERSION = 2;
 // `developerMode` is here rather than per-repo on purpose: it is a fact
 // about the person sitting at the machine, not about the project. An
 // analyst opening a developer's repo must not inherit their console.
+// `language` is global for the same reason as developerMode: it is a fact
+// about the person at the keyboard, not about the project. Two people on one
+// repo can read the panel in different languages and nothing about their
+// work differs.
 const GLOBAL_KEYS = [
   'repoPath', 'githubToken', 'gitlabToken', 'vocabulary', 'developerMode',
-  'openRouterKey', 'openRouterModel'
+  'openRouterKey', 'openRouterModel', 'language'
 ];
 
 // Keys that are per-project but still personal - how often *I* want to pull.
 const REPO_KEYS = [ 'autoPull', 'gitlabHost' ];
 
 // Keys that must agree across the whole team, so they live in the repo.
+// `enabledTabs` is here rather than global because it is a statement about
+// the project - "this repo is operated by analysts, who have no business in
+// Releases" - and it would be worthless if each machine answered it
+// differently. See tab-access.js.
 const SHARED_KEYS = [
   'branchModel', 'baseBranch', 'releaseBranch', 'branchPrefixes',
-  'mergePolicy', 'jiraHost', 'jiraProjectKey'
+  'mergePolicy', 'jiraHost', 'jiraProjectKey', 'enabledTabs'
 ];
 
 function ensureDir() {

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_ApresProd" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_ApresProd">
+    <bpmn:participant id="Participant_ApresProd" name="BDM 2.0 — promotion vers la production" processRef="Process_ApresProd" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_ApresProd" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_ApresProd">
+      <bpmn:lane id="Lane_Equipe" name="Auteur Méthode &#38; équipe">
+        <bpmn:flowNodeRef>Start_Prod</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RevueFonc</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Sonar</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Retour</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Integrateur" name="Intégrateur">
+        <bpmn:flowNodeRef>Task_Promotion</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_CI2" name="CI/CD — automatique">
+        <bpmn:flowNodeRef>Task_PipelineMain</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Deploy</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Prod</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_Prod" name="Méthode livrée en préproduction">
+      <bpmn:outgoing>PFlow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_RevueFonc" name="Revue fonctionnelle en préproduction">
+      <bpmn:incoming>PFlow_1</bpmn:incoming>
+      <bpmn:outgoing>PFlow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_Sonar" name="Qualité SonarQube corrigée ?">
+      <bpmn:incoming>PFlow_2</bpmn:incoming>
+      <bpmn:outgoing>PFlow_Oui</bpmn:outgoing>
+      <bpmn:outgoing>PFlow_Non</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Retour" name="Retour en développement">
+      <bpmn:incoming>PFlow_Non</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="Task_Promotion" name="Promotion vers main : dual merge + tag">
+      <bpmn:incoming>PFlow_Oui</bpmn:incoming>
+      <bpmn:outgoing>PFlow_3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:serviceTask id="Task_PipelineMain" name="Pipeline main : build, tests, déploiement">
+      <bpmn:incoming>PFlow_3</bpmn:incoming>
+      <bpmn:outgoing>PFlow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Deploy" name="Publier sur le moteur Camunda / rFlow">
+      <bpmn:incoming>PFlow_4</bpmn:incoming>
+      <bpmn:outgoing>PFlow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Prod" name="Méthode en production">
+      <bpmn:incoming>PFlow_5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="PFlow_1" sourceRef="Start_Prod" targetRef="Task_RevueFonc" />
+    <bpmn:sequenceFlow id="PFlow_2" sourceRef="Task_RevueFonc" targetRef="Gateway_Sonar" />
+    <bpmn:sequenceFlow id="PFlow_Non" name="Non — à corriger" sourceRef="Gateway_Sonar" targetRef="End_Retour" />
+    <bpmn:sequenceFlow id="PFlow_Oui" name="Oui" sourceRef="Gateway_Sonar" targetRef="Task_Promotion" />
+    <bpmn:sequenceFlow id="PFlow_3" sourceRef="Task_Promotion" targetRef="Task_PipelineMain" />
+    <bpmn:sequenceFlow id="PFlow_4" sourceRef="Task_PipelineMain" targetRef="Task_Deploy" />
+    <bpmn:sequenceFlow id="PFlow_5" sourceRef="Task_Deploy" targetRef="End_Prod" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_3">
+    <bpmndi:BPMNPlane id="BPMNPlane_3" bpmnElement="Collaboration_ApresProd">
+      <bpmndi:BPMNShape id="Participant_ApresProd_di" bpmnElement="Participant_ApresProd" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1300" height="480" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Equipe_di" bpmnElement="Lane_Equipe" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1270" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Integrateur_di" bpmnElement="Lane_Integrateur" isHorizontal="true">
+        <dc:Bounds x="190" y="240" width="1270" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_CI2_di" bpmnElement="Lane_CI2" isHorizontal="true">
+        <dc:Bounds x="190" y="400" width="1270" height="160" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Prod_di" bpmnElement="Start_Prod">
+        <dc:Bounds x="222" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="204" y="185" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RevueFonc_di" bpmnElement="Task_RevueFonc">
+        <dc:Bounds x="300" y="120" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Sonar_di" bpmnElement="Gateway_Sonar" isMarkerVisible="true">
+        <dc:Bounds x="490" y="135" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="472" y="92" width="86" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Retour_di" bpmnElement="End_Retour">
+        <dc:Bounds x="612" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="594" y="185" width="73" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Promotion_di" bpmnElement="Task_Promotion">
+        <dc:Bounds x="600" y="280" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PipelineMain_di" bpmnElement="Task_PipelineMain">
+        <dc:Bounds x="810" y="440" width="160" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Deploy_di" bpmnElement="Task_Deploy">
+        <dc:Bounds x="1020" y="440" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Prod_di" bpmnElement="End_Prod">
+        <dc:Bounds x="1220" y="462" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1204" y="505" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="PFlow_1_di" bpmnElement="PFlow_1">
+        <di:waypoint x="258" y="160" />
+        <di:waypoint x="300" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PFlow_2_di" bpmnElement="PFlow_2">
+        <di:waypoint x="440" y="160" />
+        <di:waypoint x="490" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PFlow_Non_di" bpmnElement="PFlow_Non">
+        <di:waypoint x="540" y="160" />
+        <di:waypoint x="612" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="546" y="136" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PFlow_Oui_di" bpmnElement="PFlow_Oui">
+        <di:waypoint x="515" y="185" />
+        <di:waypoint x="515" y="320" />
+        <di:waypoint x="600" y="320" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="522" y="238" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PFlow_3_di" bpmnElement="PFlow_3">
+        <di:waypoint x="760" y="320" />
+        <di:waypoint x="785" y="320" />
+        <di:waypoint x="785" y="480" />
+        <di:waypoint x="810" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PFlow_4_di" bpmnElement="PFlow_4">
+        <di:waypoint x="970" y="480" />
+        <di:waypoint x="1020" y="480" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="PFlow_5_di" bpmnElement="PFlow_5">
+        <di:waypoint x="1170" y="480" />
+        <di:waypoint x="1220" y="480" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -238,8 +238,10 @@ const getRoutes = {
   '/project/setup': async () => projectSetup.inspect(),
   '/context': async () => contextService.get(),
 
-  // Open pull/merge requests from the team server, flagged with which ones
-  // conflict. Read-only; the resolving happens on a POST below.
+  // Open pull/merge requests from the team server. Read-only; the resolving
+  // happens on a POST below. The cheap form - one API call - because this
+  // runs whenever the tab is opened. The conflict and review columns come
+  // from `/merge-requests/refresh`, which the user asks for.
   '/merge-requests': async () => mergeRequestService.list(),
 
   // The whole team on one screen: every workstream with its owner, how far
@@ -482,6 +484,12 @@ const postRoutes = {
 
     return { ok: true };
   },
+
+  // The same list as the GET, but with the conflict and review columns
+  // filled in - which on GitHub costs two API calls per request. A POST
+  // because it is the expensive form and should only ever run when the user
+  // presses refresh, not on a tab opening or a repository change.
+  '/merge-requests/refresh': async () => mergeRequestService.list({ enrich: true }),
 
   // Open the visual review of a merge request (all changed files,
   // before/after, synced zoom). The heavy lifting happens in the window;

@@ -1,0 +1,63 @@
+<section class="slide" id="s-sonar" data-section="Piliers" data-accent="sonar" data-title="Pilier 4 — SonarQube">
+  <p class="kicker">Pilier 04 · SonarQube</p>
+  <h2>Informatif tôt, bloquant tard</h2>
+  <p class="lede">
+    Le scan porte sur la <strong>qualité du BPMN</strong>, pas sur la logique métier. Il ne dit pas si une méthode est juste —
+    il dit si elle est lisible, maintenable et documentée par quelqu'un d'autre que son auteur.
+  </p>
+
+  <div class="body">
+    <div class="cols c-2" style="height:100%">
+      <div class="stack">
+        <div class="card hi" style="--accent:var(--ok)">
+          <div class="row" style="margin-bottom:8px">
+            <span class="badge b-ok">Sur develop</span>
+            <span class="dimmer small">préproduction</span>
+          </div>
+          <h3>Le scan tourne à chaque push, et n'empêche rien</h3>
+          <p>Il informe l'auteur pendant qu'il travaille, au moment où corriger coûte le moins cher.
+             Un déploiement en préproduction n'est jamais bloqué par la qualité.</p>
+        </div>
+
+        <div class="card hi" style="--accent:var(--bad)">
+          <div class="row" style="margin-bottom:8px">
+            <span class="badge b-bad">À la promotion vers main</span>
+            <span class="dimmer small">production</span>
+          </div>
+          <h3>Le même résultat devient bloquant</h3>
+          <p>Une méthode dont la qualité détectée sur develop n'a pas été corrigée ne peut pas atteindre la production.
+             C'est la porte de qualité du projet, et elle est portée par l'Intégrateur — pas par l'auteur.</p>
+        </div>
+
+        <div class="callout">
+          <strong>Pourquoi ce découpage ?</strong> Une porte bloquante trop tôt se contourne : on désactive la règle, on marque en « faux positif »,
+          on pousse ailleurs. Bloquer au dernier moment garde le signal utile sans transformer le quotidien en course d'obstacles.
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" style="flex:1">
+          <h3>Ce qui est évalué — la structure, pas le métier</h3>
+          <ul class="clean" style="margin-top:12px">
+            <li><strong>Nommage des éléments</strong> — une tâche appelée « Task_12 » ne dit rien à celui qui reprendra la méthode.</li>
+            <li><strong>Flux inutilisés ou orphelins</strong> — des chemins qui ne mènent nulle part, vestiges d'une version précédente.</li>
+            <li><strong>Complexité des passerelles</strong> — au-delà d'un certain nombre de branches, une passerelle devient illisible.</li>
+            <li><strong>Documentation minimale sur les tâches</strong> — le lien avec le ModOp passe par là.</li>
+          </ul>
+        </div>
+
+        <div class="callout warn">
+          <strong>À valider avec l'équipe SonarQube.</strong> Le détail exact des règles et des seuils reste à arrêter —
+          la configuration vit dans le dépôt CI/CD, pas dans celui du plugin. Le principe acté est celui-ci :
+          <strong>informatif tôt, bloquant tard.</strong>
+        </div>
+
+        <div class="card pad-sm">
+          <p class="small">La démonstration de la porte de qualité se trouve sur la slide
+            <a href="#/12" class="accent mono" data-goto="12" style="cursor:pointer;text-decoration:none">12 — CI/CD</a> :
+            tentez une promotion sans avoir coché « qualité corrigée ».</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

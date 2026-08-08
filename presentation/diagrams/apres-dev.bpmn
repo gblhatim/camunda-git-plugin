@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_ApresDev" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_ApresDev">
+    <bpmn:participant id="Participant_ApresDev" name="BDM 2.0 — boucle de développement" processRef="Process_ApresDev" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_ApresDev" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_ApresDev">
+      <bpmn:lane id="Lane_Auteur2" name="Auteur Méthode">
+        <bpmn:flowNodeRef>Start_Dev</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Local</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Commit</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Relecteur" name="Relecteur">
+        <bpmn:flowNodeRef>Task_MR</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_MR</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_MergeDevelop</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_CI" name="CI/CD — automatique">
+        <bpmn:flowNodeRef>Task_Pipeline</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Preprod</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Preprod</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start_Dev" name="Modification d'une méthode">
+      <bpmn:outgoing>DFlow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_Local" name="Développer &#38; exécuter en local">
+      <bpmn:incoming>DFlow_1</bpmn:incoming>
+      <bpmn:incoming>DFlow_6</bpmn:incoming>
+      <bpmn:outgoing>DFlow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Commit" name="Commit &#38; push sur feature/BDM-123456">
+      <bpmn:incoming>DFlow_2</bpmn:incoming>
+      <bpmn:outgoing>DFlow_3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_MR" name="Revue en Merge Request (diff visuel BPMN)">
+      <bpmn:incoming>DFlow_3</bpmn:incoming>
+      <bpmn:outgoing>DFlow_4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_MR" name="MR approuvée ?">
+      <bpmn:incoming>DFlow_4</bpmn:incoming>
+      <bpmn:outgoing>DFlow_5</bpmn:outgoing>
+      <bpmn:outgoing>DFlow_6</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_MergeDevelop" name="Fusionner dans develop">
+      <bpmn:incoming>DFlow_5</bpmn:incoming>
+      <bpmn:outgoing>DFlow_7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:serviceTask id="Task_Pipeline" name="Pipeline : build, tests, scan SonarQube (informatif)">
+      <bpmn:incoming>DFlow_7</bpmn:incoming>
+      <bpmn:outgoing>DFlow_8</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Preprod" name="Déployer en préproduction">
+      <bpmn:incoming>DFlow_8</bpmn:incoming>
+      <bpmn:outgoing>DFlow_9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Preprod" name="Méthode livrée en préproduction">
+      <bpmn:incoming>DFlow_9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="DFlow_1" sourceRef="Start_Dev" targetRef="Task_Local" />
+    <bpmn:sequenceFlow id="DFlow_2" sourceRef="Task_Local" targetRef="Task_Commit" />
+    <bpmn:sequenceFlow id="DFlow_3" sourceRef="Task_Commit" targetRef="Task_MR" />
+    <bpmn:sequenceFlow id="DFlow_4" sourceRef="Task_MR" targetRef="Gateway_MR" />
+    <bpmn:sequenceFlow id="DFlow_5" name="Oui" sourceRef="Gateway_MR" targetRef="Task_MergeDevelop" />
+    <bpmn:sequenceFlow id="DFlow_6" name="Non — corrections demandées" sourceRef="Gateway_MR" targetRef="Task_Local" />
+    <bpmn:sequenceFlow id="DFlow_7" sourceRef="Task_MergeDevelop" targetRef="Task_Pipeline" />
+    <bpmn:sequenceFlow id="DFlow_8" sourceRef="Task_Pipeline" targetRef="Task_Preprod" />
+    <bpmn:sequenceFlow id="DFlow_9" sourceRef="Task_Preprod" targetRef="End_Preprod" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_2">
+    <bpmndi:BPMNPlane id="BPMNPlane_2" bpmnElement="Collaboration_ApresDev">
+      <bpmndi:BPMNShape id="Participant_ApresDev_di" bpmnElement="Participant_ApresDev" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1420" height="480" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Auteur2_di" bpmnElement="Lane_Auteur2" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1390" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Relecteur_di" bpmnElement="Lane_Relecteur" isHorizontal="true">
+        <dc:Bounds x="190" y="280" width="1390" height="140" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_CI_di" bpmnElement="Lane_CI" isHorizontal="true">
+        <dc:Bounds x="190" y="420" width="1390" height="140" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Start_Dev_di" bpmnElement="Start_Dev">
+        <dc:Bounds x="222" y="162" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="206" y="205" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Local_di" bpmnElement="Task_Local">
+        <dc:Bounds x="290" y="140" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Commit_di" bpmnElement="Task_Commit">
+        <dc:Bounds x="480" y="140" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MR_di" bpmnElement="Task_MR">
+        <dc:Bounds x="670" y="310" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_MR_di" bpmnElement="Gateway_MR" isMarkerVisible="true">
+        <dc:Bounds x="860" y="325" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="848" y="382" width="75" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MergeDevelop_di" bpmnElement="Task_MergeDevelop">
+        <dc:Bounds x="960" y="310" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Pipeline_di" bpmnElement="Task_Pipeline">
+        <dc:Bounds x="1150" y="450" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Preprod_di" bpmnElement="Task_Preprod">
+        <dc:Bounds x="1350" y="450" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Preprod_di" bpmnElement="End_Preprod">
+        <dc:Bounds x="1522" y="472" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1504" y="515" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="DFlow_1_di" bpmnElement="DFlow_1">
+        <di:waypoint x="258" y="180" />
+        <di:waypoint x="290" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_2_di" bpmnElement="DFlow_2">
+        <di:waypoint x="430" y="180" />
+        <di:waypoint x="480" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_3_di" bpmnElement="DFlow_3">
+        <di:waypoint x="620" y="180" />
+        <di:waypoint x="645" y="180" />
+        <di:waypoint x="645" y="350" />
+        <di:waypoint x="670" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_4_di" bpmnElement="DFlow_4">
+        <di:waypoint x="810" y="350" />
+        <di:waypoint x="860" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_5_di" bpmnElement="DFlow_5">
+        <di:waypoint x="910" y="350" />
+        <di:waypoint x="960" y="350" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="924" y="332" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_6_di" bpmnElement="DFlow_6">
+        <di:waypoint x="885" y="325" />
+        <di:waypoint x="885" y="250" />
+        <di:waypoint x="360" y="250" />
+        <di:waypoint x="360" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="586" y="222" width="74" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_7_di" bpmnElement="DFlow_7">
+        <di:waypoint x="1100" y="350" />
+        <di:waypoint x="1125" y="350" />
+        <di:waypoint x="1125" y="490" />
+        <di:waypoint x="1150" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_8_di" bpmnElement="DFlow_8">
+        <di:waypoint x="1300" y="490" />
+        <di:waypoint x="1350" y="490" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DFlow_9_di" bpmnElement="DFlow_9">
+        <di:waypoint x="1490" y="490" />
+        <di:waypoint x="1522" y="490" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

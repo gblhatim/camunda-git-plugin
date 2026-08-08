@@ -1,0 +1,93 @@
+<section class="slide" id="s-chiffres" data-section="Après" data-accent="brand" data-title="Les chiffres de gain">
+  <p class="kicker">Le gain visé</p>
+  <h2>13,2 jours-homme par méthode, ramenés à 0,5</h2>
+  <p class="lede">
+    <strong>Ce sont des objectifs ciblés, pas des résultats mesurés.</strong>
+    Ils décrivent la charge supprimée par l'automatisation, pas une performance déjà constatée en production.
+  </p>
+
+  <div class="body">
+    <div id="calc" class="cols c-3-2" style="height:100%">
+      <div class="stack">
+        <table class="t">
+          <thead>
+            <tr><th>Poste de charge</th><th>Avant</th><th>Après</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Mise en production</strong><br><span class="dimmer small">déploiement, recette, tests camunda-bpm-assert, validation, communication</span></td>
+              <td class="num t-bad">2 j × 6 pers.<br><strong>12 jh</strong></td>
+              <td class="num t-ok">0,5 j × 1 pers.<br><strong>0,5 jh</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Collaboration + traçabilité</strong><br><span class="dimmer small">gestion de la concurrence à la main sur le drive</span></td>
+              <td class="num t-bad">0,2 j × 6 pers.<br><strong>1,2 jh</strong></td>
+              <td class="num t-ok"><strong>0 jh</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Total par méthode</strong></td>
+              <td class="num t-bad"><strong style="font-size:16px">13,2 jh</strong></td>
+              <td class="num t-ok"><strong style="font-size:16px">0,5 jh</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="bars" style="margin-top:6px">
+          <div class="bar-row">
+            <div class="bl">Charge annuelle — avant</div>
+            <div class="bar-track"><div class="bar-fill" id="bar-avant"></div></div>
+            <div class="bv t-bad"><span id="val-avant">0</span> jh</div>
+          </div>
+          <div class="bar-row">
+            <div class="bl">Charge annuelle — après</div>
+            <div class="bar-track"><div class="bar-fill ok" id="bar-apres"></div></div>
+            <div class="bv t-ok"><span id="val-apres">0</span> jh</div>
+          </div>
+        </div>
+
+        <div class="card pad-sm">
+          <div class="spread">
+            <div class="fill">
+              <div class="code-title" style="margin-bottom:8px">Méthodes produites par an — <span class="accent mono" id="calc-nv">40</span></div>
+              <input type="range" id="calc-n" min="5" max="150" step="5" value="40">
+            </div>
+            <div class="metric good" style="min-width:150px;text-align:right">
+              <div class="val sm"><span id="calc-saved">0</span><span class="unit">jh / an</span></div>
+              <div class="lbl">charge libérée</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card hi" style="text-align:center;padding:22px">
+          <div class="metric acc">
+            <div class="val lg" id="calc-factor">0×</div>
+            <div class="lbl">facteur sur la charge par méthode</div>
+          </div>
+        </div>
+        <div class="cols c-2">
+          <div class="card" style="text-align:center">
+            <div class="metric good"><div class="val sm" id="calc-pct">0 %</div><div class="lbl">de charge</div></div>
+          </div>
+          <div class="card" style="text-align:center">
+            <div class="metric good"><div class="val sm">−90 %</div><div class="lbl">de délai</div></div>
+          </div>
+        </div>
+        <div class="callout warn">
+          <strong>Le « 5 jours » si la question vient.</strong> Cinq jours calendaires, dont <strong>2,2 jours de travail effectif</strong>.
+          Le reste est de la coordination et de l'attente — pas du temps productif perdu par la nouvelle méthode.
+        </div>
+        <div class="callout">
+          <strong>+30 % de productivité estimée</strong> sur le périmètre Camunda. Chiffre séparé, à qualifier différemment :
+          il porte sur l'activité globale, pas sur la charge d'une méthode.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <span class="badge b-warn">Estimation</span>
+    Objectifs ciblés issus du cadrage BDM 2.0 — à confronter aux premières méthodes réellement produites avec la nouvelle chaîne.
+  </div>
+</section>

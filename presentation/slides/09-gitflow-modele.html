@@ -1,0 +1,65 @@
+<section class="slide" id="s-gitflow" data-section="Piliers" data-accent="gitflow" data-title="Pilier 1 — Gitflow">
+  <p class="kicker">Pilier 01 · Gitflow</p>
+  <h2>Deux branches longues, trois branches courtes</h2>
+  <p class="lede">
+    Le modèle de branches n'est pas une convention affichée dans un wiki : il est écrit dans la configuration du projet
+    et appliqué par le plugin. Le départ d'une branche n'est plus une décision humaine.
+  </p>
+
+  <div class="body">
+    <div class="cols c-2" style="height:100%">
+      <div class="stack">
+        <table class="t">
+          <thead>
+            <tr><th>Type</th><th>Ticket</th><th>Part de</th><th>Fusionne dans</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="mono" style="color:#4ade80">feature/*</span></td>
+              <td>requis</td><td>branche courante</td><td>branche courante <span class="dimmer">via MR revue</span></td>
+            </tr>
+            <tr>
+              <td><span class="mono" style="color:#4ade80">bugfix/*</span></td>
+              <td>requis</td><td>branche courante</td><td>branche courante <span class="dimmer">via MR revue</span></td>
+            </tr>
+            <tr>
+              <td><span class="mono" style="color:#fb923c">release/*</span></td>
+              <td>—</td><td><span class="mono">develop</span></td>
+              <td><span class="mono">main</span> <span class="dimmer">+ tag</span> <strong>et</strong> <span class="mono">develop</span></td>
+            </tr>
+            <tr>
+              <td><span class="mono" style="color:#f87171">hotfix/*</span></td>
+              <td>optionnel</td>
+              <td><span class="mono">main</span> <span class="dimmer">— ce qui est live</span></td>
+              <td><span class="mono">main</span> <strong>et</strong> <span class="mono">develop</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card pad-sm frag-up">
+          <h3>Le nommage est imposé, pas suggéré</h3>
+          <div class="code" style="margin:8px 0"><span class="k">feature</span>/<span class="n">BDM-123456</span>-<span class="s">relance-client</span></div>
+          <p style="font-size:13px">Le numéro de ticket reste visible partout où la branche apparaît — Jira, journal de build, point quotidien.
+             Il n'y a pas de branche sans ticket pour une feature ou un bugfix.</p>
+        </div>
+
+        <div class="card pad-sm frag-up">
+          <h3>Deux exceptions assumées</h3>
+          <ul class="clean" style="margin-top:6px">
+            <li><strong>hotfix part de <span class="mono">main</span></strong>, pas de develop : on corrige ce qui est réellement en ligne.</li>
+            <li><strong>Le ticket y est optionnel</strong> — exiger un ticket avant de corriger un incident live est une règle qu'on finit toujours par contourner.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="stack" style="height:100%">
+        <div class="bpmn-theatre" data-diagrams="integration" style="flex:1;min-height:0"></div>
+        <div class="callout" style="flex:none">
+          <strong>Le dual merge en une seule action.</strong> Gitflow standard demande deux commandes ;
+          l'oubli du retour vers <span class="mono">develop</span> est son échec le plus classique — et le plus silencieux.
+          Ici, une action « Intégrer », et l'absence de back-merge est détectée automatiquement.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

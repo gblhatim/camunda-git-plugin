@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BDM 2.0 — Présentation</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%80%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>/*@FONT_BPMN*/</style>
+<style>/*@CSS_VENDOR*/</style>
+<style>/*@CSS_DECK*/</style>
+</head>
+<body>
+
+<div id="viewport">
+  <div id="stage">
+<!--@SLIDES-->
+  </div>
+</div>
+
+<div id="rail"></div>
+<div id="progress"></div>
+
+<div id="hud">
+  <button id="btn-prev" title="Précédent (←)">‹</button>
+  <button id="btn-next" title="Suivant (→)">›</button>
+  <span id="counter">01 / 23</span>
+  <button id="btn-ov" title="Vue d'ensemble (O)">▦</button>
+  <button id="btn-theme" title="Thème clair / sombre (T)">◐</button>
+  <button id="btn-help" title="Raccourcis (?)">?</button>
+</div>
+
+<div id="overview">
+  <div class="spread">
+    <div>
+      <p class="kicker" style="color:var(--accent)">Vue d'ensemble</p>
+      <h2>BDM 2.0 — 23 slides</h2>
+    </div>
+    <button class="btn" id="ov-close">Fermer (Échap)</button>
+  </div>
+  <div id="ov-grid"></div>
+</div>
+
+<div id="help">
+  <div class="box">
+    <h3>Raccourcis</h3>
+    <div class="k-row"><span>Slide ou étape suivante</span><span><kbd>→</kbd> <kbd>Espace</kbd></span></div>
+    <div class="k-row"><span>Retour en arrière</span><span><kbd>←</kbd></span></div>
+    <div class="k-row"><span>Slide suivante / précédente (sans étapes)</span><span><kbd>↓</kbd> <kbd>↑</kbd></span></div>
+    <div class="k-row"><span>Première / dernière slide</span><span><kbd>Début</kbd> <kbd>Fin</kbd></span></div>
+    <div class="k-row"><span>Vue d'ensemble</span><span><kbd>O</kbd></span></div>
+    <div class="k-row"><span>Thème clair / sombre</span><span><kbd>T</kbd></span></div>
+    <div class="k-row"><span>Plein écran</span><span><kbd>F</kbd></span></div>
+    <div class="k-row"><span>Cette aide</span><span><kbd>?</kbd></span></div>
+    <p class="note" style="margin-top:16px">
+      Les diagrammes BPMN sont interactifs : molette pour zoomer, glisser pour déplacer,
+      survol pour le détail d'un élément, « Dérouler » pour suivre le flux étape par étape.
+    </p>
+  </div>
+</div>
+
+<script>/*@DIAGRAMS*/</script>
+<script>/*@JS_VENDOR*/</script>
+<script>/*@JS_DECK*/</script>
+</body>
+</html>

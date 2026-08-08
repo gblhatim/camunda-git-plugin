@@ -52,6 +52,7 @@ import {
 
 import { History } from './history.js';
 import { Icon } from './icons.js';
+import { t, setLanguage, getLanguage } from './i18n.js';
 
 const { useState, useEffect, useCallback, useMemo } = React;
 const h = React.createElement;
@@ -92,24 +93,50 @@ function tabLabel(icon, text, extraClass) {
   );
 }
 
-const TAB_LABELS = {
-  myWork: tabLabel('Branch', 'My Work'),
-  team: tabLabel('Group', 'Team'),
-  diagrams: tabLabel('Document', 'Diagrams'),
-  ai: tabLabel('MagicWand', 'AI'),
+/**
+ * Built per language rather than once at module scope, and cached, because
+ * both properties matter and they pull in opposite directions.
+ *
+ * The stability the comment above demands is *across renders*, so a cache
+ * keyed by language gives the effect the same element identity every time
+ * and keeps it quiet. Building them at module scope instead would freeze
+ * every tab name in English: this file is imported long before the language
+ * is read from settings, so `t()` at that moment can only answer in the
+ * default. Rebuilding once, on the language actually changing, costs a
+ * single re-register - which is the correct behaviour anyway, since the tab
+ * names really did change.
+ */
+const TAB_LABEL_CACHE = {};
 
-  // From here the tabs sit at the right-hand end of the strip - they are
-  // reference and configuration, not the work itself.
-  activity: tabLabel('Activity', 'Activity', 'cgp-tablabel--end'),
+function tabLabels() {
+  const lang = getLanguage();
 
-  // Icon only: it is configured once and recognised by its gear, so the word
-  // is spent screen width. The title carries the name for a screen reader.
-  settings: h('span', {
-    className: 'cgp-tablabel cgp-tablabel--icon',
-    title: 'Git settings',
-    'aria-label': 'Git settings'
-  }, h(Icon, { name: 'Settings', size: 15 }))
-};
+  if (!TAB_LABEL_CACHE[lang]) {
+    TAB_LABEL_CACHE[lang] = {
+      myWork: tabLabel('Branch', t('My Work')),
+      team: tabLabel('Group', t('Team')),
+      diagrams: tabLabel('Document', t('Diagrams')),
+      ai: tabLabel('MagicWand', 'AI'),
+
+      // From here the tabs sit at the right-hand end of the strip - they are
+      // reference and configuration, not the work itself. The first argument
+      // is the icon name, not text, so it is not translated.
+      activity: tabLabel(t('Activity'), t('Activity'), 'cgp-tablabel--end'),
+
+      // Icon only: it is configured once and recognised by its gear, so the
+      // word is spent screen width. The title carries the name for a screen
+      // reader.
+      settings: h('span', {
+        className: 'cgp-tablabel cgp-tablabel--icon',
+        title: t('Git settings'),
+        'aria-label': t('Git settings')
+        // An icon name, not text - never translated.
+      }, h(Icon, { name: 'Settings', size: 15 }))
+    };
+  }
+
+  return TAB_LABEL_CACHE[lang];
+}
 
 /**
  * Flatten the diagram tree to the .bpmn files an AI edit can target.
@@ -215,7 +242,7 @@ function apiGet({ host, port, token }, route, { timeoutMs } = {}) {
     })
     .catch(err => {
       if (err.name === 'AbortError') {
-        throw new Error('This took too long and was stopped. The team server may be unreachable.');
+        throw new Error(t('This took too long and was stopped. The team server may be unreachable.'));
       }
       throw err;
     })
@@ -294,7 +321,7 @@ function statusLabel(status) {
   }
 
   if (status.detached) {
-    return 'an old version · not on a workstream';
+    return t('an old version · not on a workstream');
   }
 
   const branch = status.branch || 'no branch';
@@ -316,7 +343,7 @@ function statusTooltip(status, error) {
   }
 
   if (!status) {
-    return 'Checking your diagrams for changes...';
+    return t('Checking your diagrams for changes...');
   }
 
   const lines = [];
@@ -326,7 +353,7 @@ function statusTooltip(status, error) {
   } else if (status.changedTotal) {
     lines.push(`${status.changedTotal} file(s) changed since your last save point`);
   } else {
-    lines.push('No changes - everything is saved');
+    lines.push(t('No changes - everything is saved'));
   }
 
   if (status.ahead) lines.push(`${status.ahead} save point(s) not yet sent to the team`);
@@ -353,96 +380,95 @@ function statusTooltip(status, error) {
  * that may be asleep. Everything else gets the generic reassurance.
  */
 const BUSY_LABELS = {
-  '/stage': { label: 'Including that diagram in your next save point' },
-  '/unstage': { label: 'Leaving that diagram out of your next save point' },
-  '/stage-all': { label: 'Including everything in your next save point' },
-  '/commit': { label: 'Creating a save point' },
+  '/stage': { label: t('Including that diagram in your next save point') },
+  '/unstage': { label: t('Leaving that diagram out of your next save point') },
+  '/stage-all': { label: t('Including everything in your next save point') },
+  '/commit': { label: t('Creating a save point') },
 
   '/push': {
-    label: 'Sending your work to the team',
-    slow: 'Still sending - this is the network, not your diagrams. Nothing is lost if it fails.'
+    label: t('Sending your work to the team'),
+    slow: t('Still sending - this is the network, not your diagrams. Nothing is lost if it fails.')
   },
   '/pull': {
     label: "Getting the team's updates",
-    slow: 'Still downloading - large projects take a while over a slow connection or VPN.'
+    slow: t('Still downloading - large projects take a while over a slow connection or VPN.')
   },
 
-  '/routine/save/preview': { label: 'Working out what would be saved' },
-  '/routine/sync/preview': { label: 'Working out what getting in step would do' },
+  '/routine/save/preview': { label: t('Working out what would be saved') },
+  '/routine/sync/preview': { label: t('Working out what getting in step would do') },
   '/routine/sync/run': {
-    label: 'Getting you back in step with the team',
-    slow: 'Still going - this gets their work and sends yours, so it is two ' +
-      'trips to the server.'
+    label: t('Getting you back in step with the team'),
+    slow: t('Still going - this gets their work and sends yours, so it is two trips to the server.')
   },
-  '/routine/save/run': { label: 'Saving your work' },
-  '/routine/finish/preview': { label: 'Working out what finishing would do' },
-  '/routine/finish/run': { label: 'Finishing this workstream' },
-  '/routine/rollback/preview': { label: 'Working out what would change' },
-  '/routine/rollback/run': { label: 'Putting your diagrams back' },
+  '/routine/save/run': { label: t('Saving your work') },
+  '/routine/finish/preview': { label: t('Working out what finishing would do') },
+  '/routine/finish/run': { label: t('Finishing this workstream') },
+  '/routine/rollback/preview': { label: t('Working out what would change') },
+  '/routine/rollback/run': { label: t('Putting your diagrams back') },
 
-  '/conflict/resolve': { label: 'Applying your decision' },
-  '/conflict/combine': { label: 'Combining both versions' },
+  '/conflict/resolve': { label: t('Applying your decision') },
+  '/conflict/combine': { label: t('Combining both versions') },
   '/merge-request/resolve': {
-    label: 'Bringing the two branches together so you can resolve them',
-    slow: 'Still going - this fetches from the server and starts the merge.'
+    label: t('Bringing the two branches together so you can resolve them'),
+    slow: t('Still going - this fetches from the server and starts the merge.')
   },
   '/merge-request/review': {
-    label: 'Opening the review',
-    slow: 'Still going - this fetches the two branches to compare them.'
+    label: t('Opening the review'),
+    slow: t('Still going - this fetches the two branches to compare them.')
   },
   '/ai/edit/preview': {
-    label: 'Asking the AI for an edit',
-    slow: 'Still thinking - the model is rewriting the diagram.'
+    label: t('Asking the AI for an edit'),
+    slow: t('Still thinking - the model is rewriting the diagram.')
   },
-  '/ai/edit/apply': { label: 'Applying the AI edit' },
+  '/ai/edit/apply': { label: t('Applying the AI edit') },
   '/ai/edit/from-chat': {
-    label: 'Generating the edit from your conversation',
-    slow: 'Still going - the model is writing the whole diagram.'
+    label: t('Generating the edit from your conversation'),
+    slow: t('Still going - the model is writing the whole diagram.')
   },
-  '/ai/edit/review': { label: 'Opening the before/after' },
-  '/catalog/new': { label: 'Creating the new diagram' },
-  '/support/report': { label: 'Compiling the problem report' },
-  '/conflict/undo': { label: 'Putting that decision back' },
-  '/conflict/compare': { label: 'Opening the two versions' },
-  '/merge/complete': { label: 'Finishing up' },
-  '/merge/abort': { label: 'Cancelling and putting everything back' },
+  '/ai/edit/review': { label: t('Opening the before/after') },
+  '/catalog/new': { label: t('Creating the new diagram') },
+  '/support/report': { label: t('Compiling the problem report') },
+  '/conflict/undo': { label: t('Putting that decision back') },
+  '/conflict/compare': { label: t('Opening the two versions') },
+  '/merge/complete': { label: t('Finishing up') },
+  '/merge/abort': { label: t('Cancelling and putting everything back') },
 
-  '/workstream/switch': { label: 'Switching workstream' },
-  '/workstream/create': { label: 'Starting the new workstream' },
-  '/workstream/delete': { label: 'Removing that workstream' },
-  '/workstream/delete/preview': { label: 'Checking whether that is safe to remove' },
+  '/workstream/switch': { label: t('Switching workstream') },
+  '/workstream/create': { label: t('Starting the new workstream') },
+  '/workstream/delete': { label: t('Removing that workstream') },
+  '/workstream/delete/preview': { label: t('Checking whether that is safe to remove') },
 
-  '/release/start': { label: 'Cutting the release branch' },
-  '/release/integrate/preview': { label: 'Checking what releasing would do' },
+  '/release/start': { label: t('Cutting the release branch') },
+  '/release/integrate/preview': { label: t('Checking what releasing would do') },
   '/release/integrate': {
-    label: 'Putting it live and bringing it back',
-    slow: 'Still going - this merges into two branches and marks the version.'
+    label: t('Putting it live and bringing it back'),
+    slow: t('Still going - this merges into two branches and marks the version.')
   },
-  '/release/back-merge': { label: 'Bringing the live changes back' },
+  '/release/back-merge': { label: t('Bringing the live changes back') },
 
-  '/setup/init': { label: 'Setting this folder up to track changes' },
-  '/setup/identity': { label: 'Recording who you are' },
-  '/setup/first-save': { label: 'Creating the first save point' },
+  '/setup/init': { label: t('Setting this folder up to track changes') },
+  '/setup/identity': { label: t('Recording who you are') },
+  '/setup/first-save': { label: t('Creating the first save point') },
   '/setup/connect': {
-    label: 'Connecting to the team server',
-    slow: 'Still waiting for the server to answer. Nothing has been sent.'
+    label: t('Connecting to the team server'),
+    slow: t('Still waiting for the server to answer. Nothing has been sent.')
   },
   '/setup/clone': {
     label: "Copying the team's project onto this computer",
-    slow: 'Still copying - a project with a long history can take several minutes.'
+    slow: t('Still copying - a project with a long history can take several minutes.')
   },
-  '/setup/branch': { label: 'Creating that branch' },
+  '/setup/branch': { label: t('Creating that branch') },
 
-  '/project/setup/preview': { label: 'Working out what would be written' },
-  '/project/setup/apply': { label: 'Saving the team settings' },
+  '/project/setup/preview': { label: t('Working out what would be written') },
+  '/project/setup/apply': { label: t('Saving the team settings') },
 
-  '/settings': { label: 'Saving your settings' },
-  '/settings/pick-folder': { label: 'Opening the folder chooser' },
-  '/setup/pick-folder': { label: 'Opening the folder chooser' },
-  '/auto-pull/now': { label: 'Checking for updates' },
-  '/activity/clear': { label: 'Clearing the log' },
-  '/activity/run': { label: 'Running your command' },
-  '/fix': { label: 'Applying the fix' }
+  '/settings': { label: t('Saving your settings') },
+  '/settings/pick-folder': { label: t('Opening the folder chooser') },
+  '/setup/pick-folder': { label: t('Opening the folder chooser') },
+  '/auto-pull/now': { label: t('Checking for updates') },
+  '/activity/clear': { label: t('Clearing the log') },
+  '/activity/run': { label: t('Running your command') },
+  '/fix': { label: t('Applying the fix') }
 };
 
 /**
@@ -665,13 +691,20 @@ function GitPlugin(props) {
    * Open merge/pull requests from the team server. Hits the network (the
    * host's API), so it loads on demand - tab activation and after a
    * refresh - never on the status poll.
+   *
+   * `enrich` is what the refresh button passes. Without it the list is one
+   * API call and the conflict and review columns read "unknown"; with it,
+   * GitHub charges two more calls per request, which is affordable when a
+   * person asked for it and ruinous on every tab activation.
    */
-  const loadMergeRequests = useCallback(async b => {
+  const loadMergeRequests = useCallback(async (b, { enrich = false } = {}) => {
     const target = b || bridge;
     if (!target) return;
 
     try {
-      const data = await apiGet(target, '/merge-requests');
+      const data = enrich
+        ? await apiPost(target, '/merge-requests/refresh', {})
+        : await apiGet(target, '/merge-requests');
       // An error here is normal - no remote, no token, an unrecognised host
       // - and the panel says so rather than looking broken.
       setMergeRequests(data);
@@ -722,6 +755,12 @@ function GitPlugin(props) {
     try {
       const data = await apiGet(target, '/settings');
       if (data.error) return;
+
+      // Before the state that triggers the re-render, so the very first
+      // paint after settings arrive is already in the chosen language
+      // rather than flashing English and correcting itself.
+      setLanguage(data.settings && data.settings.language);
+
       setSettings(data.settings);
       setAutoPullState(data.autoPull);
       setBlockedReason(data.blockedReason);
@@ -1028,9 +1067,9 @@ function GitPlugin(props) {
     stage: file => act('/stage', { path: file.path }).then(() => loadTree()),
     unstage: file => act('/unstage', { path: file.path }),
     stageAll: () => act('/stage-all'),
-    commit: message => act('/commit', { message }, 'Save point created.').then(() => { loadTree(); loadHistory(); }),
-    push: () => act('/push', {}, 'Sent to the team.'),
-    pull: () => act('/pull', {}, 'Updates downloaded.').then(() => loadTree()),
+    commit: message => act('/commit', { message }, t('Save point created.')).then(() => { loadTree(); loadHistory(); }),
+    push: () => act('/push', {}, t('Sent to the team.')),
+    pull: () => act('/pull', {}, t('Updates downloaded.')).then(() => loadTree()),
 
     previewSave: () => peek('/routine/save/preview'),
     runSave: async message => {
@@ -1063,7 +1102,7 @@ function GitPlugin(props) {
     // --- catalog -------------------------------------------------------
     // Create returns the new file's path; the component opens it via onOpen.
     catalogNew: (id, name) =>
-      act('/catalog/new', { id, name }, 'New diagram created from the catalog.')
+      act('/catalog/new', { id, name }, t('New diagram created from the catalog.'))
         .then(res => { loadTree(); return res; }),
     catalogPreview: id => act('/catalog/preview', { id }),
 
@@ -1075,9 +1114,8 @@ function GitPlugin(props) {
         setNotice({
           type: 'success',
           text: res.opened
-            ? 'A problem report opened in your mail client with the logs attached - review it and send.'
-            : `A problem report was saved to ${res.dir}. Your mail client did not open automatically; ` +
-              'attach those files to an email yourself.'
+            ? t('A problem report opened in your mail client with the logs attached - review it and send.')
+            : t('A problem report was saved to {dir}. Your mail client did not open automatically; attach those files to an email yourself.', { dir: res.dir })
         });
       }
       return res;
@@ -1089,17 +1127,17 @@ function GitPlugin(props) {
     aiChat: (path, conversation, onDelta) =>
       (bridge
         ? apiStream(bridge, '/ai/chat/stream', { path, conversation }, onDelta)
-        : Promise.reject(new Error('Not connected.'))),
+        : Promise.reject(new Error(t('Not connected.')))),
     // Turn the conversation into an edit and preview it.
     aiGenerate: (path, messages) => act('/ai/edit/from-chat', { path, messages }),
     aiApply: path =>
-      act('/ai/edit/apply', { path }, 'Applied - saved as a change in Source Control.')
+      act('/ai/edit/apply', { path }, t('Applied - saved as a change in Source Control.'))
         .then(res => { loadTree(); return res; }),
     aiReview: path => act('/ai/edit/review', { path }),
     aiDiscard: path => (bridge ? apiPost(bridge, '/ai/edit/discard', { path }) : Promise.resolve()),
     aiModels: () => (bridge ? apiPost(bridge, '/ai/models', {}) : Promise.resolve({ models: [] })),
     setModel: model =>
-      act('/settings', { openRouterModel: model }, 'Model saved.').then(() => loadSettings()),
+      act('/settings', { openRouterModel: model }, t('Model saved.')).then(() => loadSettings()),
 
     // Semantic search across the whole corpus. Its own path rather than
     // `act`, so typing does not raise the busy bar or a success notice; the
@@ -1108,7 +1146,8 @@ function GitPlugin(props) {
       (bridge ? apiPost(bridge, '/search', { query })
         : Promise.resolve({ groups: [], totalHits: 0, filesSearched: 0 })),
 
-    refreshMergeRequests: () => loadMergeRequests(),
+    // The one place that pays for the conflict and review columns.
+    refreshMergeRequests: () => loadMergeRequests(null, { enrich: true }),
     refreshOverview: () => loadOverview(),
     // Opens the visual review window (all changed files, before/after,
     // synced zoom) in the main process.
@@ -1126,8 +1165,7 @@ function GitPlugin(props) {
       if (res.hasConflicts) {
         setNotice({
           type: 'success',
-          text: 'Both branches are open together. Resolve each diagram below, ' +
-            'then Finish and Send - that updates the merge request.'
+          text: t('Both branches are open together. Resolve each diagram below, then Finish and Send - that updates the merge request.')
         });
 
         if (typeof triggerAction === 'function') {
@@ -1136,8 +1174,7 @@ function GitPlugin(props) {
       } else if (res.upToDate) {
         setNotice({
           type: 'success',
-          text: 'Nothing to resolve - your branch already has the target\'s changes. ' +
-            'Send it and the merge request will be mergeable.'
+          text: t('Nothing to resolve - your branch already has the target\'s changes. Send it and the merge request will be mergeable.')
         });
       }
 
@@ -1162,17 +1199,17 @@ function GitPlugin(props) {
     combine: path =>
       act('/conflict/combine', { path }).then(res => { loadTree(); return res; }),
     undoResolution: path =>
-      act('/conflict/undo', { path }, 'That file needs a decision again.'),
+      act('/conflict/undo', { path }, t('That file needs a decision again.')),
     compare: path => act('/conflict/compare', { path }),
 
     // Wording stays neutral about *what* completed: this is a merge most of
     // the time, but a rebase or cherry-pick left open by the console lands
     // here too, and "combined" would be wrong for those.
     completeMerge: () =>
-      act('/merge/complete', {}, 'Done. Everything is back together.')
+      act('/merge/complete', {}, t('Done. Everything is back together.'))
         .then(res => { reloadAll(); return res; }),
     abortMerge: () =>
-      act('/merge/abort', {}, 'Cancelled. Nothing was changed.')
+      act('/merge/abort', {}, t('Cancelled. Nothing was changed.'))
         .then(res => { reloadAll(); return res; }),
 
     switchWorkstream: name =>
@@ -1211,9 +1248,7 @@ function GitPlugin(props) {
           return {
             ok: true,
             summary:
-              `Urgent fix "${res.title}" started from what is live. Fix it and ` +
-              'save, then release it from here - it goes live and comes back ' +
-              'into everyday work, both, so the next release does not undo it.'
+              t('Urgent fix "{title}" started from what is live. Fix it and save, then release it from here - it goes live and comes back into everyday work, both, so the next release does not undo it.', { title: res.title })
           };
         }),
 
@@ -1269,7 +1304,7 @@ function GitPlugin(props) {
 
     applyFix: id => act('/fix', { id }).then(() => loadTree()),
 
-    saveSettings: patch => act('/settings', patch, 'Settings saved.').then(() => loadSettings()),
+    saveSettings: patch => act('/settings', patch, t('Settings saved.')).then(() => loadSettings()),
     pickFolder: () => act('/settings/pick-folder').then(() => {
       loadSetup(); loadSettings(); loadTree(); loadWorkstreams();
     }),
@@ -1376,7 +1411,7 @@ function GitPlugin(props) {
     const f = next && next.facts;
 
     if (!f) return null;
-    if (!f.hasRemote) return 'no team server';
+    if (!f.hasRemote) return t('no team server');
 
     const parts = [];
 
@@ -1399,7 +1434,7 @@ function GitPlugin(props) {
     const others = streams.length - (current ? 1 : 0);
 
     return [
-      current ? current.title : 'not on a workstream',
+      current ? current.title : t('not on a workstream'),
       others ? `${others} other${others === 1 ? '' : 's'}` : null
     ].filter(Boolean).join(' · ');
   })();
@@ -1465,8 +1500,23 @@ function GitPlugin(props) {
     const cur = workstreams && (workstreams.streams || []).find(s => s.isCurrent);
     if (cur) return cur.title;
     const branch = status && status.current;
-    return branch && branch !== 'HEAD' ? branch : 'an old version';
+    return branch && branch !== 'HEAD' ? branch : t('an old version');
   })();
+
+  /**
+   * Whether the project shows this area at all. Set in Settings by someone
+   * in developer mode and committed to `.camunda-git.json`, so it is the
+   * same for everyone who clones the repo.
+   *
+   * Everything is on until the settings arrive, and on for any project that
+   * never set the key. Defaulting the other way would blank the panel for a
+   * moment on every launch, and permanently for every project that predates
+   * this - a missing setting must not look like a locked-down one.
+   */
+  const labels = tabLabels();
+
+  const enabledTabs = settings && settings.enabledTabs;
+  const tabOn = id => !Array.isArray(enabledTabs) || enabledTabs.includes(id);
 
   // The notice, shown once in an area's fixed strip above its sub-nav body.
   const noticeStrip = notice && h('div', { className: 'cgp-area__notice' },
@@ -1492,7 +1542,7 @@ function GitPlugin(props) {
           h('span', { className: 'cgp-spinner cgp-spinner--inline', 'aria-hidden': 'true' }),
           pending.label
         )
-        : (text ? `⎇ ${text}` : (error ? '⎇ Not set up' : '⎇ …')))
+        : (text ? `⎇ ${text}` : (error ? `⎇ ${t('Not set up')}` : '⎇ …')))
     ),
 
     // =====================================================================
@@ -1513,8 +1563,8 @@ function GitPlugin(props) {
     // The individual's daily loop. Setup and a half-finished merge each take
     // over the whole area: offering "Save my work" mid-conflict is how people
     // get truly stuck, and this is the area they land on.
-    h(Fill, {
-      slot: 'bottom-panel', id: MY_WORK_ID, label: TAB_LABELS.myWork, layout,
+    tabOn(MY_WORK_ID) && h(Fill, {
+      slot: 'bottom-panel', id: MY_WORK_ID, label: labels.myWork, layout,
       priority: 60,
       // Modeler draws this as its own badge next to the label.
       number: files.length || undefined
@@ -1547,7 +1597,7 @@ function GitPlugin(props) {
                   // tab: without this an unreadable repository looks like a
                   // project with no changes in it.
                   error && h('div', { className: 'cgp-notice cgp-notice--warn' },
-                    h('div', { className: 'cgp-notice__title' }, 'Could not read your changes'),
+                    h('div', { className: 'cgp-notice__title' }, t('Could not read your changes')),
                     h('div', { className: 'cgp-notice__body' }, error)
                   ),
 
@@ -1560,14 +1610,14 @@ function GitPlugin(props) {
                         className: 'btn cgp-btn', disabled: busy,
                         title: status.behind
                           ? `Download ${status.behind} update(s) from the team`
-                          : 'Check for updates from the team',
+                          : t('Check for updates from the team'),
                         onClick: actions.pull
-                      }, status.behind ? `Get updates (${status.behind})` : 'Get updates'),
+                      }, status.behind ? `Get updates (${status.behind})` : t('Get updates')),
                       h('button', {
                         className: 'btn cgp-btn', disabled: busy,
                         title: status.ahead
                           ? `Send ${status.ahead} save point(s) to the team`
-                          : 'Send your save points to the team',
+                          : t('Send your save points to the team'),
                         onClick: actions.push
                       }, status.ahead ? `Send (${status.ahead})` : 'Send')
                     ),
@@ -1600,16 +1650,16 @@ function GitPlugin(props) {
                         }),
 
                         h(Fold, {
-                          title: 'Save my work',
+                          title: t('Save my work'),
                           summary: files.length
                             ? `${files.length} unsaved ${files.length === 1 ? 'change' : 'changes'}`
-                            : 'nothing to save',
+                            : t('nothing to save'),
                           open: section === 'save',
                           onToggle: () => toggleSection('save')
                         }, h(SaveMyWork, { actions, busy, disabled: !files.length })),
 
                         h(Fold, {
-                          title: 'Get in step with the team',
+                          title: t('Get in step with the team'),
                           summary: syncSummary,
                           open: section === 'sync',
                           onToggle: () => toggleSection('sync')
@@ -1623,17 +1673,17 @@ function GitPlugin(props) {
                         }, h(Workstreams, { workstreams, actions, busy })),
 
                         h(Fold, {
-                          title: 'Finish this workstream',
+                          title: t('Finish this workstream'),
                           summary: next && next.facts && next.facts.unmerged
                             ? `${next.facts.unmerged} save point(s) to hand over`
-                            : 'nothing to hand over yet',
+                            : t('nothing to hand over yet'),
                           open: section === 'finish',
                           onToggle: () => toggleSection('finish')
                         }, h(FinishWork, { actions, busy, workstreams }))
                       ),
 
                       h('div', { className: 'cgp-split__aside' },
-                        h('p', { className: 'cgp-split__title' }, 'Earlier versions'),
+                        h('p', { className: 'cgp-split__title' }, t('Earlier versions')),
                         h(SavePoints, { savePoints, actions, busy })
                       )
                     )
@@ -1647,8 +1697,8 @@ function GitPlugin(props) {
     // The coordinator's space. Overview and Requests are two views of one
     // thing - workstream-centric and request-centric - which is why they are
     // sections here rather than the rival top-level tabs they used to be.
-    h(Fill, {
-      slot: 'bottom-panel', id: TEAM_ID, label: TAB_LABELS.team, layout,
+    tabOn(TEAM_ID) && h(Fill, {
+      slot: 'bottom-panel', id: TEAM_ID, label: labels.team, layout,
       priority: 50,
       // What needs a coordinator, not how much exists: a conflicting request
       // or a workstream that has gone quiet. A badge that only ever counted
@@ -1670,8 +1720,8 @@ function GitPlugin(props) {
               // this says why rather than rendering an empty board.
               mergeRequests && !mergeRequests.supported && !mergeRequests.error
                 ? h('p', { className: 'cgp-empty' },
-                  `The team server (${mergeRequests.host || 'this host'}) is not GitHub or ` +
-                  'GitLab, so merge requests are not available here.')
+                  t('The team server ({host}) is not GitHub or GitLab, so merge requests are not available here.',
+                    { host: mergeRequests.host || t('this host') }))
                 : h(MergeRequests, { data: mergeRequests, actions, busy })
             )
 
@@ -1696,8 +1746,8 @@ function GitPlugin(props) {
     //
     // Find one, search inside them all, or start a new one from a pattern:
     // three tabs that were always the same job.
-    h(Fill, {
-      slot: 'bottom-panel', id: DIAGRAMS_ID, label: TAB_LABELS.diagrams, layout,
+    tabOn(DIAGRAMS_ID) && h(Fill, {
+      slot: 'bottom-panel', id: DIAGRAMS_ID, label: labels.diagrams, layout,
       priority: 40
     },
       h('div', { className: 'cgp-area' },
@@ -1740,8 +1790,8 @@ function GitPlugin(props) {
     ),
 
     // ---- AI ----
-    h(Fill, {
-      slot: 'bottom-panel', id: AI_ID, label: TAB_LABELS.ai, layout, priority: 30
+    tabOn(AI_ID) && h(Fill, {
+      slot: 'bottom-panel', id: AI_ID, label: labels.ai, layout, priority: 30
     },
       h('div', { className: 'cgp-panel' },
         h(BusyBar, { pending }),
@@ -1758,8 +1808,8 @@ function GitPlugin(props) {
     ),
 
     // ---- Activity ----
-    h(Fill, {
-      slot: 'bottom-panel', id: ACTIVITY_ID, label: TAB_LABELS.activity, layout, priority: 20
+    tabOn(ACTIVITY_ID) && h(Fill, {
+      slot: 'bottom-panel', id: ACTIVITY_ID, label: labels.activity, layout, priority: 20
     },
       h(Activity, {
         entries: activity,
@@ -1775,7 +1825,7 @@ function GitPlugin(props) {
     //
     // Last, and deliberately quiet: it is configured once, not operated.
     h(Fill, {
-      slot: 'bottom-panel', id: SETTINGS_ID, label: TAB_LABELS.settings, layout, priority: 10
+      slot: 'bottom-panel', id: SETTINGS_ID, label: labels.settings, layout, priority: 10
     },
       h(Settings, {
         settings, projectSetup, autoPull: autoPullState, blockedReason, actions, busy

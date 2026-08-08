@@ -11,6 +11,7 @@
 import React from 'camunda-modeler-plugin-helpers/vendor/react.js';
 
 import { Icon } from './icons.js';
+import { t, LANGUAGES } from './i18n.js';
 
 const { useState, useEffect, useRef } = React;
 
@@ -58,7 +59,7 @@ export function timeAgo(iso) {
   if (days < 30) return `${days} days ago`;
 
   const months = Math.floor(days / 30);
-  return months === 1 ? 'a month ago' : `${months} months ago`;
+  return months === 1 ? t('a month ago') : `${months} months ago`;
 }
 
 /** Git porcelain letters, in words. */
@@ -134,7 +135,7 @@ export function BusyBar({ pending }) {
     // Ten seconds is about where "it is being slow" turns into "is it
     // stuck?". Saying which of the two it is costs one line.
     elapsed >= 10 && h('span', { className: 'cgp-busybar__hint' },
-      pending.slow || 'Still going - large projects and slow connections take a while.'
+      pending.slow || t('Still going - large projects and slow connections take a while.')
     )
   );
 }
@@ -163,7 +164,7 @@ export function Notice({ notice, busy, onFix }) {
     ),
 
     notice.raw && notice.recognised === false && h('details', { style: { marginTop: '6px' } },
-      h('summary', { style: { cursor: 'pointer', fontSize: '11px' } }, 'Technical details'),
+      h('summary', { style: { cursor: 'pointer', fontSize: '11px' } }, t('Technical details')),
       h('pre', { className: 'cgp-notice__raw' }, notice.raw)
     )
   );
@@ -197,9 +198,9 @@ function Ticket({ stream }) {
 // deliberately shorter than the create form's ("New" vs "New work") because
 // here they sit inline next to a name and earn their place by being glanceable.
 const TYPE_META = {
-  feature: { label: 'New', cls: 'feature', title: 'New work' },
-  bugfix:  { label: 'Fix', cls: 'bugfix', title: 'A fix' },
-  hotfix:  { label: 'Urgent', cls: 'hotfix', title: 'An urgent fix to what is live' }
+  feature: { label: 'New', cls: 'feature', title: t('New work') },
+  bugfix:  { label: 'Fix', cls: 'bugfix', title: t('A fix') },
+  hotfix:  { label: 'Urgent', cls: 'hotfix', title: t('An urgent fix to what is live') }
 };
 
 function TypePill({ type }) {
@@ -265,7 +266,7 @@ function RemoveWorkstream({ stream, plan, busy, onCancel, onConfirm }) {
         disabled: busy,
         onChange: e => setAlsoOnServer(e.target.checked)
       }),
-      ' Also remove it from the team server (this affects everyone)'
+      ` ${t('Also remove it from the team server (this affects everyone)')}`
     ),
 
     h('div', { className: 'cgp-field' },
@@ -273,7 +274,7 @@ function RemoveWorkstream({ stream, plan, busy, onCancel, onConfirm }) {
         className: `btn cgp-btn ${unmerged ? '' : 'cgp-btn--primary'}`,
         disabled: busy,
         onClick: () => onConfirm({ alsoOnServer, force: unmerged })
-      }, unmerged ? 'Remove it anyway' : 'Remove it'),
+      }, unmerged ? t('Remove it anyway') : t('Remove it')),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: onCancel
       }, 'Cancel')
@@ -346,14 +347,14 @@ export function Workstreams({ workstreams, actions, busy }) {
       h('p', { className: 'cgp-eyebrow' }, "You're working on"),
       h('p', { className: 'cgp-headline', style: { display: 'flex', alignItems: 'center', gap: '8px' } },
         h(TypePill, { type: current.type }),
-        h('span', null, current.title + (current.isMain ? ' (shared version)' : ''))
+        h('span', null, current.title + (current.isMain ? ` ${t('(shared version)')}` : ''))
       ),
       current.ticketUrl && h('p', { style: { margin: '0 0 4px' } },
         h(Ticket, { stream: current })
       ),
       h('p', { className: 'cgp-sub' }, [
         current.lastChange ? `last changed ${timeAgo(current.lastChange)}` : null,
-        current.localOnly ? 'not on the server yet' : null
+        current.localOnly ? t('not on the server yet') : null
       ].filter(Boolean).join(' · '))
     ),
 
@@ -365,11 +366,11 @@ export function Workstreams({ workstreams, actions, busy }) {
         others.map(s => h('li', { key: s.name, className: 'cgp-row' },
           h(TypePill, { type: s.type }),
           h('span', { className: 'cgp-row__name' },
-            s.title, s.isMain && h('span', { className: 'cgp-row__meta' }, '  (shared version)')
+            s.title, s.isMain && h('span', { className: 'cgp-row__meta' }, `  ${t('(shared version)')}`)
           ),
           s.onServer && h('span', {
             className: 'cgp-row__meta',
-            title: 'On the team server'
+            title: t('On the team server')
           }, h(Icon, { name: 'Branch', size: 11 })),
           h('span', { className: 'cgp-row__meta' },
             [ s.lastAuthor, timeAgo(s.lastChange) ].filter(Boolean).join(', ')
@@ -378,7 +379,7 @@ export function Workstreams({ workstreams, actions, busy }) {
             h('button', {
               className: 'btn cgp-btn',
               disabled: busy,
-              title: 'Your current work is saved automatically before switching',
+              title: t('Your current work is saved automatically before switching'),
               onClick: () => actions.switchWorkstream(s.name)
             }, 'Switch'),
 
@@ -429,7 +430,7 @@ export function Workstreams({ workstreams, actions, busy }) {
             type: 'text',
             className: 'cgp-input',
             value: newName,
-            placeholder: 'What are you working on?',
+            placeholder: t('What are you working on?'),
             disabled: busy,
             autoFocus: true,
             onChange: e => setNewName(e.target.value),
@@ -477,9 +478,9 @@ export function Workstreams({ workstreams, actions, busy }) {
       : h('button', {
         className: 'btn cgp-btn',
         disabled: busy,
-        title: 'Starts from the latest shared version. Your current work is saved first.',
+        title: t('Starts from the latest shared version. Your current work is saved first.'),
         onClick: () => setCreating(true)
-      }, 'Start something new')
+      }, t('Start something new'))
   );
 }
 
@@ -516,14 +517,14 @@ export function SaveMyWork({ actions, busy, disabled }) {
   };
 
   return h('div', { className: 'cgp-block' },
-    h('p', { className: 'cgp-block__title' }, 'Save my work'),
+    h('p', { className: 'cgp-block__title' }, t('Save my work')),
 
     h('div', { className: 'cgp-field' },
       h('input', {
         type: 'text',
         className: 'cgp-input',
         value: message,
-        placeholder: disabled ? 'Nothing has changed yet' : 'What did you change?',
+        placeholder: disabled ? t('Nothing has changed yet') : t('What did you change?'),
         disabled: locked,
         onChange: e => setMessage(e.target.value),
         onKeyDown: e => {
@@ -534,14 +535,14 @@ export function SaveMyWork({ actions, busy, disabled }) {
         className: 'btn cgp-btn cgp-btn--primary',
         disabled: locked || !message.trim(),
         onClick: preview
-      }, working ? 'Working...' : 'Save my work')
+      }, working ? 'Working...' : t('Save my work'))
     ),
 
     plan && h('div', { style: { marginTop: '10px' } },
       plan.possible === false
         ? h('p', { className: 'cgp-empty' }, plan.reason)
         : h('div', null,
-          h('p', { className: 'cgp-sub' }, 'This will:'),
+          h('p', { className: 'cgp-sub' }, t('This will:')),
           h('ol', { className: 'cgp-plan' },
             plan.steps.map(s => h('li', { key: s.key }, s.label))
           ),
@@ -551,7 +552,7 @@ export function SaveMyWork({ actions, busy, disabled }) {
           h('div', { className: 'cgp-field' },
             h('button', {
               className: 'btn cgp-btn cgp-btn--primary', disabled: locked, onClick: confirm
-            }, 'Yes, do it'),
+            }, t('Yes, do it')),
             h('button', {
               className: 'btn cgp-btn', disabled: locked, onClick: () => setPlan(null)
             }, 'Cancel')
@@ -617,12 +618,11 @@ export function FinishWork({ actions, busy, workstreams }) {
 
     onShared
       ? h('p', { className: 'cgp-sub' },
-        'You are on the shared version rather than a workstream, so there ' +
-        'is nothing to finish. Start something new first.')
+        t('You are on the shared version rather than a workstream, so there is nothing to finish. Start something new first.'))
       : h('p', { className: 'cgp-sub' },
         current
           ? `Hands "${current.title}" back to the team.`
-          : 'Hands your current work back to the team.'),
+          : t('Hands your current work back to the team.')),
 
     !onShared && h('div', { className: 'cgp-field' },
       h('button', {
@@ -636,7 +636,7 @@ export function FinishWork({ actions, busy, workstreams }) {
       plan.possible === false
         ? h('p', { className: 'cgp-empty' }, plan.reason)
         : h('div', null,
-          h('p', { className: 'cgp-sub' }, 'This will:'),
+          h('p', { className: 'cgp-sub' }, t('This will:')),
           h('ol', { className: 'cgp-plan' },
             (plan.steps || []).map(s => h('li', { key: s.key }, s.label))
           ),
@@ -646,7 +646,7 @@ export function FinishWork({ actions, busy, workstreams }) {
           h('div', { className: 'cgp-field' },
             h('button', {
               className: 'btn cgp-btn cgp-btn--primary', disabled: locked, onClick: confirm
-            }, 'Yes, do it'),
+            }, t('Yes, do it')),
             h('button', {
               className: 'btn cgp-btn', disabled: locked, onClick: () => setPlan(null)
             }, 'Cancel')
@@ -722,21 +722,20 @@ export function SyncWork({ actions, busy }) {
 
   return h('div', { className: 'cgp-block' },
     h('p', { className: 'cgp-sub' },
-      'Gets whatever the team has, combines it with your work, and sends ' +
-      'yours back - in that order, which is the order that works.'
+      t('Gets whatever the team has, combines it with your work, and sends yours back - in that order, which is the order that works.')
     ),
 
     h('div', { className: 'cgp-field' },
       h('button', {
         className: 'btn cgp-btn cgp-btn--primary', disabled: locked, onClick: preview
-      }, working ? 'Working...' : 'Get in step with the team')
+      }, working ? 'Working...' : t('Get in step with the team'))
     ),
 
     plan && h('div', { style: { marginTop: '10px' } },
       plan.possible === false
         ? h('p', { className: 'cgp-empty' }, plan.reason)
         : h('div', null,
-          h('p', { className: 'cgp-sub' }, 'This will:'),
+          h('p', { className: 'cgp-sub' }, t('This will:')),
           h('ol', { className: 'cgp-plan' },
             (plan.steps || []).map(s => h('li', { key: s.key }, s.label))
           ),
@@ -746,7 +745,7 @@ export function SyncWork({ actions, busy }) {
           h('div', { className: 'cgp-field' },
             h('button', {
               className: 'btn cgp-btn cgp-btn--primary', disabled: locked, onClick: confirm
-            }, 'Yes, do it'),
+            }, t('Yes, do it')),
             h('button', {
               className: 'btn cgp-btn', disabled: locked, onClick: () => setPlan(null)
             }, 'Cancel')
@@ -839,7 +838,7 @@ export function NextAction({ next, busy, onChoose, chosen }) {
     ),
 
     (also || []).length > 0 && h('p', { className: 'cgp-lead__also' },
-      h('span', { className: 'cgp-sub' }, 'or '),
+      h('span', { className: 'cgp-sub' }, `${t('or')} `),
       also.map((row, i) => h('span', { key: row.id },
         i > 0 && h('span', { className: 'cgp-sub' }, ' · '),
         h('button', {
@@ -916,8 +915,7 @@ export function SavePoints({ savePoints, actions, busy, disabled }) {
   // headings stacked on one list reads as two sections.
   return h('div', null,
     h('p', { className: 'cgp-sub' },
-      'Every save point on this workstream. You can put your diagrams back to ' +
-      'any of them.'
+      t('Every save point on this workstream. You can put your diagrams back to any of them.')
     ),
 
     h('ul', { className: 'cgp-savepoints' },
@@ -927,10 +925,10 @@ export function SavePoints({ savePoints, actions, busy, disabled }) {
       },
         h('div', { className: 'cgp-savepoint__main' },
           h('span', { className: 'cgp-savepoint__subject', title: point.subject },
-            point.subject || '(no description)'
+            point.subject || t('(no description)')
           ),
           h('span', { className: 'cgp-savepoint__meta' }, [
-            point.isHead ? 'where you are now' : null,
+            point.isHead ? t('where you are now') : null,
             point.author,
             point.date ? timeAgo(point.date) : null,
             point.changedFiles
@@ -944,7 +942,7 @@ export function SavePoints({ savePoints, actions, busy, disabled }) {
           disabled: locked,
           title: `Put every diagram back to how it was at "${point.subject}"`,
           onClick: () => preview(point)
-        }, 'Go back to this')
+        }, t('Go back to this'))
       ))
     ),
 
@@ -973,7 +971,7 @@ export function SavePoints({ savePoints, actions, busy, disabled }) {
                 h('span', { className: `cgp-effect cgp-effect--${f.effect}` }, f.effect),
                 f.path
               )),
-              plan.truncated && h('li', { className: 'cgp-sub' }, '...and more')
+              plan.truncated && h('li', { className: 'cgp-sub' }, t('...and more'))
             )
           ),
 
@@ -984,7 +982,7 @@ export function SavePoints({ savePoints, actions, busy, disabled }) {
           h('div', { className: 'cgp-field' },
             h('button', {
               className: 'btn cgp-btn cgp-btn--primary', disabled: locked, onClick: confirm
-            }, working ? 'Working...' : 'Yes, go back to this'),
+            }, working ? 'Working...' : t('Yes, go back to this')),
             h('button', {
               className: 'btn cgp-btn', disabled: locked, onClick: cancel
             }, 'Cancel')
@@ -1015,7 +1013,7 @@ export function Setup({ setup, actions, busy }) {
 
   if (!setup) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'Checking how this project is set up...'));
+      h('p', { className: 'cgp-empty' }, t('Checking how this project is set up...')));
   }
 
   const next = setup.next;
@@ -1029,15 +1027,14 @@ export function Setup({ setup, actions, busy }) {
       h('button', {
         className: 'btn cgp-btn cgp-btn--primary', disabled: busy,
         onClick: run(actions.pickFolder)
-      }, 'Choose a folder'),
+      }, t('Choose a folder')),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: () => setCloning(!cloning)
-      }, 'Get the team\'s project instead'),
+      }, t('Get the team\'s project instead')),
 
       cloning && h('div', { style: { marginTop: '8px' } },
         h('p', { className: 'cgp-sub' },
-          'Paste the address someone sent you. A copy is made on this ' +
-          'computer; nothing on the server is changed.'),
+          t('Paste the address someone sent you. A copy is made on this computer; nothing on the server is changed.')),
         h('div', { className: 'cgp-field' },
           h('input', {
             type: 'text', className: 'cgp-input', value: cloneUrl,
@@ -1048,7 +1045,7 @@ export function Setup({ setup, actions, busy }) {
           h('button', {
             className: 'btn cgp-btn', disabled: busy || !cloneUrl.trim(),
             onClick: run(() => actions.cloneProject(cloneUrl.trim()))
-          }, 'Get a copy')
+          }, t('Get a copy'))
         )
       )
     ),
@@ -1057,14 +1054,14 @@ export function Setup({ setup, actions, busy }) {
       h('button', {
         className: 'btn cgp-btn cgp-btn--primary', disabled: busy,
         onClick: run(actions.initRepository)
-      }, 'Start tracking changes')
+      }, t('Start tracking changes'))
     ),
 
     'identity': () => h('div', { className: 'cgp-setup__form' },
       h('div', { className: 'cgp-field', style: { marginBottom: '6px' } },
         h('input', {
           type: 'text', className: 'cgp-input',
-          placeholder: 'Your name', disabled: busy,
+          placeholder: t('Your name'), disabled: busy,
           value: name || identity.name || '',
           onChange: e => setName(e.target.value)
         })
@@ -1083,20 +1080,20 @@ export function Setup({ setup, actions, busy }) {
           }))
         }, 'Save')
       ),
-      h('p', { className: 'cgp-sub' }, 'Used for this project only.')
+      h('p', { className: 'cgp-sub' }, t('Used for this project only.'))
     ),
 
     'first-save': () => h('div', { className: 'cgp-setup__form' },
       h('div', { className: 'cgp-field' },
         h('input', {
           type: 'text', className: 'cgp-input', value: message,
-          placeholder: 'Starting point', disabled: busy,
+          placeholder: t('Starting point'), disabled: busy,
           onChange: e => setMessage(e.target.value)
         }),
         h('button', {
           className: 'btn cgp-btn cgp-btn--primary', disabled: busy,
-          onClick: run(() => actions.createFirstSavePoint(message.trim() || 'Starting point'))
-        }, 'Create it')
+          onClick: run(() => actions.createFirstSavePoint(message.trim() || t('Starting point')))
+        }, t('Create it'))
       )
     ),
 
@@ -1114,24 +1111,23 @@ export function Setup({ setup, actions, busy }) {
         }, 'Connect')
       ),
       h('p', { className: 'cgp-sub' },
-        'Checked before it is saved. Nothing is sent until you ask.')
+        t('Checked before it is saved. Nothing is sent until you ask.'))
     ),
 
     'project': () => h('div', { className: 'cgp-setup__form' },
       h('p', { className: 'cgp-sub' },
-        'Open Git Settings to write down which branches the team uses.')
+        t('Open Git Settings to write down which branches the team uses.'))
     )
   };
 
   return h('div', { className: 'cgp-panel' },
     h('div', { className: 'cgp-block' },
       h('p', { className: 'cgp-block__title' },
-        setup.complete ? 'This project is set up' : 'Let\'s get this project started'),
+        setup.complete ? t('This project is set up') : t('Let\'s get this project started')),
       h('p', { className: 'cgp-sub' },
         setup.complete
-          ? 'Everything needed is in place. The optional steps below are ' +
-            'still worth doing.'
-          : 'A few one-off things, then the rest of the plugin works normally.'
+          ? t('Everything needed is in place. The optional steps below are still worth doing.')
+          : t('A few one-off things, then the rest of the plugin works normally.')
       )
     ),
 
@@ -1172,21 +1168,19 @@ export function DetachedNotice({ status, actions, busy }) {
   }
 
   return h('div', { className: 'cgp-notice cgp-notice--warn' },
-    h('div', { className: 'cgp-notice__title' }, 'You are looking at an old version'),
+    h('div', { className: 'cgp-notice__title' }, t('You are looking at an old version')),
     h('div', { className: 'cgp-notice__body' },
-      'You are not on a workstream right now. You can look around safely, ' +
-      'but anything saved here would be hard to find again.'
+      t('You are not on a workstream right now. You can look around safely, but anything saved here would be hard to find again.')
     ),
     h('div', { className: 'cgp-field', style: { marginTop: '8px' } },
       h('button', {
         className: 'btn cgp-btn cgp-btn--primary',
         disabled: busy,
         onClick: () => actions.applyFix('return-to-workstream')
-      }, 'Put me back on a workstream')
+      }, t('Put me back on a workstream'))
     ),
     h('p', { className: 'cgp-sub' },
-      'Saves anything unsaved first, and gives it its own workstream if it ' +
-      'is not already on one. Nothing is discarded.'
+      t('Saves anything unsaved first, and gives it its own workstream if it is not already on one. Nothing is discarded.')
     )
   );
 }
@@ -1232,21 +1226,21 @@ export function RepoContext({ context, busy, onRefresh, defaultOpen }) {
       h('button', {
         className: 'cgp-ctx__toggle',
         onClick: () => setOpen(!open),
-        title: open ? 'Hide the details' : 'Show where this project lives'
+        title: open ? t('Hide the details') : t('Show where this project lives')
       }, `${open ? '▾' : '▸'} ${summary}`),
 
       h('span', { className: 'cgp-toolbar__spacer' }),
 
       open && h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: onRefresh
-      }, 'Refresh')
+      }, t('Refresh'))
     ),
 
     open && h('div', { className: 'cgp-ctx__body' },
 
       h(ContextRow, { label: 'Folder', title: repo.path }, repo.path),
 
-      h(ContextRow, { label: 'Working on' },
+      h(ContextRow, { label: t('Working on') },
         branch.current
           ? h('span', null,
             branch.title,
@@ -1256,14 +1250,14 @@ export function RepoContext({ context, busy, onRefresh, defaultOpen }) {
               href: branch.ticketUrl, target: '_blank', rel: 'noreferrer'
             }, branch.ticket)
           )
-          : (branch.detached ? 'Not on a workstream (detached)' : null)
+          : (branch.detached ? t('Not on a workstream (detached)') : null)
       ),
 
-      h(ContextRow, { label: 'Team copy' },
+      h(ContextRow, { label: t('Team copy') },
         branch.upstream
           ? `${branch.upstream}${branch.ahead ? ` · ${branch.ahead} to send` : ''}` +
             `${branch.behind ? ` · ${branch.behind} to get` : ''}`
-          : 'not on the server yet'
+          : t('not on the server yet')
       ),
 
       h(ContextRow, { label: 'Server' },
@@ -1277,10 +1271,10 @@ export function RepoContext({ context, busy, onRefresh, defaultOpen }) {
               : (remote.path || remote.url),
             remote.provider && h('span', { className: 'cgp-row__meta' }, `  ${remote.provider}`)
           )
-          : 'none - this project is on this computer only'
+          : t('none - this project is on this computer only')
       ),
 
-      h(ContextRow, { label: 'Last save point' },
+      h(ContextRow, { label: t('Last save point') },
         head
           ? h('span', null,
             h('span', { className: 'cgp-ctx__sha' }, head.short),
@@ -1288,27 +1282,27 @@ export function RepoContext({ context, busy, onRefresh, defaultOpen }) {
             h('span', { className: 'cgp-row__meta' },
               `  ${head.author}, ${timeAgo(head.date)}`)
           )
-          : 'nothing saved yet'
+          : t('nothing saved yet')
       ),
 
       h(ContextRow, {
-        label: 'Saving as',
-        title: 'Commits you make are attributed to this'
+        label: t('Saving as'),
+        title: t('Commits you make are attributed to this')
       },
         identity.configured
           ? `${identity.name} <${identity.email}>`
           : h('span', { className: 'cgp-sub--warn' },
-            'not set up - ask whoever set this computer up')
+            t('not set up - ask whoever set this computer up'))
       ),
 
-      h(ContextRow, { label: 'Set up as' },
+      h(ContextRow, { label: t('Set up as') },
         h('span', null,
           project.model === 'gitflow'
             ? `separate live version · everyday "${project.base}" · live "${project.release}"`
             : `one shared version · "${project.base}"`,
           h('span', { className: 'cgp-row__meta' },
-            `  ${project.mergePolicy === 'direct' ? 'merge directly' : 'review first'}`),
-          !project.configured && h('span', { className: 'cgp-sub--warn' }, '  (guessed)')
+            `  ${project.mergePolicy === 'direct' ? t('merge directly') : 'review first'}`),
+          !project.configured && h('span', { className: 'cgp-sub--warn' }, `  ${t('(guessed)')}`)
         )
       ),
 
@@ -1374,7 +1368,7 @@ export function Releases({ release, changes, actions, busy }) {
     // integrator actually watches.
     h('div', { className: 'cgp-hero' },
       h('div', { className: 'cgp-hero__main' },
-        h('span', { className: 'cgp-hero__eyebrow' }, 'Currently live'),
+        h('span', { className: 'cgp-hero__eyebrow' }, t('Currently live')),
 
         release.lastTag
           ? h('div', { className: 'cgp-hero__line' },
@@ -1382,7 +1376,7 @@ export function Releases({ release, changes, actions, busy }) {
             h('span', { className: 'cgp-pill cgp-pill--live' }, 'Live')
           )
           : h('div', { className: 'cgp-hero__line' },
-            h('span', { className: 'cgp-hero__none' }, 'Nothing released yet')
+            h('span', { className: 'cgp-hero__none' }, t('Nothing released yet'))
           ),
 
         h('p', { className: 'cgp-hero__detail' },
@@ -1405,7 +1399,7 @@ export function Releases({ release, changes, actions, busy }) {
           h('span', {
             className: 'cgp-stat__num cgp-stat__num--' + (inFlightCount ? 'flight' : 'zero')
           }, String(inFlightCount)),
-          h('span', { className: 'cgp-stat__label' }, 'In flight')
+          h('span', { className: 'cgp-stat__label' }, t('In flight'))
         ),
         h('div', { className: 'cgp-stat' },
           h('span', {
@@ -1421,15 +1415,15 @@ export function Releases({ release, changes, actions, busy }) {
     h('div', { className: 'cgp-flow' },
       h('span', { className: 'cgp-flow__node cgp-flow__node--base' }, h('code', null, release.base)),
       h('span', { className: 'cgp-flow__arrow' }, '→'),
-      h('span', { className: 'cgp-flow__node cgp-flow__node--ship' }, 'release / hotfix'),
+      h('span', { className: 'cgp-flow__node cgp-flow__node--ship' }, t('release / hotfix')),
       h('span', { className: 'cgp-flow__arrow' }, '→'),
       h('span', { className: 'cgp-flow__node cgp-flow__node--release' },
         h(Icon, { name: 'Tag', size: 12 }),
         h('code', null, release.release)
       ),
       h('span', { className: 'cgp-flow__back' },
-        'then ', h('b', null, `back into ${release.base}`),
-        ' — both, so the next release keeps the change.'
+        `${t('then')} `, h('b', null, t('back into {branch}', { branch: release.base })),
+        ` ${t('— both, so the next release keeps the change.')}`
       )
     ),
 
@@ -1454,18 +1448,17 @@ export function Releases({ release, changes, actions, busy }) {
       h('p', { className: 'cgp-block__title' },
         integrating
           ? `Put "${release.current}" live`
-          : 'Start the next release'
+          : t('Start the next release')
       ),
 
       h('p', { className: 'cgp-sub' },
         integrating
-          ? `This goes onto "${release.release}", gets marked with a version, ` +
-            `and comes back into "${release.base}" - both, so the next ` +
-            'release does not undo it.'
+          ? t('This goes onto "{release}", gets marked with a version, and comes back into "{base}" - both, so the next release does not undo it.',
+            { release: release.release, base: release.base })
           : release.unreleased
-            ? `Takes everything queued on "${release.base}" onto its own ` +
-              'branch, so everyday work can carry on while it is checked.'
-            : 'There is nothing queued to release yet.'
+            ? t('Takes everything queued on "{base}" onto its own branch, so everyday work can carry on while it is checked.',
+              { base: release.base })
+            : t('There is nothing queued to release yet.')
       ),
 
       (integrating || release.unreleased > 0) && h('div', { className: 'cgp-field' },
@@ -1491,7 +1484,7 @@ export function Releases({ release, changes, actions, busy }) {
             : run(() => actions.startRelease(version.trim() || suggested))
         }, working
           ? 'Checking...'
-          : (integrating ? 'Check what this will do' : 'Cut the release'))
+          : (integrating ? t('Check what this will do') : t('Cut the release')))
       )
     ),
 
@@ -1500,13 +1493,11 @@ export function Releases({ release, changes, actions, busy }) {
     // or hotfix is checked out - that is the moment to finish the one in
     // hand, not start another.
     !integrating && h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'Something is broken in what is live'),
+      h('p', { className: 'cgp-block__title' }, t('Something is broken in what is live')),
 
       h('p', { className: 'cgp-sub' },
-        `An urgent fix starts from "${release.release}" - what is actually ` +
-        'live, not everyday work - so it can go out without waiting for the ' +
-        'next release. When it is done it goes live and comes back into both ' +
-        'branches.'
+        t('An urgent fix starts from "{release}" - what is actually live, not everyday work - so it can go out without waiting for the next release. When it is done it goes live and comes back into both branches.',
+          { release: release.release })
       ),
 
       h('div', { className: 'cgp-field' },
@@ -1514,7 +1505,7 @@ export function Releases({ release, changes, actions, busy }) {
           type: 'text',
           className: 'cgp-input',
           value: hotfixTitle,
-          placeholder: 'What is broken? e.g. Approvals not sending',
+          placeholder: t('What is broken? e.g. Approvals not sending'),
           disabled: locked,
           onChange: e => setHotfixTitle(e.target.value)
         })
@@ -1527,7 +1518,7 @@ export function Releases({ release, changes, actions, busy }) {
           value: hotfixTicket,
           placeholder: release.projectKey
             ? `Ticket, e.g. ${release.projectKey}-1234 (optional)`
-            : 'Ticket (optional)',
+            : t('Ticket (optional)'),
           disabled: locked,
           onChange: e => setHotfixTicket(e.target.value)
         }),
@@ -1545,7 +1536,7 @@ export function Releases({ release, changes, actions, busy }) {
 
             return res;
           })
-        }, working ? 'Starting...' : 'Start an urgent fix')
+        }, working ? 'Starting...' : t('Start an urgent fix'))
       )
     ),
 
@@ -1556,7 +1547,7 @@ export function Releases({ release, changes, actions, busy }) {
     plan && h('div', { className: 'cgp-block cgp-block--nested' },
       plan.blockers && plan.blockers.length
         ? h('div', null,
-          h('p', { className: 'cgp-block__title' }, 'This cannot be released yet'),
+          h('p', { className: 'cgp-block__title' }, t('This cannot be released yet')),
           plan.blockers.map(b => h('div', {
             key: b.id, className: 'cgp-notice cgp-notice--error'
           },
@@ -1573,7 +1564,7 @@ export function Releases({ release, changes, actions, busy }) {
             (plan.commits ? ` · ${plan.commits} change${plan.commits === 1 ? '' : 's'}` : '')
           ),
 
-          h('p', { className: 'cgp-sub' }, 'This will:'),
+          h('p', { className: 'cgp-sub' }, t('This will:')),
           h('ol', { className: 'cgp-plan' },
             (plan.steps || []).map(s => h('li', { key: s.key }, s.label))
           ),
@@ -1589,8 +1580,7 @@ export function Releases({ release, changes, actions, busy }) {
               disabled: locked,
               onChange: e => setSend(e.target.checked)
             }),
-            ' Send it to the team when done (a release nobody can see is not ' +
-            'really released)'
+            ` ${t('Send it to the team when done (a release nobody can see is not really released)')}`
           ),
 
           h('div', { className: 'cgp-field' },
@@ -1616,18 +1606,18 @@ export function Releases({ release, changes, actions, busy }) {
 
     // Anything half-done: an open release branch, a hotfix in flight.
     (release.inFlight || []).length > 0 && h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'In flight'),
+      h('p', { className: 'cgp-block__title' }, t('In flight')),
       h('ul', { className: 'cgp-list' },
         release.inFlight.map(name => h('li', { key: name, className: 'cgp-row' },
           h('span', { className: 'cgp-row__name' }, name),
           h('span', { className: 'cgp-row__actions' },
             name === release.current
-              ? h('span', { className: 'cgp-row__meta' }, 'you are here')
+              ? h('span', { className: 'cgp-row__meta' }, t('you are here'))
               : h('button', {
                 className: 'btn cgp-btn',
                 disabled: locked,
                 onClick: () => actions.switchWorkstream(name)
-              }, 'Switch to it')
+              }, t('Switch to it'))
           )
         ))
       )
@@ -1663,13 +1653,13 @@ export function Releases({ release, changes, actions, busy }) {
             )
           ))
         )
-        : h('p', { className: 'cgp-empty' }, 'Nothing queued.')
+        : h('p', { className: 'cgp-empty' }, t('Nothing queued.'))
     ),
 
     // Recent releases, as a scannable row of version chips - the history the
     // integrator glances at to answer "what did the last few go out as?".
     (release.tags || []).length > 0 && h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-section-label' }, 'Recent releases'),
+      h('p', { className: 'cgp-section-label' }, t('Recent releases')),
       h('div', { className: 'cgp-tags' },
         release.tags.slice(0, 8).map((t, i) => h('span', {
           key: t.name,
@@ -1740,7 +1730,7 @@ export function SearchDiagrams({ search, onOpen }) {
     h('div', { className: 'cgp-search__box' },
       h('input', {
         className: 'cgp-input cgp-search__input',
-        placeholder: 'Search every diagram - a name, or assignee:jdoe, calls:Invoice, type:userTask, timer',
+        placeholder: t('Search every diagram - a name, or assignee:jdoe, calls:Invoice, type:userTask, timer'),
         value: query,
         autoFocus: true,
         onChange: e => setQuery(e.target.value)
@@ -1754,12 +1744,25 @@ export function SearchDiagrams({ search, onOpen }) {
     h('div', { className: 'cgp-search__hint' },
       busy ? 'Searching…'
         : result && !result.error
-          ? `${result.totalHits} match${result.totalHits === 1 ? '' : 'es'} in ` +
-            `${groups.length} diagram${groups.length === 1 ? '' : 's'}` +
-            ` · searched ${result.filesSearched}` +
-            (result.truncated ? ' · showing the first results, narrow the search' : '')
+          // Four keys rather than one with a plural rule: `t()` has no
+          // pluralisation, and inventing one for the two counts that need it
+          // is more machinery than picking the right sentence here.
+          ? t(
+            result.totalHits === 1
+              ? (groups.length === 1
+                ? '{hits} match in {diagrams} diagram · searched {files}'
+                : '{hits} match in {diagrams} diagrams · searched {files}')
+              : (groups.length === 1
+                ? '{hits} matches in {diagrams} diagram · searched {files}'
+                : '{hits} matches in {diagrams} diagrams · searched {files}'),
+            {
+              hits: result.totalHits,
+              diagrams: groups.length,
+              files: result.filesSearched
+            }
+          ) + (result.truncated ? ` · ${t('showing the first results, narrow the search')}` : '')
           : query.trim().length < 2
-            ? 'Type at least two characters. Filters: assignee: group: calls: delegate: form: timer type:'
+            ? t('Type at least two characters. Filters: assignee: group: calls: delegate: form: timer type:')
             : ''
     ),
 
@@ -1839,7 +1842,7 @@ function aiChangeRow(entry, kind) {
  */
 export function AiEdit({ diagrams, settings, actions, busy }) {
   const hasKey = !!(settings && settings.hasOpenRouterKey);
-  const modelName = (settings && settings.openRouterModel) || 'the configured model';
+  const modelName = (settings && settings.openRouterModel) || t('the configured model');
   const list = diagrams || [];
 
   const [ path, setPath ] = useState('');
@@ -1878,11 +1881,9 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
   if (!hasKey) {
     return h('div', { className: 'cgp-panel' },
       h('div', { className: 'cgp-notice cgp-notice--warn' },
-        h('div', { className: 'cgp-notice__title' }, 'AI edits need an OpenRouter key'),
+        h('div', { className: 'cgp-notice__title' }, t('AI edits need an OpenRouter key')),
         h('div', { className: 'cgp-notice__body' },
-          'Add your OpenRouter API key under Git Settings. Then describe a change ' +
-          'here and it is applied to a diagram - with a before/after preview, and ' +
-          'nothing saved until you accept.')));
+          t('Add your OpenRouter API key under Git Settings. Then describe a change here and it is applied to a diagram - with a before/after preview, and nothing saved until you accept.'))));
   }
 
   const send = async () => {
@@ -1899,7 +1900,7 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
 
     try {
       const full = await actions.aiChat(target, next, partial => setStreamText(partial));
-      setMessages(next.concat({ role: 'assistant', content: full || '(no reply)' }));
+      setMessages(next.concat({ role: 'assistant', content: full || t('(no reply)') }));
     } catch (err) {
       setChatError(err.message);
     } finally {
@@ -1930,7 +1931,7 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
 
   return h('div', { className: 'cgp-panel' },
     !list.length
-      ? h('p', { className: 'cgp-empty' }, 'No BPMN diagrams in this project yet.')
+      ? h('p', { className: 'cgp-empty' }, t('No BPMN diagrams in this project yet.'))
       : h('div', null,
         h('div', { className: 'cgp-field', style: { marginBottom: '8px' } },
           h('span', { className: 'cgp-row__meta', style: { minWidth: '64px' } }, 'Diagram'),
@@ -1957,7 +1958,7 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
             : h('input', {
               className: 'cgp-input', type: 'text', defaultValue: currentModel, disabled: busy,
               placeholder: 'anthropic/claude-sonnet-4.5',
-              title: models === null ? 'Loading the model list…' : 'Could not load the model list - type an id, saved when you click away',
+              title: models === null ? t('Loading the model list…') : t('Could not load the model list - type an id, saved when you click away'),
               onBlur: e => { if (e.target.value !== currentModel) actions.setModel(e.target.value); }
             })
         ),
@@ -1975,8 +1976,8 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
             h('div', { ref: bottomRef })
           )
           : h('p', { className: 'cgp-sub', style: { margin: '2px 0 8px' } },
-            `Describe what you want changed. ${modelName.split('/').pop()} asks a few ` +
-            'guiding questions first, then generates the edit for you to review.'),
+            t('Describe what you want changed. {model} asks a few guiding questions first, then generates the edit for you to review.',
+              { model: modelName.split('/').pop() })),
 
         chatError
           ? h('div', { className: 'cgp-notice cgp-notice--warn', style: { marginBottom: '8px' } },
@@ -1986,8 +1987,8 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
         h('textarea', {
           className: 'cgp-input cgp-ai__prompt', rows: 2,
           placeholder: messages.length
-            ? 'Answer, or say "go ahead" when ready…'
-            : 'e.g. "add a 2-day timer boundary event on Approve invoice"',
+            ? t('Answer, or say "go ahead" when ready…')
+            : t('e.g. "add a 2-day timer boundary event on Approve invoice"'),
           value: input, disabled: busy || streaming,
           onChange: e => setInput(e.target.value),
           onKeyDown: e => {
@@ -2001,20 +2002,20 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
           }, streaming ? 'Thinking…' : 'Send'),
           h('button', {
             className: 'btn cgp-btn cgp-btn--primary', disabled: !canGenerate, onClick: generate,
-            title: 'Turn the conversation into an edit and preview it'
-          }, 'Generate the edit'),
+            title: t('Turn the conversation into an edit and preview it')
+          }, t('Generate the edit')),
           messages.length
-            ? h('button', { className: 'btn cgp-btn', disabled: busy || streaming, onClick: startOver }, 'Start over')
+            ? h('button', { className: 'btn cgp-btn', disabled: busy || streaming, onClick: startOver }, t('Start over'))
             : null,
-          h('span', { className: 'cgp-sub' }, 'Ctrl+Enter sends')
+          h('span', { className: 'cgp-sub' }, t('Ctrl+Enter sends'))
         ),
 
         preview && !preview.hasChanges && h('div', {
           className: 'cgp-notice cgp-notice--warn', style: { marginTop: '10px' }
         },
-          h('div', { className: 'cgp-notice__title' }, 'No change'),
+          h('div', { className: 'cgp-notice__title' }, t('No change')),
           h('div', { className: 'cgp-notice__body' },
-            'The AI did not change anything. Try a more specific instruction.')),
+            t('The AI did not change anything. Try a more specific instruction.'))),
 
         preview && preview.hasChanges && h('div', { className: 'cgp-ai__result' },
           h('div', { className: 'cgp-ai__summary' },
@@ -2029,7 +2030,7 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
           h('div', { className: 'cgp-field', style: { marginTop: '10px' } },
             h('button', {
               className: 'btn cgp-btn', disabled: busy, onClick: () => actions.aiReview(target)
-            }, 'See before / after'),
+            }, t('See before / after')),
             h('button', {
               className: 'btn cgp-btn cgp-btn--primary', disabled: busy, onClick: apply
             }, 'Apply'),
@@ -2039,8 +2040,7 @@ export function AiEdit({ diagrams, settings, actions, busy }) {
           ),
 
           h('p', { className: 'cgp-sub', style: { marginTop: '6px' } },
-            'Apply saves it as an unstaged change in Source Control - review it there, ' +
-            'or reopen the diagram, before making a save point.')
+            t('Apply saves it as an unstaged change in Source Control - review it there, or reopen the diagram, before making a save point.'))
         )
       )
   );
@@ -2060,7 +2060,7 @@ export function Catalog({ catalog, actions, busy, onOpen, onInsert }) {
 
   if (!catalog) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'Loading the catalog...'));
+      h('p', { className: 'cgp-empty' }, t('Loading the catalog...')));
   }
 
   if (catalog.error) {
@@ -2072,7 +2072,7 @@ export function Catalog({ catalog, actions, busy, onOpen, onInsert }) {
 
   if (!entries.length) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'The catalog is empty.'));
+      h('p', { className: 'cgp-empty' }, t('The catalog is empty.')));
   }
 
   const copy = async entry => {
@@ -2133,30 +2133,30 @@ export function Catalog({ catalog, actions, busy, onOpen, onInsert }) {
           h('button', {
             className: 'btn cgp-btn',
             disabled: busy,
-            title: 'See this diagram in a viewer',
+            title: t('See this diagram in a viewer'),
             onClick: () => actions.catalogPreview(entry.id)
           }, 'Preview'),
 
           onInsert && h('button', {
             className: 'btn cgp-btn cgp-btn--primary',
             disabled: busy,
-            title: 'Drop this straight into the diagram open in the editor',
+            title: t('Drop this straight into the diagram open in the editor'),
             onClick: () => addToEditor(entry)
-          }, insertedId === entry.id ? 'Added ✓' : 'Add to editor'),
+          }, insertedId === entry.id ? t('Added ✓') : t('Add to editor')),
 
           h('button', {
             className: 'btn cgp-btn',
             disabled: busy || workingId === entry.id,
-            title: 'Add this as a new .bpmn in your project and open it',
+            title: t('Add this as a new .bpmn in your project and open it'),
             onClick: () => create(entry)
-          }, workingId === entry.id ? 'Creating…' : 'New file'),
+          }, workingId === entry.id ? 'Creating…' : t('New file')),
 
           h('button', {
             className: 'btn cgp-btn',
             disabled: busy,
-            title: 'Copy the BPMN XML to the clipboard',
+            title: t('Copy the BPMN XML to the clipboard'),
             onClick: () => copy(entry)
-          }, copiedId === entry.id ? 'Copied!' : 'Copy XML')
+          }, copiedId === entry.id ? 'Copied!' : t('Copy XML'))
         )
       ))
     )
@@ -2177,7 +2177,7 @@ export function Catalog({ catalog, actions, busy, onOpen, onInsert }) {
 function openedAgo(days) {
   if (days === null || days === undefined) return null;
   if (days <= 0) return 'opened today';
-  if (days === 1) return 'opened yesterday';
+  if (days === 1) return t('opened yesterday');
   return `opened ${days} days ago`;
 }
 
@@ -2202,23 +2202,23 @@ function reviewChip(state) {
 export function MergeRequests({ data, actions, busy }) {
   if (!data) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'Loading merge requests...'));
+      h('p', { className: 'cgp-empty' }, t('Loading merge requests...')));
   }
 
   if (data.error) {
     return h('div', { className: 'cgp-panel' },
       h('div', { className: 'cgp-notice cgp-notice--warn' },
-        h('div', { className: 'cgp-notice__title' }, 'Could not load merge requests'),
+        h('div', { className: 'cgp-notice__title' }, t('Could not load merge requests')),
         h('div', { className: 'cgp-notice__body' }, data.error),
         h('div', { className: 'cgp-notice__body cgp-sub' },
-          'A private project needs a token - add one under Git Settings.')));
+          t('A private project needs a token - add one under Git Settings.'))));
   }
 
   if (!data.supported) {
     return h('div', { className: 'cgp-panel' },
       h('p', { className: 'cgp-empty' },
-        `The team server (${data.host || 'this host'}) is not GitHub or GitLab, ` +
-        'so merge requests are not available here.'));
+        t('The team server ({host}) is not GitHub or GitLab, so merge requests are not available here.',
+          { host: data.host || t('this host') })));
   }
 
   const items = data.items || [];
@@ -2245,11 +2245,11 @@ export function MergeRequests({ data, actions, busy }) {
       h('span', { className: 'cgp-toolbar__spacer' }),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: actions.refreshMergeRequests
-      }, h(Icon, { name: 'Renew', size: 13 }), ' Refresh')
+      }, h(Icon, { name: 'Renew', size: 13 }), ` ${t('Refresh')}`)
     ),
 
     !items.length
-      ? h('p', { className: 'cgp-empty' }, 'No open merge requests right now.')
+      ? h('p', { className: 'cgp-empty' }, t('No open merge requests right now.'))
       : h('ul', { className: 'cgp-mr-list' },
         items.map(mr => h('li', { key: `${mr.number}`, className: 'cgp-mr' },
           h('div', { className: 'cgp-mr__top' },
@@ -2258,7 +2258,7 @@ export function MergeRequests({ data, actions, busy }) {
             // diagram before and after with synced zoom.
             h('span', {
               className: 'cgp-mr__title cgp-mr__title--link',
-              title: 'See every changed file, before and after',
+              title: t('See every changed file, before and after'),
               onClick: () => actions.reviewMr(mr.source, mr.target)
             }, mr.title),
             mr.draft && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Draft'),
@@ -2272,7 +2272,7 @@ export function MergeRequests({ data, actions, busy }) {
               h('span', { className: 'cgp-mono' }, mr.source),
               ' → ',
               h('span', { className: 'cgp-mono' }, mr.target)),
-            mr.isCurrent && h('span', { className: 'cgp-chip cgp-chip--current' }, 'You are here'),
+            mr.isCurrent && h('span', { className: 'cgp-chip cgp-chip--current' }, t('You are here')),
             mr.author && h('span', { className: 'cgp-sub' }, `by ${mr.author}`),
             openedAgo(mr.ageDays) && h('span', { className: 'cgp-sub' }, openedAgo(mr.ageDays))
           ),
@@ -2293,18 +2293,18 @@ export function MergeRequests({ data, actions, busy }) {
             h('button', {
               className: 'btn cgp-btn',
               disabled: busy,
-              title: 'See every changed file, before and after, with synced zoom',
+              title: t('See every changed file, before and after, with synced zoom'),
               onClick: () => actions.reviewMr(mr.source, mr.target)
-            }, 'Review changes'),
+            }, t('Review changes')),
 
             // Offered whenever it is not known to be clean: conflicts, or an
             // unknown state the merge itself will settle.
             mr.hasConflicts !== false && h('button', {
               className: 'btn cgp-btn cgp-btn--primary',
               disabled: busy,
-              title: 'Bring both branches together here and resolve each diagram visually',
+              title: t('Bring both branches together here and resolve each diagram visually'),
               onClick: () => actions.resolveMr(mr.source, mr.target)
-            }, 'Resolve in Modeler'),
+            }, t('Resolve in Modeler')),
 
             h('button', {
               className: 'btn cgp-btn',
@@ -2327,7 +2327,7 @@ export function MergeRequests({ data, actions, busy }) {
 function activityLabel(days) {
   if (days === null || days === undefined) return null;
   if (days <= 0) return 'active today';
-  if (days === 1) return 'active yesterday';
+  if (days === 1) return t('active yesterday');
   return `quiet for ${days} days`;
 }
 
@@ -2341,19 +2341,19 @@ function activityLabel(days) {
 export function Overview({ data, actions, busy, onOpenTicket }) {
   if (!data) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'Loading the team overview...'));
+      h('p', { className: 'cgp-empty' }, t('Loading the team overview...')));
   }
 
   if (data.error) {
     return h('div', { className: 'cgp-panel' },
       h('div', { className: 'cgp-notice cgp-notice--warn' },
-        h('div', { className: 'cgp-notice__title' }, 'Could not load the overview'),
+        h('div', { className: 'cgp-notice__title' }, t('Could not load the overview')),
         h('div', { className: 'cgp-notice__body' }, data.error)));
   }
 
   const rows = data.rows || [];
   const s = data.summary || {};
-  const base = data.base || 'the shared branch';
+  const base = data.base || t('the shared branch');
 
   // What needs a coordinator's attention, countable before scrolling.
   const attention = [
@@ -2365,7 +2365,7 @@ export function Overview({ data, actions, busy, onOpenTicket }) {
   // Why the request column might be blank, said once at the top rather than
   // on every row.
   const mrNote = data.mr && !data.mr.supported
-    ? (data.mr.error || 'This project has no GitHub/GitLab server, so there are no requests to show.')
+    ? (data.mr.error || t('This project has no GitHub/GitLab server, so there are no requests to show.'))
     : null;
 
   return h('div', { className: 'cgp-panel' },
@@ -2373,11 +2373,11 @@ export function Overview({ data, actions, busy, onOpenTicket }) {
       h('span', { className: 'cgp-eyebrow' },
         rows.length
           ? `${rows.length} active workstream${rows.length === 1 ? '' : 's'}${attention ? ` — ${attention}` : ''}`
-          : 'No active workstreams'),
+          : t('No active workstreams')),
       h('span', { className: 'cgp-toolbar__spacer' }),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: actions.refreshOverview
-      }, h(Icon, { name: 'Renew', size: 13 }), ' Refresh')
+      }, h(Icon, { name: 'Renew', size: 13 }), ` ${t('Refresh')}`)
     ),
 
     h('p', { className: 'cgp-sub' },
@@ -2388,7 +2388,7 @@ export function Overview({ data, actions, busy, onOpenTicket }) {
 
     !rows.length
       ? h('p', { className: 'cgp-empty' },
-        'Nobody has a workstream open right now - everything is on the shared version.')
+        t('Nobody has a workstream open right now - everything is on the shared version.'))
       : h('ul', { className: 'cgp-mr-list' },
         rows.map(r => h('li', { key: r.name, className: 'cgp-mr' },
 
@@ -2397,7 +2397,7 @@ export function Overview({ data, actions, busy, onOpenTicket }) {
               className: 'cgp-mr__title',
               title: r.lastMessage || r.name
             }, r.title),
-            r.isCurrent && h('span', { className: 'cgp-chip cgp-chip--current' }, 'You are here'),
+            r.isCurrent && h('span', { className: 'cgp-chip cgp-chip--current' }, t('You are here')),
             r.ticket && (r.ticketUrl
               ? h('span', {
                 className: 'cgp-chip',
@@ -2405,13 +2405,13 @@ export function Overview({ data, actions, busy, onOpenTicket }) {
                 onClick: () => onOpenTicket && onOpenTicket(r.ticketUrl)
               }, r.ticket)
               : h('span', { className: 'cgp-chip cgp-chip--muted' }, r.ticket)),
-            r.stale && h('span', { className: 'cgp-chip cgp-chip--warn' }, 'Gone quiet')
+            r.stale && h('span', { className: 'cgp-chip cgp-chip--warn' }, t('Gone quiet'))
           ),
 
           h('div', { className: 'cgp-mr__meta' },
             r.owner && h('span', { className: 'cgp-sub' }, `last by ${r.owner}`),
             activityLabel(r.ageDays) && h('span', { className: 'cgp-sub' }, activityLabel(r.ageDays)),
-            r.localOnly && h('span', { className: 'cgp-chip cgp-chip--muted' }, 'Not sent yet'),
+            r.localOnly && h('span', { className: 'cgp-chip cgp-chip--muted' }, t('Not sent yet')),
 
             // The distance from the shared branch, the two numbers that say
             // whether finishing this later will be small or large.
@@ -2441,17 +2441,17 @@ export function Overview({ data, actions, busy, onOpenTicket }) {
                 r.mr.target && h('button', {
                   className: 'btn cgp-btn',
                   disabled: busy,
-                  title: 'See every changed file, before and after',
+                  title: t('See every changed file, before and after'),
                   onClick: () => actions.reviewMr(r.name, r.mr.target)
                 }, 'Review'),
                 h('button', {
                   className: 'btn cgp-btn',
                   disabled: busy,
-                  title: 'Open this request in the browser',
+                  title: t('Open this request in the browser'),
                   onClick: () => actions.openUrl(r.mr.url)
                 }, 'Open')
               )
-              : h('span', { className: 'cgp-sub cgp-sub--muted' }, 'No open request')
+              : h('span', { className: 'cgp-sub cgp-sub--muted' }, t('No open request'))
           )
         ))
       )
@@ -2478,7 +2478,7 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
   // the exact moment it was needed most.
   const ctx = context || {};
   const oursName = ctx.oursTitle || ctx.ours || 'this version';
-  const theirsName = ctx.theirsTitle || ctx.theirs || 'the other version';
+  const theirsName = ctx.theirsTitle || ctx.theirs || t('the other version');
 
   const operation = (context && context.operation) || null;
   const inverted = !!(context && context.inverted);
@@ -2486,12 +2486,12 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
   return h('div', null,
     h('div', { className: 'cgp-notice cgp-notice--warn' },
       h('div', { className: 'cgp-notice__title' },
-        remaining ? 'The same diagrams were changed twice' : 'All decisions made'
+        remaining ? t('The same diagrams were changed twice') : t('All decisions made')
       ),
       h('div', { className: 'cgp-notice__body' },
         remaining
           ? `Choose which version of each diagram to keep - "${oursName}" or "${theirsName}". Open both first if you are not sure.`
-          : 'Nothing is conflicted any more. Finish up to complete this.'
+          : t('Nothing is conflicted any more. Finish up to complete this.')
       ),
 
       // What is actually half-finished. It is usually a merge, but the
@@ -2505,8 +2505,8 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
       // "ours" as "mine" here discards their own changes believing they
       // kept them, so it is stated rather than implied.
       inverted && h('div', { className: 'cgp-notice__body cgp-sub--warn' },
-        `Note: your own changes are the "${theirsName}" side here, because ` +
-        'they are being replayed on top of the other version.'
+        t('Note: your own changes are the "{side}" side here, because they are being replayed on top of the other version.',
+          { side: theirsName })
       )
     ),
 
@@ -2525,7 +2525,7 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
             ? `"${theirsName}" deleted this diagram - keeping it removes the file.`
             : c.deletedBy === 'us'
               ? `"${oursName}" deleted this diagram - keeping it removes the file.`
-              : 'Both versions deleted this diagram.'
+              : t('Both versions deleted this diagram.')
         ),
 
         // When the two sides changed different things, keeping a whole side
@@ -2533,22 +2533,22 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
         // combining exists for, so it is called out rather than left as an
         // equal-looking third button.
         c.combinable && h('div', { className: 'cgp-sub', style: { color: 'var(--cgp-added)' } },
-          'These changes do not clash - they can be combined without losing either side.'
+          t('These changes do not clash - they can be combined without losing either side.')
         ),
 
         h('div', { className: 'cgp-field', style: { marginTop: '5px' } },
           c.combinable && h('button', {
             className: 'btn cgp-btn cgp-btn--primary',
             disabled: busy,
-            title: 'Merge both sets of changes into one diagram. Nothing is discarded.',
+            title: t('Merge both sets of changes into one diagram. Nothing is discarded.'),
             onClick: () => actions.combine(c.path)
-          }, 'Combine both'),
+          }, t('Combine both')),
           c.isDiagram && c.hasOurs && c.hasTheirs && h('button', {
             className: 'btn cgp-btn',
             disabled: busy,
-            title: 'Open both versions side by side',
+            title: t('Open both versions side by side'),
             onClick: () => actions.compare(c.path)
-          }, 'Show me both'),
+          }, t('Show me both')),
           h('button', {
             className: 'btn cgp-btn', disabled: busy,
             title: `Keep the version from "${oursName}"`,
@@ -2575,15 +2575,15 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
         (resolved || []).map(r => h('li', { key: r.path, className: 'cgp-row' },
           h('span', { className: 'cgp-row__name', title: r.path },
             prettyName(r.name),
-            r.removed && h('span', { className: 'cgp-row__meta' }, '  (removed)')
+            r.removed && h('span', { className: 'cgp-row__meta' }, `  ${t('(removed)')}`)
           ),
           h('span', { className: 'cgp-row__actions' },
             h('button', {
               className: 'btn cgp-btn',
               disabled: busy,
-              title: 'Put this file back to needing a decision',
+              title: t('Put this file back to needing a decision'),
               onClick: () => actions.undoResolution(r.path)
-            }, 'Change my mind')
+            }, t('Change my mind'))
           )
         ))
       )
@@ -2595,16 +2595,16 @@ export function ConflictResolver({ conflicts, resolved, actions, busy, context }
         disabled: busy || remaining > 0,
         title: remaining
           ? `${remaining} diagram(s) still need a decision`
-          : 'Complete this and carry on',
+          : t('Complete this and carry on'),
         onClick: actions.completeMerge
       }, 'Finish'),
       h('button', {
         className: 'btn cgp-btn',
         disabled: busy,
         title: (operation && operation.startOver) ||
-          'Undo this entirely. Your own saved work is not affected.',
+          t('Undo this entirely. Your own saved work is not affected.'),
         onClick: actions.abortMerge
-      }, 'Start over')
+      }, t('Start over'))
     ),
 
     operation && h('p', { className: 'cgp-sub' }, operation.startOver)
@@ -2629,7 +2629,7 @@ export function FileRow({ file, actions, busy }) {
       h('button', {
         className: 'btn cgp-btn cgp-btn--icon',
         disabled: busy,
-        title: file.staged ? 'Remove from the next save point' : 'Include in the next save point',
+        title: file.staged ? t('Remove from the next save point') : t('Include in the next save point'),
         onClick: () => (file.staged ? actions.unstage(file) : actions.stage(file))
       }, file.staged ? '−' : '+')
     )
@@ -2701,7 +2701,7 @@ function TreeLevel({ node, repoPath, onOpen }) {
 export function Explorer({ tree, onOpen, onRefresh, busy }) {
   if (!tree) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'Loading diagrams...')
+      h('p', { className: 'cgp-empty' }, t('Loading diagrams...'))
     );
   }
 
@@ -2716,17 +2716,17 @@ export function Explorer({ tree, onOpen, onRefresh, busy }) {
   return h('div', { className: 'cgp-panel' },
     h('div', { className: 'cgp-toolbar' },
       h('span', { className: 'cgp-eyebrow' },
-        empty ? 'No diagrams found' : `${tree.total} diagrams · ${tree.changed} changed`
+        empty ? t('No diagrams found') : `${tree.total} diagrams · ${tree.changed} changed`
       ),
       h('span', { className: 'cgp-toolbar__spacer' }),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: onRefresh
-      }, 'Refresh')
+      }, t('Refresh'))
     ),
 
     empty
       ? h('p', { className: 'cgp-empty' },
-        'No .bpmn, .dmn or .form files in this project yet.')
+        t('No .bpmn, .dmn or .form files in this project yet.'))
       : h(TreeLevel, { node: tree.tree, repoPath: tree.repoPath, onOpen })
   );
 }
@@ -2763,7 +2763,7 @@ function Output({ entry }) {
     h('button', {
       className: 'cgp-log__toggle',
       onClick: () => setOpen(!open),
-      title: open ? 'Hide the output' : 'Show what this command answered'
+      title: open ? t('Hide the output') : t('Show what this command answered')
     }, `${open ? '▾' : '▸'} ${lines} line${lines === 1 ? '' : 's'} of output`),
 
     open && h('pre', { className: 'cgp-log__pre' },
@@ -2869,19 +2869,19 @@ export function Activity({ entries, onRefresh, onClear, onRun, consoleEnabled, b
     // went wrong, and the counts worth a glance before reading the log.
     h('div', { className: 'cgp-hero' },
       h('div', { className: 'cgp-hero__main' },
-        h('span', { className: 'cgp-hero__eyebrow' }, 'Activity'),
+        h('span', { className: 'cgp-hero__eyebrow' }, t('Activity')),
         h('div', { className: 'cgp-hero__line' },
-          h('span', { className: 'cgp-hero__version', style: { fontSize: '17px' } }, 'Command log'),
+          h('span', { className: 'cgp-hero__version', style: { fontSize: '17px' } }, t('Command log')),
           failedAll
             ? h('span', { className: 'cgp-pill cgp-pill--warn' },
               `${failedAll} failed`)
-            : h('span', { className: 'cgp-pill cgp-pill--live' }, 'All ran')
+            : h('span', { className: 'cgp-pill cgp-pill--live' }, t('All ran'))
         )
       ),
       h('div', { className: 'cgp-stats' },
         stat(all.length, 'Commands', 'queued'),
         stat(failedAll, 'Failed', 'flight'),
-        stat(typed.length, 'By you', 'flight')
+        stat(typed.length, t('By you'), 'flight')
       )
     ),
 
@@ -2899,19 +2899,19 @@ export function Activity({ entries, onRefresh, onClear, onRun, consoleEnabled, b
         onChange: e => setFilter(e.target.value)
       },
         h('option', { value: 'all' }, 'Everything'),
-        h('option', { value: 'auto' }, 'Background only'),
-        h('option', { value: 'console' }, 'Typed by me')
+        h('option', { value: 'auto' }, t('Background only')),
+        h('option', { value: 'console' }, t('Typed by me'))
       ),
 
-      h('button', { className: 'btn cgp-btn', disabled: busy, onClick: onRefresh }, 'Refresh'),
+      h('button', { className: 'btn cgp-btn', disabled: busy, onClick: onRefresh }, t('Refresh')),
       h('button', { className: 'btn cgp-btn', disabled: busy, onClick: onClear }, 'Clear')
     ),
 
     !rows.length
       ? h('p', { className: 'cgp-empty' },
-        filter === 'auto' ? 'Nothing has run in the background yet.'
-          : filter === 'console' ? 'You have not typed any commands yet.'
-            : 'No commands yet.')
+        filter === 'auto' ? t('Nothing has run in the background yet.')
+          : filter === 'console' ? t('You have not typed any commands yet.')
+            : t('No commands yet.'))
       : h('ul', { className: 'cgp-log' },
         rows.map(e => h('li', {
           key: e.id,
@@ -2953,7 +2953,7 @@ export function Activity({ entries, onRefresh, onClear, onRun, consoleEnabled, b
         }, 'Run')
       )
       : h('p', { className: 'cgp-console__off' },
-        'Turn on "Developer mode" in Git Settings to run git commands here.'
+        t('Turn on "Developer mode" in Git Settings to run git commands here.')
       )
   );
 }
@@ -3021,16 +3021,14 @@ function ProjectSetup({ setup, actions, busy }) {
   };
 
   return h('div', { className: 'cgp-block cgp-block--team' },
-    h('p', { className: 'cgp-block__title' }, 'How this project is organised'),
+    h('p', { className: 'cgp-block__title' }, t('How this project is organised')),
 
     setup.guessing
       ? h('p', { className: 'cgp-sub' },
-        'Nobody has set this project up yet, so the plugin is working it out ' +
-        'from the branch names. Writing it down means everyone on the team ' +
-        'agrees - including people who have not opened it yet.')
+        t('Nobody has set this project up yet, so the plugin is working it out from the branch names. Writing it down means everyone on the team agrees - including people who have not opened it yet.'))
       : h('p', { className: 'cgp-sub' },
-        `Shared with the team through ${setup.file}` +
-        (setup.committed ? '.' : ' - not saved and sent yet, so only you have it.')),
+        t('Shared with the team through {file}', { file: setup.file }) +
+        (setup.committed ? '.' : ` - ${t('not saved and sent yet, so only you have it.')}`)),
 
     setup.warning && h('p', { className: 'cgp-sub cgp-sub--warn' }, setup.warning),
 
@@ -3053,19 +3051,19 @@ function ProjectSetup({ setup, actions, busy }) {
 
     h('div', { style: { marginTop: '8px' } },
       branchPicker(
-        gitflow ? 'Everyday work' : 'Shared branch',
+        gitflow ? t('Everyday work') : t('Shared branch'),
         'baseBranch',
-        'Where new work starts from and returns to'
+        t('Where new work starts from and returns to')
       ),
       gitflow && branchPicker(
-        'What is live',
+        t('What is live'),
         'releaseBranch',
-        'Urgent fixes start from here, so it must be what is actually released'
+        t('Urgent fixes start from here, so it must be what is actually released')
       )
     ),
 
     h('div', { className: 'cgp-field', style: { marginBottom: '6px' } },
-      h('span', { className: 'cgp-row__meta', style: { minWidth: '110px' } }, 'Ticket prefix'),
+      h('span', { className: 'cgp-row__meta', style: { minWidth: '110px' } }, t('Ticket prefix')),
       h('input', {
         type: 'text', className: 'cgp-input cgp-input--ticket',
         value: value.jiraProjectKey || '', disabled: busy,
@@ -3074,10 +3072,10 @@ function ProjectSetup({ setup, actions, busy }) {
     ),
 
     h('div', { className: 'cgp-field', style: { marginBottom: '6px' } },
-      h('span', { className: 'cgp-row__meta', style: { minWidth: '110px' } }, 'Jira address'),
+      h('span', { className: 'cgp-row__meta', style: { minWidth: '110px' } }, t('Jira address')),
       h('input', {
         type: 'text', className: 'cgp-input',
-        placeholder: 'jira.example.com - optional, makes ticket numbers clickable',
+        placeholder: t('jira.example.com - optional, makes ticket numbers clickable'),
         value: value.jiraHost || '', disabled: busy,
         onChange: e => change({ jiraHost: e.target.value })
       })
@@ -3087,7 +3085,7 @@ function ProjectSetup({ setup, actions, busy }) {
 
     plan
       ? h('div', { className: 'cgp-plan' },
-        h('p', { className: 'cgp-eyebrow' }, 'This will:'),
+        h('p', { className: 'cgp-eyebrow' }, t('This will:')),
         h('ol', { className: 'cgp-plan__steps' },
           plan.steps.map(s => h('li', { key: s.key }, s.label))
         ),
@@ -3096,7 +3094,7 @@ function ProjectSetup({ setup, actions, busy }) {
         h('div', { className: 'cgp-field' },
           h('button', {
             className: 'btn cgp-btn', disabled: busy, onClick: apply
-          }, 'Save these settings'),
+          }, t('Save these settings')),
           h('button', {
             className: 'btn cgp-btn', disabled: busy, onClick: () => setPlan(null)
           }, 'Cancel')
@@ -3104,7 +3102,64 @@ function ProjectSetup({ setup, actions, busy }) {
       )
       : h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: preview
-      }, setup.exists ? 'Review changes' : 'Set this project up')
+      }, setup.exists ? t('Review changes') : t('Set this project up'))
+  );
+}
+
+/**
+ * Which areas of the panel this project shows.
+ *
+ * A team that runs the plugin for analysts has no use for six areas, and an
+ * area that exists only to be avoided is worse than no area. Turning one off
+ * here writes it to the project's committed settings, so everyone who clones
+ * the repo gets the same panel.
+ *
+ * It is a tidying tool, not a lock, and the note says so: the file is plain
+ * text in the project folder. Implying otherwise would be the one thing a
+ * setting like this must not do.
+ */
+function TabAccess({ value, change }) {
+  const all = value.allTabs || [];
+  const alwaysOn = value.alwaysOnTabs || [];
+  const enabled = Array.isArray(value.enabledTabs)
+    ? value.enabledTabs
+    : all.map(t => t.id);
+
+  const toggle = (id, on) => {
+    const next = all
+      .map(t => t.id)
+      .filter(tid => (tid === id ? on : enabled.includes(tid)));
+
+    change({ enabledTabs: next });
+  };
+
+  return h('div', { className: 'cgp-block' },
+    h('p', { className: 'cgp-block__title' }, t('Areas this project shows')),
+
+    all.map(tab => {
+      const pinned = alwaysOn.includes(tab.id);
+
+      return h('label', {
+        key: tab.id,
+        className: 'cgp-row__meta',
+        style: { display: 'block', cursor: pinned ? 'default' : 'pointer' }
+      },
+        h('input', {
+          type: 'checkbox',
+          checked: pinned || enabled.includes(tab.id),
+          disabled: pinned,
+          style: { marginRight: '6px' },
+          onChange: e => toggle(tab.id, e.target.checked)
+        }),
+        h('span', null, tab.label),
+        h('span', { className: 'cgp-sub', style: { display: 'block', marginLeft: '20px' } },
+          tab.description)
+      );
+    }),
+
+    h('p', { className: 'cgp-sub', style: { marginTop: '6px' } },
+      t('Saved into your project\'s settings file, so everyone on the team sees the same areas. It appears as a change to save and send, like any other. Anyone can turn an area back on from here, so treat this as tidying the panel rather than locking it.')
+    )
   );
 }
 
@@ -3116,7 +3171,7 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
 
   if (!settings) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'Loading settings...'));
+      h('p', { className: 'cgp-empty' }, t('Loading settings...')));
   }
 
   // `autoPull` is defaulted rather than assumed. A response that is missing
@@ -3150,13 +3205,13 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
   return h('div', { className: `cgp-panel ${busy ? 'cgp-busy' : ''}` },
 
     h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'Project folder'),
+      h('p', { className: 'cgp-block__title' }, t('Project folder')),
       h('div', { className: 'cgp-field' },
         h('input', {
           type: 'text',
           className: 'cgp-input',
           value: value.repoPath || '',
-          placeholder: 'No folder selected',
+          placeholder: t('No folder selected'),
           readOnly: true
         }),
         h('button', {
@@ -3164,11 +3219,11 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         }, 'Choose...')
       ),
       h('p', { className: 'cgp-sub' },
-        'The folder containing your diagrams. It should already be set up for the team.')
+        t('The folder containing your diagrams. It should already be set up for the team.'))
     ),
 
     h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'Get updates automatically'),
+      h('p', { className: 'cgp-block__title' }, t('Get updates automatically')),
       h('label', { className: 'cgp-field', style: { cursor: 'pointer' } },
         h('input', {
           type: 'checkbox',
@@ -3178,7 +3233,7 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
             autoPull: Object.assign({}, value.autoPull, { enabled: e.target.checked })
           })
         }),
-        h('span', null, 'Check for the team\'s updates in the background')
+        h('span', null, t('Check for the team\'s updates in the background'))
       ),
       value.autoPull.enabled && h('div', { className: 'cgp-field', style: { marginTop: '8px' } },
         h('span', { className: 'cgp-row__meta' }, 'Every'),
@@ -3196,21 +3251,20 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         h('span', { className: 'cgp-row__meta' }, 'minutes')
       ),
       h('p', { className: 'cgp-sub' },
-        'Only runs when everything is saved and no decisions are pending, so it ' +
-        'can never interrupt you. Everything it does appears in Activity.'),
+        t('Only runs when everything is saved and no decisions are pending, so it can never interrupt you. Everything it does appears in Activity.')),
       blockedReason && h('p', { className: 'cgp-sub', style: { color: 'var(--cgp-edited)' } },
         `Currently: ${blockedReason}`),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, style: { marginTop: '6px' },
         onClick: actions.autoPullNow
-      }, 'Check now')
+      }, t('Check now'))
     ),
 
     h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'When someone finishes a workstream'),
+      h('p', { className: 'cgp-block__title' }, t('When someone finishes a workstream')),
       [
-        [ 'review', 'Review first', 'Opens a review request. Someone checks the diagrams before they reach the shared version.' ],
-        [ 'direct', 'Combine directly', 'Finished work goes straight in. Faster, but nothing is checked first.' ]
+        [ 'review', t('Review first'), t('Opens a review request. Someone checks the diagrams before they reach the shared version.') ],
+        [ 'direct', t('Combine directly'), t('Finished work goes straight in. Faster, but nothing is checked first.') ]
       ].map(([ id, title, note ]) => h('label', {
         key: id,
         style: { display: 'block', cursor: 'pointer', marginBottom: '6px' }
@@ -3230,8 +3284,31 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
 
     h(ProjectSetup, { setup: projectSetup, actions, busy }),
 
+    // The title carries both languages at once, on purpose: someone who has
+    // landed in a language they cannot read needs to find this control
+    // without reading anything else on the screen.
     h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'Developer mode'),
+      h('p', { className: 'cgp-block__title' },
+        // Both languages at once, unless they are the same word - "Language /
+        // Language" would just look like a mistake.
+        t('Language') === 'Language' ? 'Language' : `${t('Language')} / Language`),
+      h('div', { className: 'cgp-field' },
+        h('select', {
+          className: 'cgp-input',
+          value: value.language || 'en',
+          disabled: busy,
+          onChange: e => change({ language: e.target.value })
+        },
+          LANGUAGES.map(lang =>
+            h('option', { key: lang.id, value: lang.id }, lang.label))
+        )
+      ),
+      h('p', { className: 'cgp-sub' },
+        t('The language of this panel. Personal to this computer - it changes nothing for the rest of the team.'))
+    ),
+
+    h('div', { className: 'cgp-block' },
+      h('p', { className: 'cgp-block__title' }, t('Developer mode')),
       h('label', { className: 'cgp-row__meta', style: { cursor: 'pointer' } },
         h('input', {
           type: 'checkbox',
@@ -3240,26 +3317,30 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
           style: { marginRight: '6px' },
           onChange: e => change({ developerMode: e.target.checked })
         }),
-        h('span', null, 'Let me type git commands in the Activity tab')
+        h('span', null, t('Let me type git commands in the Activity tab'))
       ),
       h('p', { className: 'cgp-sub', style: { marginLeft: '20px' } },
-        'Runs whatever you type against this project, including commands ' +
-        'that can throw work away. There is no confirmation and no undo - ' +
-        'leave this off unless you use git directly.'
+        t('Runs whatever you type against this project, including commands that can throw work away. There is no confirmation and no undo - leave this off unless you use git directly.')
       )
     ),
 
+    // Which areas the panel shows. Only offered in developer mode, because
+    // it decides what everyone else on the project sees - and the server
+    // refuses the write without it, so showing the boxes otherwise would
+    // just be a control that fails on save.
+    value.canEditTabs && h(TabAccess, { value, change }),
+
     h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'Team server (optional)'),
+      h('p', { className: 'cgp-block__title' }, t('Team server (optional)')),
       h('div', { className: 'cgp-field', style: { marginBottom: '8px' } },
-        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, 'GitLab host'),
+        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, t('GitLab host')),
         h('input', {
           type: 'text', className: 'cgp-input', value: value.gitlabHost || '',
           disabled: busy, onChange: e => change({ gitlabHost: e.target.value })
         })
       ),
       h('div', { className: 'cgp-field', style: { marginBottom: '8px' } },
-        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, 'GitHub token'),
+        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, t('GitHub token')),
         h('input', {
           type: 'password', className: 'cgp-input',
           placeholder: settings.hasGithubToken ? 'saved' : 'not set',
@@ -3268,7 +3349,7 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         })
       ),
       h('div', { className: 'cgp-field' },
-        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, 'GitLab token'),
+        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, t('GitLab token')),
         h('input', {
           type: 'password', className: 'cgp-input',
           placeholder: settings.hasGitlabToken ? 'saved' : 'not set',
@@ -3277,14 +3358,13 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         })
       ),
       h('p', { className: 'cgp-sub' },
-        'Only needed for listing issues on private projects. Stored in plain ' +
-        'text in your home folder - treat them as low-value tokens.')
+        t('Only needed for listing issues on private projects. Stored in plain text in your home folder - treat them as low-value tokens.'))
     ),
 
     h('div', { className: 'cgp-block' },
-      h('p', { className: 'cgp-block__title' }, 'AI edits (OpenRouter)'),
+      h('p', { className: 'cgp-block__title' }, t('AI edits (OpenRouter)')),
       h('div', { className: 'cgp-field', style: { marginBottom: '8px' } },
-        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, 'API key'),
+        h('span', { className: 'cgp-row__meta', style: { minWidth: '90px' } }, t('API key')),
         h('input', {
           type: 'password', className: 'cgp-input',
           placeholder: settings.hasOpenRouterKey ? 'saved' : 'not set',
@@ -3302,27 +3382,22 @@ export function Settings({ settings, projectSetup, autoPull, blockedReason, acti
         })
       ),
       h('p', { className: 'cgp-sub' },
-        'Used by the AI Edit tab. Your diagram and instruction are sent to ' +
-        'OpenRouter when you preview an edit. The key is stored in plain text ' +
-        'in your home folder, like the tokens above.')
+        t('Used by the AI Edit tab. Your diagram and instruction are sent to OpenRouter when you preview an edit. The key is stored in plain text in your home folder, like the tokens above.'))
     ),
 
     h('div', { className: 'cgp-block' },
       h('p', { className: 'cgp-block__title' }, 'Support'),
       h('p', { className: 'cgp-sub', style: { marginBottom: '8px' } },
-        'Stuck? This gathers a summary, your recent git activity, the ' +
-        'environment, and a secret-free copy of these settings into an email ' +
-        'draft with the files attached - for you to review and send. Nothing ' +
-        'is sent automatically.'),
+        t('Stuck? This gathers a summary, your recent git activity, the environment, and a secret-free copy of these settings into an email draft with the files attached - for you to review and send. Nothing is sent automatically.')),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: () => actions.reportProblem()
-      }, 'Report a problem')
+      }, t('Report a problem'))
     ),
 
     h('div', { className: 'cgp-field' },
       h('button', {
         className: 'btn cgp-btn cgp-btn--primary', disabled: busy || !dirty, onClick: save
-      }, 'Save settings'),
+      }, t('Save settings')),
       dirty && h('button', {
         className: 'btn cgp-btn', disabled: busy,
         onClick: () => {
@@ -3363,7 +3438,7 @@ ${word} (git status: ${code})`
       h('button', {
         className: 'btn cgp-btn cgp-btn--icon',
         disabled: busy,
-        title: file.staged ? 'Remove from the next save point' : 'Include in the next save point',
+        title: file.staged ? t('Remove from the next save point') : t('Include in the next save point'),
         onClick: () => (file.staged ? actions.unstage(file) : actions.stage(file))
       }, file.staged ? '−' : '+')
     ),
@@ -3405,12 +3480,12 @@ export function WorkHero({ label, title, status }) {
         h('span', { className: 'cgp-hero__version', style: { fontSize: '17px' } }, title),
         changeCount
           ? h('span', { className: 'cgp-pill cgp-pill--warn' }, `${changeCount} unsaved`)
-          : h('span', { className: 'cgp-pill cgp-pill--live' }, 'All saved')
+          : h('span', { className: 'cgp-pill cgp-pill--live' }, t('All saved'))
       )
     ),
     h('div', { className: 'cgp-stats' },
-      stat(status.behind, 'To get', 'queued'),
-      stat(status.ahead, 'To send', 'flight'),
+      stat(status.behind, t('To get'), 'queued'),
+      stat(status.ahead, t('To send'), 'flight'),
       stat(changeCount, 'Unsaved', 'flight')
     )
   );
@@ -3440,7 +3515,7 @@ export function ChangesPane({ status, actions, busy }) {
       className: 'cgp-msg',
       rows: 2,
       value: message,
-      placeholder: 'Message (Ctrl+Enter to save)',
+      placeholder: t('Message (Ctrl+Enter to save)'),
       disabled: busy,
       onChange: e => setMessage(e.target.value),
       onKeyDown: e => {
@@ -3453,13 +3528,13 @@ export function ChangesPane({ status, actions, busy }) {
       disabled: !canCommit,
       title: staged.length
         ? `Save ${staged.length} file(s) as a new save point`
-        : 'Include some files first, using the + buttons',
+        : t('Include some files first, using the + buttons'),
       onClick: commit
     }, `✓  Save point${staged.length ? ` (${staged.length})` : ''}`),
 
     staged.length > 0 && h('div', { style: { marginTop: '12px' } },
       h('p', { className: 'cgp-split__title' },
-        h('span', null, 'Ready to save'),
+        h('span', null, t('Ready to save')),
         h('span', { className: 'cgp-badge' }, staged.length)
       ),
       staged.map(f => h(ScmRow, { key: f.path, file: f, actions, busy }))
@@ -3473,13 +3548,13 @@ export function ChangesPane({ status, actions, busy }) {
         unstaged.length > 0 && h('button', {
           className: 'btn cgp-btn cgp-btn--icon',
           disabled: busy,
-          title: 'Include every change',
+          title: t('Include every change'),
           onClick: actions.stageAll
         }, '+')
       ),
       unstaged.length
         ? unstaged.map(f => h(ScmRow, { key: f.path, file: f, actions, busy }))
-        : h('p', { className: 'cgp-empty' }, 'No changes. Everything is saved.')
+        : h('p', { className: 'cgp-empty' }, t('No changes. Everything is saved.'))
     )
   );
 }

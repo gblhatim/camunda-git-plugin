@@ -1,0 +1,58 @@
+<section class="slide" id="s-raci" data-section="Organisation" data-accent="brand" data-title="Qui fait quoi — après">
+  <p class="kicker">Organisation · RACI</p>
+  <h2>Chaque étape sensible a désormais un approbateur distinct</h2>
+  <p class="lede">
+    Le vrai changement d'organisation n'est pas l'outillage : c'est que <strong>R</strong> et <strong>A</strong> cessent d'être
+    la même personne sur les trois points qui comptent — le conflit d'intégration, le tag, et le déploiement en production.
+  </p>
+
+  <div class="body">
+    <div class="cols c-3-2" style="height:100%">
+      <div class="stack">
+        <table class="t raci">
+          <thead>
+            <tr>
+              <th style="width:30%">Cas d'usage</th>
+              <th data-col="1">Auteur</th>
+              <th data-col="2">Intégrateur</th>
+              <th data-col="3">Relecteur</th>
+              <th data-col="4">Admin Git/CI</th>
+              <th data-col="5">Comité</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Créer une branche</td><td class="r-cell rr">R/A</td><td class="r-cell">–</td><td class="r-cell ri">I</td><td class="r-cell rc">C</td><td class="r-cell">–</td></tr>
+            <tr><td>Modifier &amp; committer</td><td class="r-cell rr">R/A</td><td class="r-cell">–</td><td class="r-cell ri">I</td><td class="r-cell">–</td><td class="r-cell">–</td></tr>
+            <tr><td>Ouvrir une Merge Request</td><td class="r-cell rr">R/A</td><td class="r-cell ri">I</td><td class="r-cell rc">C</td><td class="r-cell ri">I</td><td class="r-cell">–</td></tr>
+            <tr><td>Revue — diff visuel</td><td class="r-cell ri">I</td><td class="r-cell ri">I</td><td class="r-cell rr">R/A</td><td class="r-cell rc">C</td><td class="r-cell">–</td></tr>
+            <tr><td>Conflit d'intégration release/hotfix</td><td class="r-cell ri">I</td><td class="r-cell rr">R/A</td><td class="r-cell rc">C</td><td class="r-cell rc">C</td><td class="r-cell">–</td></tr>
+            <tr><td>Tag / version</td><td class="r-cell ri">I</td><td class="r-cell rr">R/A</td><td class="r-cell ri">I</td><td class="r-cell ra">A</td><td class="r-cell">–</td></tr>
+            <tr><td>Déploiement CI/CD vers la production</td><td class="r-cell ri">I</td><td class="r-cell rr">R/A</td><td class="r-cell">–</td><td class="r-cell ra">A</td><td class="r-cell ri">I</td></tr>
+          </tbody>
+        </table>
+        <div class="raci-legend">
+          <span><b class="rr">R</b> exécute</span><span><b class="ra">A</b> rend des comptes</span>
+          <span><b class="rc">C</b> consulté</span><span><b class="ri">I</b> informé</span>
+          <span class="dimmer">— cliquez sur un en-tête de colonne pour isoler un rôle</span>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card hi">
+          <h3>Le rôle qui n'existait pas : l'Intégrateur</h3>
+          <p>Il porte la promotion vers <span class="mono">main</span>, le tag et le déploiement en production.
+             C'est lui qui franchit — ou non — la porte de qualité. L'auteur d'une méthode ne peut plus la mettre en production seul.</p>
+        </div>
+        <div class="card">
+          <h3>Comparé à aujourd'hui</h3>
+          <p>Trois cases <strong class="t-bad">R/A</strong> confondues sur cinq étapes, dont le déploiement en production.
+             Ce n'était pas un problème de personnes : le processus n'offrait nulle part où poser une validation indépendante.</p>
+        </div>
+        <div class="callout">
+          <strong>L'Admin Git/CI</strong> est approbateur sur le tag et le déploiement, mais n'exécute pas :
+          il garantit que le pipeline fait ce qu'il prétend faire.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

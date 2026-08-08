@@ -1,0 +1,91 @@
+<section class="slide" id="s-cicd" data-section="Piliers" data-accent="cicd" data-title="Pilier 2 — CI/CD">
+  <div class="spread">
+    <div>
+      <p class="kicker">Pilier 02 · CI/CD</p>
+      <h2>Le même pipeline, deux fois</h2>
+    </div>
+    <div class="seg" data-group="cicdview">
+      <button data-panel="sim" class="on">Simulation</button>
+      <button data-panel="model">Modèle BPMN</button>
+    </div>
+  </div>
+  <p class="lede">
+    Ce qui prenait <strong>2 jours et 6 personnes</strong> en manuel se déclenche désormais à chaque push.
+    Essayez : poussez sur <span class="mono">develop</span>, faites échouer un test, puis tentez une promotion en production.
+  </p>
+
+  <div class="body">
+    <div id="cicd" data-panel-group="cicdview" data-panel="sim" style="height:100%">
+      <div class="stack" style="height:100%">
+        <div class="pipe" style="grid-template-columns:repeat(4,1fr)">
+          <div class="pipe-stage" data-stage="build">
+            <div class="ps-state"></div>
+            <div class="ps-name">Build</div>
+            <div class="ps-sub">Compilation du projet et des méthodes</div>
+            <div class="ps-bar"></div>
+          </div>
+          <div class="pipe-stage" data-stage="tests">
+            <div class="ps-state"></div>
+            <div class="ps-name">Tests</div>
+            <div class="ps-sub">camunda-bpm-assert — exécution réelle du workflow</div>
+            <div class="ps-bar"></div>
+          </div>
+          <div class="pipe-stage" data-stage="sonar">
+            <div class="ps-state"></div>
+            <div class="ps-name">SonarQube</div>
+            <div class="ps-sub">Qualité du BPMN — informatif sur develop</div>
+            <div class="ps-bar"></div>
+          </div>
+          <div class="pipe-stage" data-stage="deploy">
+            <div class="ps-state"></div>
+            <div class="ps-name">Déployer</div>
+            <div class="ps-sub">Préproduction, ou production depuis main</div>
+            <div class="ps-bar"></div>
+          </div>
+        </div>
+
+        <div class="card pad-sm">
+          <div class="spread">
+            <div class="row" style="gap:10px">
+              <button class="btn primary" id="cicd-push">▶ Pousser sur develop</button>
+              <button class="btn" id="cicd-promote">Promouvoir vers main</button>
+              <span class="dimmer small">cible</span>
+              <span class="badge b-accent" id="cicd-target">préproduction</span>
+            </div>
+            <div class="row" style="gap:20px">
+              <label class="switch"><input type="checkbox" id="cicd-fail"><span class="track"></span>Simuler un test en échec</label>
+              <label class="switch"><input type="checkbox" id="cicd-fixed"><span class="track"></span>Qualité SonarQube corrigée</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="cols c-3-2" style="flex:1;min-height:0">
+          <div style="display:flex;flex-direction:column;min-height:0">
+            <div class="code-title">Journal du pipeline</div>
+            <div id="cicd-log" class="term" style="flex:1;min-height:0"></div>
+          </div>
+
+          <div class="stack">
+            <div class="card pad-sm hi">
+              <h3>Sur <span class="mono">develop</span></h3>
+              <p>Déploiement en préproduction à chaque push. Le scan SonarQube tourne, mais <strong>n'empêche jamais</strong> le déploiement :
+                 il informe, il ne bloque pas.</p>
+            </div>
+            <div class="card pad-sm hi" style="--accent:var(--sonar,#fb923c)">
+              <h3>Sur <span class="mono">main</span></h3>
+              <p>Le même pipeline déploie en production — mais il n'est atteint que si la promotion a franchi la porte de qualité.
+                 Le même résultat de scan devient <strong>bloquant</strong>.</p>
+            </div>
+            <div class="callout" style="font-size:12.5px">
+              La non-régression se joue maintenant <strong>ici</strong>, avant tout déploiement — plus en production après coup.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div data-panel-group="cicdview" data-panel="model" class="hidden" style="height:100%">
+      <div class="bpmn-theatre" data-diagrams="pipeline" style="height:100%"></div>
+    </div>
+  </div>
+</section>

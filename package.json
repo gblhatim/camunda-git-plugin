@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "check": "node scripts/check-undefined.js",
-    "test": "node test/merge.test.js && node test/combine.test.js && node test/combine-integration.test.js && node test/merge-request-integration.test.js && node test/mr-review-integration.test.js && node test/mr-board.test.js && node test/search.test.js && node test/ai.test.js && node test/catalog.test.js && node test/support.test.js && node test/overview.test.js",
+    "test": "node test/merge.test.js && node test/combine.test.js && node test/combine-integration.test.js && node test/merge-request-integration.test.js && node test/mr-review-integration.test.js && node test/mr-board.test.js && node test/search.test.js && node test/ai.test.js && node test/catalog.test.js && node test/support.test.js && node test/overview.test.js && node test/tab-access.test.js && node test/i18n.test.js",
+    "build:deck": "node scripts/build-presentation.js",
     "build": "npm run check && webpack",
     "build:only": "webpack",
     "watch": "webpack --watch"

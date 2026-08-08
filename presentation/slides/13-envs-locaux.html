@@ -1,0 +1,86 @@
+<section class="slide" id="s-envs" data-section="Piliers" data-accent="local" data-title="Pilier 3 — Environnements locaux">
+  <div class="spread">
+    <div>
+      <p class="kicker">Pilier 03 · environnements locaux</p>
+      <h2>Exécuter une méthode avant de la pousser</h2>
+    </div>
+    <div class="seg" data-group="envs">
+      <button data-panel="A" class="on">Option A — parité complète</button>
+      <button data-panel="B">Option B — léger</button>
+    </div>
+  </div>
+  <p class="lede">
+    C'est le pilier qui supprime la rupture la plus coûteuse du fonctionnement actuel :
+    <strong>la première exécution réelle d'un processus n'a plus lieu sur un environnement partagé.</strong>
+  </p>
+
+  <div class="body">
+    <div data-panel-group="envs" data-panel="A" style="height:100%">
+      <div class="cols c-2" style="height:100%">
+        <div class="card hi">
+          <span class="card-num">Option A</span>
+          <h3 style="font-size:24px">Airflow + Camunda en local</h3>
+          <p style="margin:10px 0 16px">Une réplique complète de l'environnement réel, y compris les appels aux API externes
+             utilisées par Airflow et l'équipe.</p>
+          <ul class="clean pro">
+            <li><strong>Parité totale avec la production</strong> — aucun comportement mocké, ce qui marche ici marche là-bas.</li>
+            <li><strong>Fonctionne pour tous les workers</strong> — la contrainte de certificats SSL qui bloquait la communication avec les API externes est levée.</li>
+          </ul>
+          <ul class="clean con" style="margin-top:10px">
+            <li><strong>Setup plus lourd</strong> — deux systèmes à faire tourner localement sur le poste.</li>
+          </ul>
+        </div>
+
+        <div class="stack">
+          <div class="card">
+            <h3>Quand la choisir</h3>
+            <p>Dès qu'une méthode touche à un worker non mocké, ou qu'on veut valider un comportement d'intégration
+               réel avant de pousser. C'est l'option de référence.</p>
+          </div>
+          <div class="callout warn">
+            <strong>À reconfirmer avant le comité.</strong> Le statut exact de la levée de la contrainte SSL vit dans le dépôt
+            backend Airflow/rFlow — il n'est pas vérifiable depuis le dépôt du plugin.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div data-panel-group="envs" data-panel="B" class="hidden" style="height:100%">
+      <div class="cols c-2" style="height:100%">
+        <div class="card hi">
+          <span class="card-num">Option B</span>
+          <h3 style="font-size:24px">Spring Boot + workers mockés</h3>
+          <p style="margin:10px 0 16px">Camunda embarqué dans Spring Boot, les workers en <em>external task pattern</em> mockés,
+             base de données simulée. Pas d'Airflow réel.</p>
+          <ul class="clean pro">
+            <li><strong>Léger et rapide à lancer</strong> — rien à installer côté Airflow.</li>
+            <li><strong>Suffisant pour tester le workflow lui-même</strong> — routage, passerelles, boucles, événements.</li>
+          </ul>
+          <ul class="clean con" style="margin-top:10px">
+            <li><strong>Ne couvre que les workers déjà mockés</strong> — 3 sur 29 aujourd'hui.</li>
+          </ul>
+        </div>
+
+        <div class="stack">
+          <div class="card">
+            <h3>La couverture est priorisée, pas exhaustive</h3>
+            <p>Les workers sont mockés méthode par méthode, selon ce dont les méthodes en cours ont réellement besoin —
+               plutôt que de viser les 29 avant de commencer à s'en servir.</p>
+          </div>
+          <div class="cols c-2">
+            <div class="card" style="text-align:center">
+              <div class="metric acc"><div class="val sm">3 / 29</div><div class="lbl">workers mockés</div></div>
+            </div>
+            <div class="card" style="text-align:center">
+              <div class="metric"><div class="val sm">≈ 1 min</div><div class="lbl">pour démarrer</div></div>
+            </div>
+          </div>
+          <div class="callout warn">
+            <strong>À reconfirmer avant le comité.</strong> Le chiffre « 3 sur 29 » vient du dépôt backend et doit être
+            revalidé — il n'est pas vérifiable depuis le dépôt du plugin.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

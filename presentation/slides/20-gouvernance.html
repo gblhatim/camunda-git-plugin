@@ -1,0 +1,73 @@
+<section class="slide" id="s-gouvernance" data-section="Organisation" data-accent="gov" data-title="Gouvernance — le bus factor">
+  <p class="kicker">Organisation · gouvernance</p>
+  <h2>Le risque qui n'est pas technique</h2>
+  <p class="lede">
+    La chaîne fonctionne. Le problème est ailleurs : la connaissance de son fonctionnement est concentrée sur
+    <strong>deux points de défaillance</strong>, dont l'un est temporaire par nature.
+  </p>
+
+  <div class="body">
+    <div class="cols c-2" style="height:100%">
+      <div class="stack">
+        <div class="cols c-2">
+          <div class="card hi" style="--accent:var(--bad)">
+            <span class="card-num">Point 1</span>
+            <h3>Hatim</h3>
+            <p>Architecture, logique, débogage, évolution du pipeline. Tout ce qui n'est pas écrit ailleurs.</p>
+          </div>
+          <div class="card hi" style="--accent:var(--warn)">
+            <span class="card-num">Point 2</span>
+            <h3>Les interns</h3>
+            <p>Implémentation — et <strong>temporaires</strong> par définition. Leur départ est daté, celui de la connaissance ne l'est pas.</p>
+          </div>
+        </div>
+
+        <div class="callout bad">
+          <strong>Conséquence si le premier point disparaît :</strong> plus personne ne peut déboguer, maintenir
+          ou faire évoluer BDM 2.0. Le pipeline continue de tourner — jusqu'à la première fois où il ne tourne plus.
+        </div>
+
+        <div class="card">
+          <h3>Ce qui réduit réellement le risque</h3>
+          <ul class="clean" style="margin-top:10px">
+            <li>Documenter <strong>avant le départ des interns</strong>, pas après — ils sont les seuls à savoir pourquoi certaines choses sont faites ainsi.</li>
+            <li>Un cadre de gouvernance « à remplir » a été construit séparément pour Confluence.</li>
+            <li>La formation des futurs intégrateurs répartit la connaissance opérationnelle, pas la connaissance d'architecture.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" style="flex:1">
+          <div class="code-title">Les 4 zones critiques, par ordre de criticité</div>
+          <div class="bars" style="margin-top:18px">
+            <div class="bar-row" style="grid-template-columns:190px 1fr 40px">
+              <div class="bl"><strong>Pipeline CI/CD</strong><br><span class="dimmer small">build, checks, déploiement</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+              <div class="bv t-bad">1</div>
+            </div>
+            <div class="bar-row" style="grid-template-columns:190px 1fr 40px">
+              <div class="bl"><strong>Git Flow</strong><br><span class="dimmer small">branches, merge, conventions</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:76%;background:linear-gradient(90deg,color-mix(in srgb,var(--warn) 60%,transparent),var(--warn))"></div></div>
+              <div class="bv" style="color:var(--warn)">2</div>
+            </div>
+            <div class="bar-row" style="grid-template-columns:190px 1fr 40px">
+              <div class="bl"><strong>Config du moteur Camunda</strong><br><span class="dimmer small">environnements, déploiement</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:56%;background:linear-gradient(90deg,color-mix(in srgb,var(--warn) 40%,transparent),var(--warn))"></div></div>
+              <div class="bv" style="color:var(--warn)">3</div>
+            </div>
+            <div class="bar-row" style="grid-template-columns:190px 1fr 40px">
+              <div class="bl"><strong>Règles de validation</strong><br><span class="dimmer small">SonarQube, checks BPMN</span></div>
+              <div class="bar-track"><div class="bar-fill ok" style="width:38%"></div></div>
+              <div class="bv t-ok">4</div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:20px">
+            L'ordre compte : documenter les règles SonarQube avant le pipeline reviendrait à écrire le manuel
+            de la serrure avant celui de la porte.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,62 @@
+<section class="slide" id="s-avant-ruptures" data-section="Avant" data-accent="past" data-title="Là où le processus casse">
+  <p class="kicker">Avant · les points de rupture</p>
+  <h2>Trois ruptures, et un problème de responsabilité</h2>
+
+  <div class="body">
+    <div class="cols c-3-2" style="height:100%">
+      <div class="stack">
+        <div class="card hi" style="--accent:var(--bad)">
+          <span class="card-num">Rupture 01</span>
+          <h3>Aucun environnement isolé</h3>
+          <p>L'environnement de test est partagé et sans propriétaire dédié. La première exécution réelle d'un processus a lieu là,
+             au milieu du travail des autres. Deux méthodes en test peuvent se marcher dessus.</p>
+        </div>
+        <div class="card hi" style="--accent:var(--bad)">
+          <span class="card-num">Rupture 02</span>
+          <h3>Le contrôle arrive après la mise en ligne</h3>
+          <p>La non-régression est refaite en production. Le filet de sécurité est tendu une fois que les utilisateurs
+             ont déjà la nouvelle version entre les mains.</p>
+        </div>
+        <div class="card hi" style="--accent:var(--bad)">
+          <span class="card-num">Rupture 03</span>
+          <h3>La trace n'existe pas</h3>
+          <p>Le nom et la date ajoutés au fichier sont la seule mémoire du changement. Pas de diff, pas d'auteur,
+             pas de retour arrière — et pas de moyen de savoir pourquoi une méthode a évolué.</p>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div>
+          <div class="code-title">Qui fait quoi — aujourd'hui</div>
+          <table class="t compact raci">
+            <thead>
+              <tr>
+                <th>Étape</th>
+                <th data-col="1">Auteur</th>
+                <th data-col="2">Resp. prod</th>
+                <th data-col="3">Validateur</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Copier / renommer sur le drive</td><td class="r-cell both">R/A</td><td class="r-cell">–</td><td class="r-cell">–</td></tr>
+              <tr><td>Déployer vers l'env. de test</td><td class="r-cell both">R/A</td><td class="r-cell">–</td><td class="r-cell">–</td></tr>
+              <tr><td>Recette / non-régression</td><td class="r-cell rr">R</td><td class="r-cell ri">I</td><td class="r-cell rr">R</td></tr>
+              <tr><td>Déployer vers la production</td><td class="r-cell ri">I</td><td class="r-cell both">R/A</td><td class="r-cell ri">I</td></tr>
+              <tr><td>Non-régression en production</td><td class="r-cell rr">R</td><td class="r-cell ri">I</td><td class="r-cell rr">R</td></tr>
+            </tbody>
+          </table>
+          <div class="raci-legend" style="margin-top:10px">
+            <span><b>R</b> exécute</span><span><b>A</b> rend des comptes</span><span><b>C</b> consulté</span><span><b>I</b> informé</span>
+          </div>
+        </div>
+
+        <div class="callout bad">
+          <strong>Trois cases R/A sur cinq.</strong> La même personne exécute et répond du résultat.
+          Ce n'est pas un problème de personnes : le processus n'offre nulle part où poser une validation indépendante.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">Cliquez sur un en-tête de colonne pour isoler un rôle.</div>
+</section>

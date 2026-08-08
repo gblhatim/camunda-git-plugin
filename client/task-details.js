@@ -29,6 +29,8 @@
 
 'use strict';
 
+import { t } from './i18n.js';
+
 // --------------------------------------------------------- moddle reading
 
 /**
@@ -91,6 +93,11 @@ function text(node) {
 
 // The type, in the reader's words. Anything not here still shows its
 // configuration; it just gets its raw BPMN type as a heading.
+//
+// Held in English and translated at lookup, not at definition: this map is
+// built once when the module loads, which is before the language has been
+// read from settings. Calling t() here would freeze every label in whatever
+// language happened to be active at import time - English, always.
 const TYPE_LABELS = {
   'bpmn:UserTask': 'User task',
   'bpmn:ServiceTask': 'Service task',
@@ -112,7 +119,9 @@ const TYPE_LABELS = {
 };
 
 function typeLabel(bo) {
-  return TYPE_LABELS[bo.$type] || String(bo.$type || '').replace(/^bpmn:/, '');
+  const label = TYPE_LABELS[bo.$type];
+
+  return label ? t(label) : String(bo.$type || '').replace(/^bpmn:/, '');
 }
 
 // --------------------------------------------------------------- sections
@@ -126,10 +135,10 @@ function assignment(bo) {
   };
 
   add('Assignee', 'assignee');
-  add('Candidate groups', 'candidateGroups');
-  add('Candidate users', 'candidateUsers');
-  add('Due date', 'dueDate');
-  add('Follow-up date', 'followUpDate');
+  add(t('Candidate groups'), 'candidateGroups');
+  add(t('Candidate users'), 'candidateUsers');
+  add(t('Due date'), 'dueDate');
+  add(t('Follow-up date'), 'followUpDate');
   add('Priority', 'priority');
 
   return rows.length ? { title: 'Assignment', rows } : null;
@@ -142,11 +151,11 @@ function form(bo, ext) {
   const key = attr(bo, 'formKey');
   const ref = attr(bo, 'formRef');
 
-  if (key) rows.push({ label: 'Form key', value: String(key) });
+  if (key) rows.push({ label: t('Form key'), value: String(key) });
 
   if (ref) {
     const binding = attr(bo, 'formRefBinding');
-    rows.push({ label: 'Form reference', value: String(ref) + (binding ? ` (${binding})` : '') });
+    rows.push({ label: t('Form reference'), value: String(ref) + (binding ? ` (${binding})` : '') });
   }
 
   const formData = ext.find(v => local(v) === 'formdata');
@@ -199,15 +208,15 @@ function implementation(bo) {
     if (value) rows.push({ label, value: String(value) });
   };
 
-  add('Java class', 'class');
+  add(t('Java class'), 'class');
   add('Expression', 'expression');
-  add('Delegate expression', 'delegateExpression');
-  add('External task topic', 'topic');
-  add('Decision reference', 'decisionRef');
-  add('Called element', 'calledElement');
+  add(t('Delegate expression'), 'delegateExpression');
+  add(t('External task topic'), 'topic');
+  add(t('Decision reference'), 'decisionRef');
+  add(t('Called element'), 'calledElement');
 
   const script = attr(bo, 'scriptFormat');
-  if (script) rows.push({ label: 'Script format', value: String(script) });
+  if (script) rows.push({ label: t('Script format'), value: String(script) });
 
   return rows.length ? { title: 'Implementation', rows } : null;
 }
@@ -263,7 +272,7 @@ function mappings(ext) {
     .filter(p => local(p) === 'outputparameter')
     .forEach(p => describe(p, 'out'));
 
-  return rows.length ? { title: 'Input / output', rows } : null;
+  return rows.length ? { title: t('Input / output'), rows } : null;
 }
 
 function multiInstance(bo) {
@@ -276,12 +285,12 @@ function multiInstance(bo) {
   const rows = [ {
     label: 'Runs',
     value: attr(loop, 'isSequential') === true || attr(loop, 'isSequential') === 'true'
-      ? 'one after another'
+      ? t('one after another')
       : 'in parallel'
   } ];
 
   const collection = attr(loop, 'collection');
-  if (collection) rows.push({ label: 'For each', value: String(collection) });
+  if (collection) rows.push({ label: t('For each'), value: String(collection) });
 
   const element = attr(loop, 'elementVariable');
   if (element) rows.push({ label: 'As', value: String(element) });
@@ -321,7 +330,7 @@ function detailsFor(element) {
   const condition = bo.conditionExpression && text(bo.conditionExpression);
 
   if (condition) {
-    sections.unshift({ title: 'Condition', rows: [ { label: 'Only when', value: condition } ] });
+    sections.unshift({ title: 'Condition', rows: [ { label: t('Only when'), value: condition } ] });
   }
 
   const documentation = (bo.documentation || [])
@@ -391,7 +400,7 @@ function renderCard(details) {
   // A card that stays has to say how to make it go. Quiet, and last, because
   // it is the least interesting line on it - but without it the reader's only
   // model of the card is "it appeared and now it will not leave".
-  card.appendChild(el('div', 'cgp-taskcard__dismiss', 'Click or press Esc to close'));
+  card.appendChild(el('div', 'cgp-taskcard__dismiss', t('Click or press Esc to close')));
 
   return card;
 }

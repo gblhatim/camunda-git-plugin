@@ -22,6 +22,7 @@
 
 import React from 'camunda-modeler-plugin-helpers/vendor/react.js';
 import { Icon } from './icons.js';
+import { t } from './i18n.js';
 
 const h = React.createElement;
 const { useState, useEffect, useRef, useCallback } = React;
@@ -242,14 +243,14 @@ function HoverCard({ row, rect }) {
     h('div', { className: 'cgp-hovercard__meta' },
       isMerge
         ? h('span', { className: 'cgp-chip cgp-chip--merge' },
-          h(Icon, { name: 'Merge', size: 11 }), ' Merge')
+          h(Icon, { name: 'Merge', size: 11 }), ` ${t('Merge')}`)
         : null,
       h('span', null, row.author),
       h('span', { className: 'cgp-dot-sep' }, '·'),
       h('span', { title: fullDate(row.date) }, relativeTime(row.date))
     ),
     h('div', { className: 'cgp-hovercard__hash' }, row.hash.slice(0, 12)),
-    h('div', { className: 'cgp-hovercard__hint' }, 'Click to see what changed')
+    h('div', { className: 'cgp-hovercard__hint' }, t('Click to see what changed'))
   );
 }
 
@@ -284,7 +285,7 @@ function CommitDetail({ row, fetchCommit }) {
 
   if (!detail) {
     return h('div', { className: 'cgp-commit-detail' },
-      h('p', { className: 'cgp-empty' }, 'Loading the details...'));
+      h('p', { className: 'cgp-empty' }, t('Loading the details...')));
   }
 
   const authored = fullDate(detail.authorDate);
@@ -292,8 +293,8 @@ function CommitDetail({ row, fetchCommit }) {
   const diagrams = detail.files.filter(f => f.isDiagram).length;
 
   const fileSummary = !detail.fileCount
-    ? (detail.isMerge ? 'A merge - it combined branches without changing files on its own.'
-      : 'No files changed.')
+    ? (detail.isMerge ? t('A merge - it combined branches without changing files on its own.')
+      : t('No files changed.'))
     : `${detail.fileCount} file${detail.fileCount === 1 ? '' : 's'} changed` +
       (diagrams ? ` · ${diagrams} diagram${diagrams === 1 ? '' : 's'}` : '');
 
@@ -301,7 +302,7 @@ function CommitDetail({ row, fetchCommit }) {
     h('div', { className: 'cgp-commit-detail__head' },
       h('span', { className: 'cgp-commit-detail__subject' }, detail.subject),
       detail.isMerge && h('span', { className: 'cgp-chip cgp-chip--merge' },
-        h(Icon, { name: 'Merge', size: 11 }), ' Merge')
+        h(Icon, { name: 'Merge', size: 11 }), ` ${t('Merge')}`)
     ),
 
     detail.body && h('pre', { className: 'cgp-commit-detail__body' }, detail.body),
@@ -321,7 +322,7 @@ function CommitDetail({ row, fetchCommit }) {
         h('dd', { className: 'cgp-mono' },
           detail.parents.length
             ? detail.parents.map(p => p.slice(0, 8)).join('  ')
-            : 'none - this is the first save point')),
+            : t('none - this is the first save point'))),
       detail.refs.length ? h('div', { className: 'cgp-meta__row' },
         h('dt', null, 'Here'),
         h('dd', null, h('span', { className: 'cgp-commit__refs' },
@@ -381,7 +382,7 @@ export function History({ history, onRefresh, busy, fetchCommit }) {
 
   if (!history) {
     return h('div', { className: 'cgp-panel' },
-      h('p', { className: 'cgp-empty' }, 'Loading history...'));
+      h('p', { className: 'cgp-empty' }, t('Loading history...')));
   }
 
   if (history.error) {
@@ -398,11 +399,11 @@ export function History({ history, onRefresh, busy, fetchCommit }) {
       h('span', { className: 'cgp-toolbar__spacer' }),
       h('button', {
         className: 'btn cgp-btn', disabled: busy, onClick: onRefresh
-      }, h(Icon, { name: 'Renew', size: 13 }), ' Refresh')
+      }, h(Icon, { name: 'Renew', size: 13 }), ` ${t('Refresh')}`)
     ),
 
     !commits.length
-      ? h('p', { className: 'cgp-empty' }, 'No commits yet.')
+      ? h('p', { className: 'cgp-empty' }, t('No commits yet.'))
       : h('ul', { className: 'cgp-commits' },
         commits.map(row => {
           const open = row.hash === openHash;

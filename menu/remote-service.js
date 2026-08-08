@@ -195,8 +195,16 @@ function computeGitHubReviewState(reviews, requestedCount) {
  * where each request stands. Both are capped, because a large backlog
  * should not turn one refresh into a hundred API requests - past the cap
  * these stay null, which the UI reads as "unknown" and shows honestly.
+ *
+ * That enrichment is off unless `enrich` is set, and only an explicit
+ * refresh sets it. It costs two requests per pull request, so leaving it on
+ * meant every visit to the tab burned dozens of calls against a budget that
+ * is only 60 an hour without a token - the list would go blank on a rate
+ * limit long before the user did anything wrong. Unenriched, the whole list
+ * is one request, and the conflict and review columns read "unknown" until
+ * asked.
  */
-async function listGitHubPulls({ host, path }, token) {
+async function listGitHubPulls({ host, path }, token, { enrich = false } = {}) {
   const server = host === 'github.com' ? 'api.github.com' : `${host}/api/v3`;
   const headers = { Accept: 'application/vnd.github+json' };
   if (token) {
@@ -229,6 +237,10 @@ async function listGitHubPulls({ host, path }, token) {
   }));
 
   const ENRICH_LIMIT = 20;
+
+  if (!enrich) {
+    return items;
+  }
 
   await Promise.all(items.slice(0, ENRICH_LIMIT).map(async mr => {
     try {

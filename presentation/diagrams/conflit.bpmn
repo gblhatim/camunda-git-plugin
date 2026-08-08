@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Conflit" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_Conflit" name="Résolution guidée d'un conflit" isExecutable="false">
+    <bpmn:startEvent id="Start_Conflit" name="Conflit détecté au merge">
+      <bpmn:outgoing>XFlow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_Panneau" name="Ouvrir le panneau de résolution">
+      <bpmn:incoming>XFlow_1</bpmn:incoming>
+      <bpmn:outgoing>XFlow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_Choix" name="Choix de résolution, fichier par fichier">
+      <bpmn:incoming>XFlow_2</bpmn:incoming>
+      <bpmn:outgoing>XFlow_Combine</bpmn:outgoing>
+      <bpmn:outgoing>XFlow_Mine</bpmn:outgoing>
+      <bpmn:outgoing>XFlow_Theirs</bpmn:outgoing>
+      <bpmn:outgoing>XFlow_Abort</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_Combine" name="Combiner les deux versions">
+      <bpmn:incoming>XFlow_Combine</bpmn:incoming>
+      <bpmn:outgoing>XFlow_C1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Mine" name="Garder ma version">
+      <bpmn:incoming>XFlow_Mine</bpmn:incoming>
+      <bpmn:outgoing>XFlow_C2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Theirs" name="Garder la version de l'équipe">
+      <bpmn:incoming>XFlow_Theirs</bpmn:incoming>
+      <bpmn:outgoing>XFlow_C3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Abort" name="Recommencer (merge --abort)">
+      <bpmn:incoming>XFlow_Abort</bpmn:incoming>
+      <bpmn:outgoing>XFlow_C4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_Abort" name="Retour à l'état d'avant le merge — rien n'est perdu">
+      <bpmn:incoming>XFlow_C4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="Gateway_Join2">
+      <bpmn:incoming>XFlow_C1</bpmn:incoming>
+      <bpmn:incoming>XFlow_C2</bpmn:incoming>
+      <bpmn:incoming>XFlow_C3</bpmn:incoming>
+      <bpmn:outgoing>XFlow_3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_Verifier" name="Vérifier le diagramme, puis Terminer">
+      <bpmn:incoming>XFlow_3</bpmn:incoming>
+      <bpmn:outgoing>XFlow_4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_Conflit" name="Merge finalisé">
+      <bpmn:incoming>XFlow_4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:textAnnotation id="Annotation_Conflit">
+      <bpmn:text>Proposé uniquement si les changements ne se chevauchent pas — sinon l'option n'apparaît pas</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_Conflit" sourceRef="Task_Combine" targetRef="Annotation_Conflit" />
+    <bpmn:sequenceFlow id="XFlow_1" sourceRef="Start_Conflit" targetRef="Task_Panneau" />
+    <bpmn:sequenceFlow id="XFlow_2" sourceRef="Task_Panneau" targetRef="Gateway_Choix" />
+    <bpmn:sequenceFlow id="XFlow_Combine" name="Combiner les deux" sourceRef="Gateway_Choix" targetRef="Task_Combine" />
+    <bpmn:sequenceFlow id="XFlow_Mine" name="Ma version" sourceRef="Gateway_Choix" targetRef="Task_Mine" />
+    <bpmn:sequenceFlow id="XFlow_Theirs" name="Celle de l'équipe" sourceRef="Gateway_Choix" targetRef="Task_Theirs" />
+    <bpmn:sequenceFlow id="XFlow_Abort" name="Recommencer" sourceRef="Gateway_Choix" targetRef="Task_Abort" />
+    <bpmn:sequenceFlow id="XFlow_C1" sourceRef="Task_Combine" targetRef="Gateway_Join2" />
+    <bpmn:sequenceFlow id="XFlow_C2" sourceRef="Task_Mine" targetRef="Gateway_Join2" />
+    <bpmn:sequenceFlow id="XFlow_C3" sourceRef="Task_Theirs" targetRef="Gateway_Join2" />
+    <bpmn:sequenceFlow id="XFlow_C4" sourceRef="Task_Abort" targetRef="End_Abort" />
+    <bpmn:sequenceFlow id="XFlow_3" sourceRef="Gateway_Join2" targetRef="Task_Verifier" />
+    <bpmn:sequenceFlow id="XFlow_4" sourceRef="Task_Verifier" targetRef="End_Conflit" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_6">
+    <bpmndi:BPMNPlane id="BPMNPlane_6" bpmnElement="Process_Conflit">
+      <bpmndi:BPMNShape id="Start_Conflit_di" bpmnElement="Start_Conflit">
+        <dc:Bounds x="160" y="282" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="144" y="325" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Panneau_di" bpmnElement="Task_Panneau">
+        <dc:Bounds x="240" y="260" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Choix_di" bpmnElement="Gateway_Choix" isMarkerVisible="true">
+        <dc:Bounds x="440" y="275" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="422" y="332" width="87" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Combine_di" bpmnElement="Task_Combine">
+        <dc:Bounds x="580" y="60" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Mine_di" bpmnElement="Task_Mine">
+        <dc:Bounds x="580" y="180" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Theirs_di" bpmnElement="Task_Theirs">
+        <dc:Bounds x="580" y="300" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Abort_di" bpmnElement="Task_Abort">
+        <dc:Bounds x="580" y="420" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Abort_di" bpmnElement="End_Abort">
+        <dc:Bounds x="800" y="442" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="777" y="485" width="83" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Join2_di" bpmnElement="Gateway_Join2" isMarkerVisible="true">
+        <dc:Bounds x="810" y="195" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Verifier_di" bpmnElement="Task_Verifier">
+        <dc:Bounds x="920" y="180" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Conflit_di" bpmnElement="End_Conflit">
+        <dc:Bounds x="1120" y="202" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1105" y="245" width="67" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Annotation_Conflit_di" bpmnElement="Annotation_Conflit">
+        <dc:Bounds x="820" y="40" width="250" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="XFlow_1_di" bpmnElement="XFlow_1">
+        <di:waypoint x="196" y="300" />
+        <di:waypoint x="240" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_2_di" bpmnElement="XFlow_2">
+        <di:waypoint x="390" y="300" />
+        <di:waypoint x="440" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_Combine_di" bpmnElement="XFlow_Combine">
+        <di:waypoint x="465" y="275" />
+        <di:waypoint x="465" y="100" />
+        <di:waypoint x="580" y="100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="472" y="120" width="61" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_Mine_di" bpmnElement="XFlow_Mine">
+        <di:waypoint x="490" y="300" />
+        <di:waypoint x="530" y="300" />
+        <di:waypoint x="530" y="220" />
+        <di:waypoint x="580" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="537" y="226" width="43" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_Theirs_di" bpmnElement="XFlow_Theirs">
+        <di:waypoint x="490" y="300" />
+        <di:waypoint x="545" y="300" />
+        <di:waypoint x="545" y="340" />
+        <di:waypoint x="580" y="340" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="500" y="306" width="45" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_Abort_di" bpmnElement="XFlow_Abort">
+        <di:waypoint x="465" y="325" />
+        <di:waypoint x="465" y="460" />
+        <di:waypoint x="580" y="460" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="472" y="425" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_C1_di" bpmnElement="XFlow_C1">
+        <di:waypoint x="730" y="100" />
+        <di:waypoint x="835" y="100" />
+        <di:waypoint x="835" y="195" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_C2_di" bpmnElement="XFlow_C2">
+        <di:waypoint x="730" y="220" />
+        <di:waypoint x="810" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_C3_di" bpmnElement="XFlow_C3">
+        <di:waypoint x="730" y="340" />
+        <di:waypoint x="770" y="340" />
+        <di:waypoint x="770" y="220" />
+        <di:waypoint x="810" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_C4_di" bpmnElement="XFlow_C4">
+        <di:waypoint x="730" y="460" />
+        <di:waypoint x="800" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_3_di" bpmnElement="XFlow_3">
+        <di:waypoint x="860" y="220" />
+        <di:waypoint x="920" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="XFlow_4_di" bpmnElement="XFlow_4">
+        <di:waypoint x="1070" y="220" />
+        <di:waypoint x="1120" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Conflit_di" bpmnElement="Association_Conflit">
+        <di:waypoint x="730" y="90" />
+        <di:waypoint x="820" y="80" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

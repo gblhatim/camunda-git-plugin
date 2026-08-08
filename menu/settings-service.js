@@ -14,6 +14,7 @@
 'use strict';
 
 const configStore = require('./config-store');
+const tabAccess = require('./tab-access');
 
 const DEFAULTS = {
   repoPath: '',
@@ -23,6 +24,12 @@ const DEFAULTS = {
   // The OpenRouter model used for AI edits. A safe, widely-available
   // default; changeable in Settings, since OpenRouter's ids move over time.
   openRouterModel: 'anthropic/claude-sonnet-4.5',
+
+  // The panel's language. English by default rather than guessed from the
+  // system locale: a wrong guess is worse than a plain default here, because
+  // the person who needs French can set it in one click and the person who
+  // does not has nothing to undo.
+  language: 'en',
 
   // Off by default. It turns the Activity tab into a git console, which is
   // wanted by developers and is a way for an analyst to destroy a week of
@@ -34,6 +41,12 @@ const DEFAULTS = {
     intervalMinutes: 15
   }
 };
+
+// Kept in step with client/i18n.js by hand: the renderer is bundled
+// separately and cannot require this file. An id here with no dictionary in
+// the panel falls back to English rather than breaking, which is the safe
+// direction for the two to drift in.
+const LANGUAGES = [ 'en', 'fr' ];
 
 const MIN_INTERVAL = 1;
 const MAX_INTERVAL = 240;
@@ -47,11 +60,21 @@ function read() {
     gitlabHost: config.gitlabHost || DEFAULTS.gitlabHost,
     mergePolicy: config.mergePolicy === 'direct' ? 'direct' : 'review',
     developerMode: !!config.developerMode,
+    language: LANGUAGES.includes(config.language) ? config.language : DEFAULTS.language,
+    languages: LANGUAGES,
 
     autoPull: {
       enabled: !!autoPull.enabled,
       intervalMinutes: clampInterval(autoPull.intervalMinutes)
     },
+
+    // Which areas this project shows, and whether this person may change
+    // the set. The list of what *could* be shown travels with it so the
+    // Settings tab does not have to keep its own copy in sync.
+    enabledTabs: tabAccess.normalize(config.enabledTabs),
+    allTabs: tabAccess.TABS,
+    alwaysOnTabs: tabAccess.ALWAYS_ON,
+    canEditTabs: !!config.developerMode,
 
     // Presence only - never the value.
     hasGithubToken: !!config.githubToken,
@@ -93,6 +116,13 @@ function update(patch = {}) {
     next.mergePolicy = patch.mergePolicy;
   }
 
+  // An unknown id is dropped rather than stored: a config file naming a
+  // language the panel has no dictionary for would render English anyway,
+  // and saving it would make the dropdown show a value it cannot honour.
+  if (LANGUAGES.includes(patch.language)) {
+    next.language = patch.language;
+  }
+
   if (patch.developerMode !== undefined) {
     next.developerMode = !!patch.developerMode;
   }
@@ -127,6 +157,39 @@ function update(patch = {}) {
 
   configStore.update(next);
 
+  // The visible areas are the project's, not the machine's, so they go
+  // straight into the committed file rather than the local store - written
+  // last, so a rejected patch above cannot leave a half-applied pair.
+  //
+  // Refused rather than ignored when developerMode is off: silently
+  // dropping a write the UI offered is how a setting appears to save and
+  // then come back wrong on the next read.
+  if (patch.enabledTabs !== undefined) {
+    // The patch may be turning developer mode on in the same request, and
+    // that counts - the gate is on the state being saved, not the one being
+    // replaced.
+    const allowed = next.developerMode !== undefined
+      ? next.developerMode
+      : !!current.developerMode;
+
+    if (!allowed) {
+      throw new Error(
+        'Changing which areas this project shows needs developer mode, ' +
+        'which is off. Turn it on in Settings first.'
+      );
+    }
+
+    const repoPath = configStore.readRaw().global.repoPath;
+
+    if (!repoPath) {
+      throw new Error('No project folder is selected, so there is nowhere to save this.');
+    }
+
+    configStore.writeShared(repoPath, {
+      enabledTabs: tabAccess.normalize(patch.enabledTabs)
+    });
+  }
+
   return read();
 }
 
@@ -134,6 +197,7 @@ module.exports = {
   read,
   update,
   clampInterval,
+  LANGUAGES,
   DEFAULTS,
   MIN_INTERVAL,
   MAX_INTERVAL

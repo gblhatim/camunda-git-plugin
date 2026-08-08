@@ -1,0 +1,78 @@
+<section class="slide" id="s-conflit" data-section="Plugin" data-accent="plugin" data-title="Résolution de conflit">
+  <div class="spread">
+    <div>
+      <p class="kicker">Le plugin · l'argument différenciant</p>
+      <h2>Le conflit sur un diagramme, résolu visuellement</h2>
+    </div>
+    <div class="seg" data-group="confview">
+      <button data-panel="demo" class="on">Démonstration</button>
+      <button data-panel="model">Modèle BPMN</button>
+    </div>
+  </div>
+  <p class="lede">
+    C'est ce qu'un client Git générique ne propose pas. Deux personnes ont modifié le même diagramme :
+    un merge ligne à ligne d'un XML BPMN ne produirait <strong>ni l'un ni l'autre</strong> des deux diagrammes.
+  </p>
+
+  <div class="body">
+    <div id="conf" data-panel-group="confview" data-panel="demo" style="height:100%">
+      <div class="cols c-2" style="height:100%">
+        <div class="stack">
+          <div class="cols c-2">
+            <div class="card pad-sm">
+              <div class="row" style="margin-bottom:8px"><span class="badge b-accent">Ma version</span></div>
+              <div class="mock-file" style="margin-bottom:6px"><span class="nm">Recevoir la demande</span></div>
+              <div class="mock-file" style="border-color:var(--accent)"><span class="nm">Valider la demande <b>client</b></span></div>
+              <div class="mock-file" style="margin-top:6px"><span class="nm">Envoyer au client</span></div>
+              <p class="small dimmer" style="margin-top:8px">J'ai renommé une tâche.</p>
+            </div>
+            <div class="card pad-sm">
+              <div class="row" style="margin-bottom:8px"><span class="badge b-ok">Version de l'équipe</span></div>
+              <div class="mock-file" style="margin-bottom:6px"><span class="nm">Recevoir la demande</span></div>
+              <div class="mock-file"><span class="nm">Valider la demande</span></div>
+              <div class="mock-file" style="border-color:var(--ok);margin-top:6px"><span class="nm">Notifier le superviseur</span></div>
+              <div class="mock-file" style="margin-top:6px"><span class="nm">Envoyer au client</span></div>
+              <p class="small dimmer" style="margin-top:8px">Ils ont ajouté une tâche.</p>
+            </div>
+          </div>
+
+          <div class="card pad-sm">
+            <div class="code-title">Choix proposés — au niveau du fichier</div>
+            <div class="cols c-2" style="gap:8px;margin-top:8px">
+              <button class="btn primary" data-c="combine">Combiner les deux</button>
+              <button class="btn" data-c="mine">Garder ma version</button>
+              <button class="btn" data-c="theirs">Garder celle de l'équipe</button>
+              <button class="btn" data-c="abort">Recommencer</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="stack">
+          <div class="card" style="flex:1">
+            <div class="code-title">Résultat</div>
+            <div id="conf-out" class="stack" style="gap:7px;margin-top:10px">
+              <p class="dimmer small">Choisissez une option à gauche.</p>
+            </div>
+          </div>
+          <div id="conf-verdict" class="callout">
+            <strong>« Combiner les deux » n'est proposé que si la fusion peut être garantie correcte.</strong>
+            Le résultat est vérifié élément par élément après coup ; si la garantie n'est pas possible, l'option n'apparaît simplement pas.
+            Correct, ou abstention — jamais une fusion potentiellement fausse.
+          </div>
+          <div class="card pad-sm">
+            <ul class="clean" style="margin:0">
+              <li><strong>Jamais d'auto-résolution silencieuse</strong>, jamais un fichier truffé de marqueurs bruts.</li>
+              <li><strong>« Montrer les deux »</strong> rend les deux diagrammes côte à côte avant de trancher.</li>
+              <li><strong>« Recommencer »</strong> (<span class="mono">merge --abort</span>) n'affecte jamais le travail déjà commité.</li>
+              <li>Gère aussi les <strong>rebase, cherry-pick et revert</strong> laissés en cours, avec l'inversion correcte de ours/theirs.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div data-panel-group="confview" data-panel="model" class="hidden" style="height:100%">
+      <div class="bpmn-theatre" data-diagrams="conflit" style="height:100%"></div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,52 @@
+<section class="slide" id="s-perspectives" data-section="Suite" data-accent="brand" data-title="Ce qui reste à faire">
+  <p class="kicker">La suite</p>
+  <h2>Ce qui est livré, ce qui reste, ce qui doit être confirmé</h2>
+  <p class="lede">
+    La distinction compte pour un comité : ce qui est déjà dans le dépôt n'est pas une perspective,
+    et ce qui n'est pas vérifiable depuis ce dépôt ne doit pas être présenté comme acquis.
+  </p>
+
+  <div class="body">
+    <div class="cols c-3" style="height:100%">
+      <div class="card hi" style="--accent:var(--ok)">
+        <div class="row" style="margin-bottom:12px"><span class="badge b-ok">Déjà livré</span></div>
+        <ul class="clean pro">
+          <li><strong>Édition assistée par IA</strong> — conception <em>aperçu puis application</em> : rien n'est écrit sur disque sans accord, rien n'est jamais commité automatiquement.</li>
+          <li><strong>Catalogue de patterns</strong> — approbation, boucle de relance, revue parallèle. Lus depuis le dossier du plugin, disponibles avant même qu'un projet soit configuré.</li>
+          <li><strong>Recherche sémantique</strong> — sur tout le corpus de diagrammes, pas un grep de texte.</li>
+          <li><strong>Résolution de conflit visuelle</strong>, y compris « combiner les deux ».</li>
+        </ul>
+        <div class="callout ok" style="margin-top:14px;font-size:12.5px">
+          Ces quatre points sont souvent présentés comme des perspectives. Ils sont dans le dépôt, avec leurs tests.
+        </div>
+      </div>
+
+      <div class="card hi">
+        <div class="row" style="margin-bottom:12px"><span class="badge b-accent">Pistes identifiées</span></div>
+        <ul class="clean">
+          <li><strong>Créer une issue depuis le plugin</strong> — aujourd'hui la liste est consultable, la création se fait encore sur GitLab.</li>
+          <li><strong>« Enregistrer mon travail »</strong> comme point d'entrée unique — la routine est déjà codée, elle mérite d'être mise en avant dans la démo.</li>
+          <li><strong>Le mode « combiner les deux »</strong> comme argument différenciant fort — c'est ce qu'un client Git générique ne propose pas.</li>
+          <li><strong>Chiffrement des jetons</strong> stockés localement.</li>
+        </ul>
+        <div class="callout" style="margin-top:14px;font-size:12.5px">
+          Hors périmètre : les évolutions rFlow non liées à l'authoring Git/BPMN de ce plugin.
+        </div>
+      </div>
+
+      <div class="card hi" style="--accent:var(--warn)">
+        <div class="row" style="margin-bottom:12px"><span class="badge b-warn">À reconfirmer</span></div>
+        <ul class="clean">
+          <li><strong>« 3 workers mockés sur 29 »</strong> — le chiffre vient du dépôt backend Airflow/rFlow.</li>
+          <li><strong>Le statut de la contrainte SSL</strong> sur les appels aux API externes en local.</li>
+          <li><strong>La configuration exacte des règles SonarQube</strong> — elle vit dans le dépôt CI/CD séparé.</li>
+          <li><strong>Les chiffres de gain</strong> — objectifs ciblés issus du cadrage, à confronter aux premières méthodes réellement produites.</li>
+        </ul>
+        <div class="callout warn" style="margin-top:14px;font-size:12.5px">
+          Aucun de ces quatre points n'est vérifiable depuis le dépôt du plugin. Les annoncer comme mesurés
+          serait la seule vraie erreur possible dans cette présentation.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

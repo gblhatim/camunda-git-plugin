@@ -1,0 +1,58 @@
+<section class="slide" id="s-vs" data-section="Plugin" data-accent="plugin" data-title="Le plugin face à Gitflow standard">
+  <p class="kicker">Le plugin · positionnement</p>
+  <h2>Ce que Gitflow demande à l'humain, et ce que le plugin fait à sa place</h2>
+  <p class="lede">
+    Gitflow est un modèle, pas un outil. Presque toutes ses règles reposent sur la discipline de celui qui tape les commandes —
+    c'est exactement là que ça casse dans une équipe qui n'est pas composée de développeurs.
+  </p>
+
+  <div class="body">
+    <table class="t">
+      <thead>
+        <tr>
+          <th style="width:44%">Gitflow — la règle standard</th>
+          <th>Ce que fait le plugin</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Deux branches longues <span class="mono">develop</span>/<span class="mono">main</span>, plus <span class="mono">feature/</span> et <span class="mono">hotfix/</span></td>
+          <td>Choix « tronc commun » ou « Gitflow » dans les réglages, écrit dans le <span class="mono">.camunda-git.json</span> partagé</td>
+        </tr>
+        <tr>
+          <td>Le point de départ d'une branche est une convention humaine</td>
+          <td><strong>Automatique</strong> — feature et bugfix partent de develop, hotfix part de main. Aucun choix à faire</td>
+        </tr>
+        <tr>
+          <td>Le nommage est une convention</td>
+          <td><strong>Imposé</strong> : <span class="mono">feature/BDM-123456-slug</span>, et affiché en clair dans l'interface</td>
+        </tr>
+        <tr>
+          <td>Release et hotfix doivent être fusionnés dans main <em>et</em> develop — deux commandes</td>
+          <td>Une action « Intégrer » fait les deux merges <span class="mono">--no-ff</span></td>
+        </tr>
+        <tr>
+          <td>L'oubli du back-merge est l'échec le plus classique, et le plus silencieux</td>
+          <td><strong>Détecté et signalé automatiquement</strong></td>
+        </tr>
+        <tr>
+          <td>Le versioning repose sur la discipline humaine</td>
+          <td>Version suggérée automatiquement, tag validé avant l'intégration</td>
+        </tr>
+        <tr>
+          <td>Les conflits se résolvent en git brut, avec des marqueurs dans le fichier</td>
+          <td>Panneau de résolution dédié, au niveau fichier, jamais d'auto-résolution</td>
+        </tr>
+        <tr>
+          <td>Aucun contrôle sur qui touche <span class="mono">main</span></td>
+          <td>Mode développeur : l'auteur n'a pas accès aux commandes qui atteignent main</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footnote">
+    <span class="badge b-accent">Le point clé</span>
+    Le plugin ne réinvente pas Gitflow. Il retire de la table les huit décisions qu'un auteur de méthode n'a aucune raison d'avoir à prendre.
+  </div>
+</section>

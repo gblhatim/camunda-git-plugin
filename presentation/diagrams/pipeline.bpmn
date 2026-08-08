@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Pipeline" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_Pipeline" name="Pipeline CI/CD" isExecutable="false">
+    <bpmn:startEvent id="Start_Push" name="Push sur develop">
+      <bpmn:outgoing>CFlow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Stage_Build" name="Build — compilation">
+      <bpmn:incoming>CFlow_1</bpmn:incoming>
+      <bpmn:outgoing>CFlow_2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Stage_Tests" name="Tests camunda-bpm-assert">
+      <bpmn:incoming>CFlow_2</bpmn:incoming>
+      <bpmn:outgoing>CFlow_3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="Boundary_Fail" name="Échec" attachedToRef="Stage_Tests">
+      <bpmn:outgoing>CFlow_Fail</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorDef_1" />
+    </bpmn:boundaryEvent>
+    <bpmn:endEvent id="End_Fail" name="Rien n'est déployé — l'auteur est notifié">
+      <bpmn:incoming>CFlow_Fail</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateDef_1" />
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Stage_Sonar" name="Scan SonarQube — informatif sur develop">
+      <bpmn:incoming>CFlow_3</bpmn:incoming>
+      <bpmn:outgoing>CFlow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Stage_Deploy" name="Déployer en préproduction">
+      <bpmn:incoming>CFlow_4</bpmn:incoming>
+      <bpmn:outgoing>CFlow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Pipeline" name="Préproduction à jour">
+      <bpmn:incoming>CFlow_5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="CFlow_1" sourceRef="Start_Push" targetRef="Stage_Build" />
+    <bpmn:sequenceFlow id="CFlow_2" sourceRef="Stage_Build" targetRef="Stage_Tests" />
+    <bpmn:sequenceFlow id="CFlow_3" sourceRef="Stage_Tests" targetRef="Stage_Sonar" />
+    <bpmn:sequenceFlow id="CFlow_4" sourceRef="Stage_Sonar" targetRef="Stage_Deploy" />
+    <bpmn:sequenceFlow id="CFlow_5" sourceRef="Stage_Deploy" targetRef="End_Pipeline" />
+    <bpmn:sequenceFlow id="CFlow_Fail" sourceRef="Boundary_Fail" targetRef="End_Fail" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_5">
+    <bpmndi:BPMNPlane id="BPMNPlane_5" bpmnElement="Process_Pipeline">
+      <bpmndi:BPMNShape id="Start_Push_di" bpmnElement="Start_Push">
+        <dc:Bounds x="160" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="146" y="225" width="65" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Stage_Build_di" bpmnElement="Stage_Build">
+        <dc:Bounds x="240" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Stage_Tests_di" bpmnElement="Stage_Tests">
+        <dc:Bounds x="430" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Fail_di" bpmnElement="Boundary_Fail">
+        <dc:Bounds x="482" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="524" y="233" width="33" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Fail_di" bpmnElement="End_Fail">
+        <dc:Bounds x="482" y="350" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="459" y="393" width="83" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Stage_Sonar_di" bpmnElement="Stage_Sonar">
+        <dc:Bounds x="620" y="160" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Stage_Deploy_di" bpmnElement="Stage_Deploy">
+        <dc:Bounds x="820" y="160" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Pipeline_di" bpmnElement="End_Pipeline">
+        <dc:Bounds x="1020" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1004" y="225" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="CFlow_1_di" bpmnElement="CFlow_1">
+        <di:waypoint x="196" y="200" />
+        <di:waypoint x="240" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CFlow_2_di" bpmnElement="CFlow_2">
+        <di:waypoint x="380" y="200" />
+        <di:waypoint x="430" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CFlow_3_di" bpmnElement="CFlow_3">
+        <di:waypoint x="570" y="200" />
+        <di:waypoint x="620" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CFlow_4_di" bpmnElement="CFlow_4">
+        <di:waypoint x="770" y="200" />
+        <di:waypoint x="820" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CFlow_5_di" bpmnElement="CFlow_5">
+        <di:waypoint x="970" y="200" />
+        <di:waypoint x="1020" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="CFlow_Fail_di" bpmnElement="CFlow_Fail">
+        <di:waypoint x="500" y="258" />
+        <di:waypoint x="500" y="350" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

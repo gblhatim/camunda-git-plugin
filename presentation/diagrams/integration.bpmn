@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_Integration" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="Process_Integration" name="Intégrer une release" isExecutable="false">
+    <bpmn:startEvent id="Start_Int" name="Livraison prête sur develop">
+      <bpmn:outgoing>IFlow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_CreateRelease" name="Créer release/x.y.z (version suggérée)">
+      <bpmn:incoming>IFlow_1</bpmn:incoming>
+      <bpmn:outgoing>IFlow_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_ValidateTag" name="Valider le tag de version">
+      <bpmn:incoming>IFlow_2</bpmn:incoming>
+      <bpmn:outgoing>IFlow_3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="Gateway_Split" name="Une seule action « Intégrer »">
+      <bpmn:incoming>IFlow_3</bpmn:incoming>
+      <bpmn:outgoing>IFlow_4</bpmn:outgoing>
+      <bpmn:outgoing>IFlow_5</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="Task_MergeMain" name="merge --no-ff vers main">
+      <bpmn:incoming>IFlow_4</bpmn:incoming>
+      <bpmn:outgoing>IFlow_6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_BackMerge" name="Back-merge --no-ff vers develop">
+      <bpmn:incoming>IFlow_5</bpmn:incoming>
+      <bpmn:outgoing>IFlow_7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="Gateway_Join">
+      <bpmn:incoming>IFlow_6</bpmn:incoming>
+      <bpmn:incoming>IFlow_7</bpmn:incoming>
+      <bpmn:outgoing>IFlow_8</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="Task_Tag" name="Taguer la version et pousser">
+      <bpmn:incoming>IFlow_8</bpmn:incoming>
+      <bpmn:outgoing>IFlow_9</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="End_Int" name="Release intégrée sans oubli">
+      <bpmn:incoming>IFlow_9</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:textAnnotation id="Annotation_Int">
+      <bpmn:text>L'oubli du back-merge — l'échec classique de Gitflow — est détecté automatiquement</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_Int" sourceRef="Task_BackMerge" targetRef="Annotation_Int" />
+    <bpmn:sequenceFlow id="IFlow_1" sourceRef="Start_Int" targetRef="Task_CreateRelease" />
+    <bpmn:sequenceFlow id="IFlow_2" sourceRef="Task_CreateRelease" targetRef="Task_ValidateTag" />
+    <bpmn:sequenceFlow id="IFlow_3" sourceRef="Task_ValidateTag" targetRef="Gateway_Split" />
+    <bpmn:sequenceFlow id="IFlow_4" sourceRef="Gateway_Split" targetRef="Task_MergeMain" />
+    <bpmn:sequenceFlow id="IFlow_5" sourceRef="Gateway_Split" targetRef="Task_BackMerge" />
+    <bpmn:sequenceFlow id="IFlow_6" sourceRef="Task_MergeMain" targetRef="Gateway_Join" />
+    <bpmn:sequenceFlow id="IFlow_7" sourceRef="Task_BackMerge" targetRef="Gateway_Join" />
+    <bpmn:sequenceFlow id="IFlow_8" sourceRef="Gateway_Join" targetRef="Task_Tag" />
+    <bpmn:sequenceFlow id="IFlow_9" sourceRef="Task_Tag" targetRef="End_Int" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_4">
+    <bpmndi:BPMNPlane id="BPMNPlane_4" bpmnElement="Process_Integration">
+      <bpmndi:BPMNShape id="Start_Int_di" bpmnElement="Start_Int">
+        <dc:Bounds x="160" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="142" y="225" width="73" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_CreateRelease_di" bpmnElement="Task_CreateRelease">
+        <dc:Bounds x="240" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ValidateTag_di" bpmnElement="Task_ValidateTag">
+        <dc:Bounds x="430" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Split_di" bpmnElement="Gateway_Split">
+        <dc:Bounds x="620" y="175" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="604" y="232" width="83" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MergeMain_di" bpmnElement="Task_MergeMain">
+        <dc:Bounds x="720" y="60" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_BackMerge_di" bpmnElement="Task_BackMerge">
+        <dc:Bounds x="720" y="260" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Join_di" bpmnElement="Gateway_Join">
+        <dc:Bounds x="910" y="175" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Tag_di" bpmnElement="Task_Tag">
+        <dc:Bounds x="1010" y="160" width="140" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Int_di" bpmnElement="End_Int">
+        <dc:Bounds x="1200" y="182" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1182" y="225" width="73" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Annotation_Int_di" bpmnElement="Annotation_Int">
+        <dc:Bounds x="720" y="390" width="250" height="70" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="IFlow_1_di" bpmnElement="IFlow_1">
+        <di:waypoint x="196" y="200" />
+        <di:waypoint x="240" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_2_di" bpmnElement="IFlow_2">
+        <di:waypoint x="380" y="200" />
+        <di:waypoint x="430" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_3_di" bpmnElement="IFlow_3">
+        <di:waypoint x="570" y="200" />
+        <di:waypoint x="620" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_4_di" bpmnElement="IFlow_4">
+        <di:waypoint x="645" y="175" />
+        <di:waypoint x="645" y="100" />
+        <di:waypoint x="720" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_5_di" bpmnElement="IFlow_5">
+        <di:waypoint x="645" y="225" />
+        <di:waypoint x="645" y="300" />
+        <di:waypoint x="720" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_6_di" bpmnElement="IFlow_6">
+        <di:waypoint x="860" y="100" />
+        <di:waypoint x="935" y="100" />
+        <di:waypoint x="935" y="175" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_7_di" bpmnElement="IFlow_7">
+        <di:waypoint x="860" y="300" />
+        <di:waypoint x="935" y="300" />
+        <di:waypoint x="935" y="225" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_8_di" bpmnElement="IFlow_8">
+        <di:waypoint x="960" y="200" />
+        <di:waypoint x="1010" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="IFlow_9_di" bpmnElement="IFlow_9">
+        <di:waypoint x="1150" y="200" />
+        <di:waypoint x="1200" y="200" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_Int_di" bpmnElement="Association_Int">
+        <di:waypoint x="800" y="340" />
+        <di:waypoint x="820" y="390" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

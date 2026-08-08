@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>BDM 2.0 — Présentation comité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root{
+    --page-bg:#F6F4EE; --surface-1:#EFECE2; --surface-2:#FFFFFF;
+    --border:#E2DFD3; --border-strong:#CBC7B7;
+    --text-primary:#17160F; --text-secondary:#635F53; --text-muted:#948F7E;
+    --font-display:'Space Grotesk',-apple-system,sans-serif;
+    --font-body:'Inter',-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page-bg);color:var(--text-primary);font-family:var(--font-body);counter-reset:slidenum;}
+
+  .slide{--accent:#0C447C;display:none;min-height:100vh;padding:60px 90px 120px;
+    flex-direction:column;position:relative;overflow:hidden;isolation:isolate;}
+  .slide.active{display:flex;animation:fadein .4s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .slide::after{content:"";position:absolute;top:0;left:90px;right:90px;height:4px;background:var(--accent);opacity:.55;z-index:1;}
+  .slide::before{content:counter(slidenum,decimal-leading-zero);counter-increment:slidenum;
+    position:absolute;bottom:-38px;right:20px;font-family:var(--font-display);font-size:220px;
+    font-weight:700;color:var(--accent);opacity:.06;line-height:.8;pointer-events:none;z-index:0;}
+
+  .slide[data-accent="gitflow"]{--accent:#5B3E8A;}
+  .slide[data-accent="cicd"]{--accent:#0F6E5C;}
+  .slide[data-accent="sonar"]{--accent:#B8461E;}
+  .slide[data-accent="local"]{--accent:#185FA5;}
+  .slide[data-accent="plugin"]{--accent:#8A5A0C;}
+  .slide[data-accent="adopt"]{--accent:#3B6D11;}
+  .slide[data-accent="gov"]{--accent:#4A473A;}
+  .slide[data-accent="neutral"]{--accent:#0C447C;}
+
+  .slide h1,.slide h2{font-family:var(--font-display);font-weight:600;position:relative;z-index:2;}
+  .slide h1{font-size:44px;margin:0 0 8px;}
+  .slide h2{font-size:28px;margin:16px 0 6px;}
+  .kicker{font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.09em;
+    margin:0;font-weight:600;position:relative;z-index:2;display:flex;align-items:center;gap:8px;}
+  .kicker i{font-size:14px;}
+  .intro{font-size:16px;color:var(--text-secondary);line-height:1.65;max-width:760px;
+    margin:0 0 24px;position:relative;z-index:2;}
+  .content{flex:1;overflow-y:auto;position:relative;z-index:2;}
+  .note{font-size:13px;color:var(--text-muted);margin-top:16px;line-height:1.65;max-width:760px;}
+  table{border-collapse:collapse;width:100%;font-size:13px;background:var(--surface-2);}
+  th,td{border:0.5px solid var(--border-strong);padding:9px 11px;text-align:left;vertical-align:top;}
+  th{background:color-mix(in srgb, var(--accent) 10%, var(--surface-1));font-weight:600;
+    font-family:var(--font-display);color:var(--text-primary);}
+  ul{margin:0;padding-left:20px;line-height:1.7;}
+  li{margin-bottom:6px;font-size:15px;color:var(--text-secondary);}
+  .reveal-item{opacity:0;transform:translateY(6px);transition:opacity .3s ease,transform .3s ease;}
+  .reveal-item.revealed{opacity:1;transform:translateY(0);}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+  .card{background:var(--surface-2);border:0.5px solid var(--border);border-top:3px solid var(--accent);
+    border-radius:12px;padding:1.15rem 1.3rem;}
+  .card .card-icn{font-size:22px;color:var(--accent);display:block;margin-bottom:10px;}
+  .card p.t{font-weight:600;font-size:15px;margin:0 0 5px;font-family:var(--font-display);}
+  .card p.s{font-size:13px;color:var(--text-secondary);margin:0;line-height:1.55;}
+
+  .steps{display:flex;flex-direction:column;margin-top:4px;max-width:740px;}
+  .step{display:flex;gap:18px;padding:18px 0;border-bottom:0.5px solid var(--border);}
+  .step:last-child{border-bottom:none;}
+  .step-icn{width:42px;height:42px;border-radius:50%;flex-shrink:0;
+    background:color-mix(in srgb, var(--accent) 14%, white);
+    display:flex;align-items:center;justify-content:center;}
+  .step-icn i{font-size:19px;color:var(--accent);}
+  .step-t{font-weight:600;font-size:15.5px;margin:0 0 3px;font-family:var(--font-display);}
+  .step-s{font-size:14px;color:var(--text-secondary);margin:0;line-height:1.6;}
+
+  .rows{display:flex;flex-direction:column;margin-top:4px;}
+  .row-item{display:flex;align-items:center;gap:24px;padding:20px 4px;border-bottom:0.5px solid var(--border);}
+  .row-item:first-child{padding-top:4px;}
+  .row-item:last-child{border-bottom:none;}
+  .row-icn{width:56px;height:56px;border-radius:14px;flex-shrink:0;
+    background:color-mix(in srgb, var(--accent) 14%, white);
+    display:flex;align-items:center;justify-content:center;}
+  .row-icn i{font-size:26px;color:var(--accent);}
+  .row-t{font-weight:600;font-size:18px;margin:0 0 4px;font-family:var(--font-display);}
+  .row-s{font-size:14.5px;color:var(--text-secondary);margin:0;line-height:1.6;max-width:640px;}
+
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;
+    text-align:center;position:relative;z-index:2;}
+  .roledots{display:flex;gap:8px;margin-top:22px;}
+  .roledots span{width:8px;height:8px;border-radius:2px;}
+
+  .placeholder{border:1px dashed var(--border-strong);border-radius:12px;min-height:180px;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;
+    color:var(--text-muted);font-size:13px;background:var(--surface-1);}
+  .placeholder strong{color:var(--text-secondary);font-weight:600;font-size:14px;}
+
+  .node{cursor:help;}
+  .node:hover>rect{stroke-width:1.6;}
+  .upload-slot{display:flex;align-items:center;justify-content:center;margin-top:12px;
+    height:120px;border:1px dashed var(--border-strong);border-radius:8px;cursor:pointer;
+    overflow:hidden;background:var(--surface-1);position:relative;}
+  .upload-slot span{font-size:12px;color:var(--text-muted);}
+  .upload-slot img{width:100%;height:100%;object-fit:cover;display:none;}
+  .upload-slot input{display:none;}
+  .prosconslist{list-style:none;padding:0;margin:12px 0 0;}
+  .prosconslist li{font-size:14px;padding:0;}
+
+  svg text.t{font-size:14px;fill:var(--text-primary);font-family:var(--font-body);}
+  svg text.ts{font-size:12px;fill:var(--text-secondary);font-family:var(--font-body);}
+  svg text.th{font-size:14px;font-weight:600;fill:var(--text-primary);font-family:var(--font-body);}
+  .box{fill:var(--surface-1);stroke:var(--border-strong);stroke-width:0.5;}
+  .arr{stroke:var(--border-strong);stroke-width:1.5;fill:none;}
+  .leader{stroke:var(--border-strong);stroke-width:0.5;stroke-dasharray:4 3;fill:none;}
+  .c-blue>rect,.c-blue>circle{fill:#E6F1FB;stroke:#185FA5;stroke-width:0.5;}
+  .c-blue>path{fill:#E6F1FB;}
+  .c-blue text.th{fill:#0C447C;} .c-blue text.ts{fill:#185FA5;}
+  .c-amber>rect,.c-amber>circle{fill:#FAEEDA;stroke:#854F0B;stroke-width:0.5;}
+  .c-amber>path{fill:#FAEEDA;}
+  .c-amber text.th{fill:#633806;} .c-amber text.ts{fill:#854F0B;}
+  .c-gray>rect,.c-gray>circle{fill:#F1EFE8;stroke:#5F5E5A;stroke-width:0.5;}
+  .c-gray>path{fill:#F1EFE8;}
+  .c-gray text.th{fill:#444441;} .c-gray text.ts{fill:#5F5E5A;}
+  .c-red>rect,.c-red>circle{fill:#FCEBEB;stroke:#A32D2D;stroke-width:0.5;}
+  .c-red>path{fill:#FCEBEB;}
+  .c-red text.th{fill:#791F1F;} .c-red text.ts{fill:#A32D2D;}
+  .diagram{max-width:100%;margin:0 auto;position:relative;z-index:2;overflow-x:auto;padding-bottom:8px;}
+  .diagram svg{height:auto;display:block;}
+  .diagram.narrow{max-width:600px;}
+  .diagram.narrow svg{width:100%;}
+
+  .toggle-row{display:flex;gap:8px;margin-bottom:20px;position:relative;z-index:2;}
+  .opt-btn{background:var(--surface-2);border:0.5px solid var(--border-strong);border-radius:8px;
+    padding:8px 16px;font-size:14px;cursor:pointer;color:var(--text-secondary);font-family:var(--font-body);}
+  .opt-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .opt-panel{display:none;} .opt-panel.active{display:block;}
+
+  #tooltip{position:fixed;max-width:280px;background:#17160F;color:#fff;padding:11px 14px;
+    border-radius:10px;font-size:13px;line-height:1.55;pointer-events:none;z-index:1000;display:none;
+    box-shadow:0 10px 28px rgba(0,0,0,.22);}
+  #tooltip strong{display:block;font-family:var(--font-display);font-size:13.5px;margin-bottom:4px;color:#fff;}
+  #tooltip span{display:block;color:#D8D6CC;}
+
+  .navbar{position:fixed;bottom:0;left:0;right:0;height:56px;background:var(--surface-2);
+    border-top:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;
+    gap:16px;z-index:10;}
+  .navbar button{background:transparent;border:0.5px solid var(--border-strong);border-radius:8px;
+    padding:6px 16px;font-size:14px;cursor:pointer;color:var(--text-primary);font-family:var(--font-body);}
+  .navbar button:hover{background:var(--surface-1);}
+  .navbar .hint{font-size:11px;color:var(--text-muted);}
+  .dots{display:flex;gap:6px;flex-wrap:wrap;max-width:260px;}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--border-strong);cursor:pointer;}
+  .dot.active{background:#17160F;}
+  #counter{font-size:13px;color:var(--text-muted);min-width:52px;text-align:center;font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body>
+
+<div id="tooltip"></div>
+
+<section class="slide active" data-accent="neutral">
+  <div class="center">
+    <p class="kicker" style="justify-content:center;"><i class="ti ti-git-branch"></i>Bureau de Méthode — Bouygues Telecom</p>
+    <h1 style="font-size:56px;margin-top:16px;">BDM 2.0</h1>
+    <p class="intro" style="max-width:520px;text-align:center;">Gitflow, CI/CD, environnements locaux et SonarQube — et le plugin qui les rend utilisables au quotidien</p>
+    <div class="roledots">
+      <span style="background:#E6F1FB;border:1px solid #185FA5;"></span>
+      <span style="background:#FAEEDA;border:1px solid #854F0B;"></span>
+      <span style="background:#F1EFE8;border:1px solid #5F5E5A;"></span>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <p class="kicker"><i class="ti ti-layout-grid"></i>Vue d'ensemble</p>
+  <h2>Quatre piliers</h2>
+  <p class="intro">BDM 2.0 ne se résume pas au plugin — il repose sur quatre piliers. Le plugin est ce qui les rend utilisables au quotidien, pas le sujet en lui-même.</p>
+  <div class="content">
+  <div class="rows">
+    <div class="row-item" style="--accent:#5B3E8A;"><div class="row-icn"><i class="ti ti-git-branch"></i></div><div><p class="row-t">Gitflow</p><p class="row-s">Le modèle de branches : develop pour le quotidien, main pour la production, release/hotfix pour l'intégration contrôlée.</p></div></div>
+    <div class="row-item" style="--accent:#0F6E5C;"><div class="row-icn"><i class="ti ti-git-merge"></i></div><div><p class="row-t">CI/CD</p><p class="row-s">Le pipeline qui automatise build, tests et déploiement à chaque étape, sans intervention manuelle une fois le code poussé.</p></div></div>
+    <div class="row-item" style="--accent:#185FA5;"><div class="row-icn"><i class="ti ti-device-desktop"></i></div><div><p class="row-t">Environnements locaux</p><p class="row-s">Exécuter une méthode avant même de la pousser sur Git, via Airflow+Camunda ou Spring Boot+mocks.</p></div></div>
+    <div class="row-item" style="--accent:#B8461E;"><div class="row-icn"><i class="ti ti-shield-check"></i></div><div><p class="row-t">SonarQube</p><p class="row-s">La porte de qualité qui valide une méthode avant sa mise en production.</p></div></div>
+  </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <p class="kicker"><i class="ti ti-history"></i>Aujourd'hui</p>
+  <h2>Le fonctionnement actuel</h2>
+  <p class="intro">Un drive partagé organisé par univers, un déploiement manuel, une recette réalisée une fois la méthode déjà mise à disposition. Survolez chaque étape pour le détail.</p>
+  <div class="content">
+    <div class="diagram">
+    <svg viewBox="0 0 1170 230" role="img">
+    <title>Architecture avant BDM 2.0</title>
+    <desc>Drive partagé, déploiement manuel vers un environnement de test partagé sans isolation, recette manuelle, déploiement manuel vers la production, non-régression refaite en production.</desc>
+    <defs><marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+    <g class="c-gray node" data-tip-title="Drive partagé — dossier « Univers »" data-tip-body="Deux sous-dossiers : « En ligne » (version publiée) et « En rédaction » (copie de travail renommée avec le numéro de ticket). La concurrence entre auteurs est gérée à la main : on ajoute son nom dans le fichier et on met à jour la date à chaque changement.">
+      <rect x="40" y="70" width="150" height="90" rx="4"/>
+      <text x="115" y="104" class="th" text-anchor="middle">Drive partagé</text>
+      <text x="115" y="126" class="ts" text-anchor="middle">En ligne / En rédaction</text>
+      <text x="115" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur Méthode</text>
+    </g>
+    <line x1="190" y1="115" x2="220" y2="115" class="arr" marker-end="url(#a1)"/>
+
+    <g class="c-gray node" data-tip-title="Déploiement vers l'environnement de test" data-tip-body="Upload manuel sur rFlow par l'Auteur Méthode : on clique, et soit ça marche, soit ça renvoie une erreur — aucun contrôle de qualité avant.">
+      <rect x="220" y="70" width="150" height="90" rx="4"/>
+      <text x="295" y="104" class="th" text-anchor="middle">Déploiement test</text>
+      <text x="295" y="126" class="ts" text-anchor="middle">Auteur Méthode</text>
+    </g>
+    <line x1="370" y1="115" x2="400" y2="115" class="arr" marker-end="url(#a1)"/>
+
+    <g class="c-red node" data-tip-title="Environnement de test partagé" data-tip-body="Aucune isolation entre auteurs : c'est ici que le processus s'exécute pour la première fois, quel qu'il soit. Deux méthodes en cours de test peuvent se marcher dessus.">
+      <rect x="400" y="70" width="150" height="90" rx="4"/>
+      <text x="475" y="104" class="th" text-anchor="middle">Env. test partagé</text>
+      <text x="475" y="126" class="ts" text-anchor="middle">Aucune isolation</text>
+      <text x="475" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#948F7E">Sans propriétaire dédié</text>
+    </g>
+    <line x1="550" y1="115" x2="580" y2="115" class="arr" marker-end="url(#a1)"/>
+
+    <g class="c-gray node" data-tip-title="Recette manuelle" data-tip-body="Test de non-régression fait à la main par l'Auteur Méthode, le Validateur et une personne technique — dans l'environnement de test partagé.">
+      <rect x="580" y="70" width="150" height="90" rx="4"/>
+      <text x="655" y="104" class="th" text-anchor="middle">Recette manuelle</text>
+      <text x="655" y="126" class="ts" text-anchor="middle">Auteur, Validateur, Technique</text>
+    </g>
+    <line x1="730" y1="115" x2="760" y2="115" class="arr" marker-end="url(#a1)"/>
+
+    <g class="c-gray node" data-tip-title="Déploiement vers Production" data-tip-body="Second upload manuel sur rFlow, cette fois par le Responsable de la mise en production — même processus, même absence de contrôle automatisé.">
+      <rect x="760" y="70" width="150" height="90" rx="4"/>
+      <text x="835" y="104" class="th" text-anchor="middle">Déploiement prod</text>
+      <text x="835" y="126" class="ts" text-anchor="middle">Resp. mise en prod</text>
+    </g>
+    <line x1="910" y1="115" x2="940" y2="115" class="arr" marker-end="url(#a1)"/>
+
+    <g class="c-gray node" data-tip-title="Production" data-tip-body="Version live, unique et partagée. Une non-régression est refaite ici par les auteurs et les validateurs — le filet de sécurité arrive après la mise en ligne, pas avant.">
+      <rect x="940" y="70" width="150" height="90" rx="4"/>
+      <text x="1015" y="104" class="th" text-anchor="middle">Production</text>
+      <text x="1015" y="126" class="ts" text-anchor="middle">Non-régression refaite</text>
+      <text x="1015" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#5B3E8A">Auteur &amp; Validateur</text>
+    </g>
+
+    <rect x="40" y="195" width="14" height="14" rx="3" class="c-gray"/><text x="60" y="206" class="ts">Étape manuelle</text>
+    <rect x="200" y="195" width="14" height="14" rx="3" class="c-red"/><text x="220" y="206" class="ts">Point d'attention</text>
+    </svg>
+    </div>
+    <p class="note">Ce schéma montre une limite de <em>processus</em> — l'absence d'un environnement isolé pour tester avant mise à disposition — pas une limite des personnes qui l'exécutent aujourd'hui avec les moyens du bord.</p>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <p class="kicker"><i class="ti ti-map"></i>Ce qui change</p>
+  <h2>BDM 2.0 — vue d'ensemble</h2>
+  <p class="intro">Même chaîne, du poste de travail jusqu'à la production. Survolez chaque étape pour le détail.</p>
+  <div class="content">
+    <div class="diagram">
+    <svg viewBox="0 0 1350 230" role="img">
+    <title>Architecture BDM 2.0</title>
+    <defs><marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+    <g class="c-blue node" data-tip-title="Poste de travail" data-tip-body="Camunda Modeler avec le plugin Git installé : l'auteur méthode conçoit son BPMN et gère Git depuis les mêmes panneaux, style VS Code.">
+      <rect x="30" y="70" width="150" height="90" rx="4"/>
+      <text x="105" y="104" class="th" text-anchor="middle">Poste de travail</text>
+      <text x="105" y="126" class="ts" text-anchor="middle">Éditeur + plugin Git</text>
+      <text x="105" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur Méthode</text>
+    </g>
+    <line x1="180" y1="115" x2="205" y2="115" class="arr" marker-end="url(#a2)"/>
+
+    <g class="c-blue node" data-tip-title="Environnement local — deux options" data-tip-body="Option A, Airflow + Camunda locaux : parité complète, la contrainte SSL qui bloquait les API externes est résolue. Option B, Spring Boot + workers mockés : léger, mais seulement 3 workers sur 29 sont mockés aujourd'hui, couverture priorisée par méthode.">
+      <rect x="205" y="70" width="150" height="90" rx="4"/>
+      <text x="280" y="104" class="th" text-anchor="middle">Env. local</text>
+      <text x="280" y="126" class="ts" text-anchor="middle">Airflow/Camunda ou mocks</text>
+      <text x="280" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur Méthode</text>
+    </g>
+    <line x1="355" y1="115" x2="380" y2="115" class="arr" marker-end="url(#a2)"/>
+
+    <g class="c-blue node" data-tip-title="Dépôt Git local" data-tip-body="Commits, branches, historique complet — l'inverse du drive partagé sans mémoire. Modèle Gitflow : develop, main, feature/*, bugfix/*, hotfix/*, release/*.">
+      <rect x="380" y="70" width="150" height="90" rx="4"/>
+      <text x="455" y="104" class="th" text-anchor="middle">Dépôt Git local</text>
+      <text x="455" y="126" class="ts" text-anchor="middle">Commits, branches</text>
+      <text x="455" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur Méthode</text>
+    </g>
+    <line x1="530" y1="115" x2="555" y2="115" class="arr" marker-end="url(#a2)"/>
+
+    <g class="c-blue node" data-tip-title="Remote — GitLab" data-tip-body="Push de la branche, ouverture d'une Merge Request pour revue, et suivi des issues — sans quitter le modeler.">
+      <rect x="555" y="70" width="150" height="90" rx="4"/>
+      <text x="630" y="104" class="th" text-anchor="middle">Remote GitLab</text>
+      <text x="630" y="126" class="ts" text-anchor="middle">Branches, revue (MR)</text>
+      <text x="630" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#5B3E8A">Auteur + Relecteur</text>
+    </g>
+    <line x1="705" y1="115" x2="730" y2="115" class="arr" marker-end="url(#a2)"/>
+
+    <g class="c-blue node" data-tip-title="Préproduction" data-tip-body="develop déclenche automatiquement un déploiement en préproduction, où une revue fonctionnelle a lieu. Si elle est validée, la méthode est considérée « livrée ».">
+      <rect x="730" y="70" width="150" height="90" rx="4"/>
+      <text x="805" y="104" class="th" text-anchor="middle">Préproduction</text>
+      <text x="805" y="126" class="ts" text-anchor="middle">Déploiement auto, revue</text>
+      <text x="805" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur + équipe</text>
+    </g>
+    <line x1="880" y1="115" x2="905" y2="115" class="arr" marker-end="url(#a2)"/>
+
+    <g class="c-amber node" data-tip-title="Production" data-tip-body="main déclenche le déploiement en production — mais la promotion vers main est bloquée si la qualité SonarQube n'a pas été corrigée. rFlow exécute les méthodes déployées.">
+      <rect x="905" y="70" width="150" height="90" rx="4"/>
+      <text x="980" y="104" class="th" text-anchor="middle">Production</text>
+      <text x="980" y="126" class="ts" text-anchor="middle">Bloqué si qualité KO</text>
+      <text x="980" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#854F0B">Intégrateur</text>
+    </g>
+
+    <line x1="980" y1="160" x2="980" y2="185" class="leader" marker-end="url(#a2)"/>
+    <rect x="855" y="185" width="250" height="40" rx="4" fill="var(--surface-1)" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4 3"/>
+    <text x="980" y="209" class="ts" text-anchor="middle">ModOp ↔ Confluence ↔ Airflow — hors scope</text>
+
+    <rect x="40" y="195" width="14" height="14" rx="3" class="c-blue"/><text x="60" y="206" class="ts">Auteur / équipe</text>
+    <rect x="200" y="195" width="14" height="14" rx="3" class="c-amber"/><text x="220" y="206" class="ts">Intégrateur / Admin</text>
+    </svg>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <p class="kicker"><i class="ti ti-sitemap"></i>Ce qui change</p>
+  <h2>Architecture détaillée</h2>
+  <p class="intro">Chaque étape a un propriétaire clair. Survolez chaque bloc pour le détail complet.</p>
+  <div class="content">
+    <div class="diagram">
+    <svg viewBox="0 0 1800 230" role="img">
+    <title>Architecture BDM 2.0 avec exécution locale, préproduction et production</title>
+    <defs><marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+    <g class="c-blue node" data-tip-title="Poste de travail" data-tip-body="Camunda Modeler (Electron). Renderer : panneaux du plugin (statut, diff, commit, MR). Main process : bridge.js, accès Node complet pour parler à git.">
+      <rect x="20" y="70" width="150" height="90" rx="4"/>
+      <text x="95" y="104" class="th" text-anchor="middle">Poste de travail</text>
+      <text x="95" y="126" class="ts" text-anchor="middle">Renderer + main process</text>
+      <text x="95" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur Méthode</text>
+    </g>
+    <line x1="170" y1="115" x2="192" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-blue node" data-tip-title="Environnement local — deux options" data-tip-body="Option A, Airflow + Camunda locaux : parité complète, contrainte SSL résolue. Option B, Spring Boot + workers mockés : léger, mais 3 workers sur 29 mockés aujourd'hui, couverture priorisée par méthode plutôt qu'exhaustive.">
+      <rect x="192" y="70" width="150" height="90" rx="4"/>
+      <text x="267" y="104" class="th" text-anchor="middle">Env. local</text>
+      <text x="267" y="126" class="ts" text-anchor="middle">Switchable A / B</text>
+      <text x="267" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur Méthode</text>
+    </g>
+    <line x1="342" y1="115" x2="364" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-blue node" data-tip-title="Dépôt Git local" data-tip-body="Branches : develop, main, feature/*, bugfix/*, hotfix/*, release/*. Config partagée .camunda-git.json : branchModel, mergePolicy, préfixe de ticket — écrite une fois, valable pour toute l'équipe.">
+      <rect x="364" y="70" width="150" height="90" rx="4"/>
+      <text x="439" y="104" class="th" text-anchor="middle">Dépôt Git local</text>
+      <text x="439" y="126" class="ts" text-anchor="middle">Branches + config</text>
+      <text x="439" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur Méthode</text>
+    </g>
+    <line x1="514" y1="115" x2="536" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-blue node" data-tip-title="Remote — GitLab" data-tip-body="MR : revue avant fusion, ouverte et suivie depuis le modeler. Issues : suivi des problèmes signalés sur une méthode, même endroit que le reste du travail.">
+      <rect x="536" y="70" width="150" height="90" rx="4"/>
+      <text x="611" y="104" class="th" text-anchor="middle">Remote GitLab</text>
+      <text x="611" y="126" class="ts" text-anchor="middle">MR + Issues</text>
+      <text x="611" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#5B3E8A">Auteur + Relecteur</text>
+    </g>
+    <line x1="686" y1="115" x2="708" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-blue node" data-tip-title="Pipeline CI/CD — develop" data-tip-body="Déclenché à chaque push sur develop : build, tests (camunda-bpm-assert), scan qualité SonarQube. Le scan est informatif ici — il ne bloque pas le déploiement en préproduction.">
+      <rect x="708" y="70" width="150" height="90" rx="4"/>
+      <text x="783" y="104" class="th" text-anchor="middle">Pipeline (develop)</text>
+      <text x="783" y="126" class="ts" text-anchor="middle">Build, tests, Sonar</text>
+      <text x="783" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#4A473A">Automatique — Admin Git/CI</text>
+    </g>
+    <line x1="858" y1="115" x2="880" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-blue node" data-tip-title="Préproduction" data-tip-body="Déploiement automatique depuis develop. Une revue fonctionnelle a lieu ici ; si elle est validée, la méthode est considérée « livrée ».">
+      <rect x="880" y="70" width="150" height="90" rx="4"/>
+      <text x="955" y="104" class="th" text-anchor="middle">Préproduction</text>
+      <text x="955" y="126" class="ts" text-anchor="middle">Revue → livré si OK</text>
+      <text x="955" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#185FA5">Auteur + équipe</text>
+    </g>
+    <line x1="1030" y1="115" x2="1052" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-amber node" data-tip-title="Promotion vers main" data-tip-body="Portée par l'Intégrateur. Bloquée tant que la qualité SonarQube détectée sur develop n'a pas été corrigée — c'est la porte de qualité du projet.">
+      <rect x="1052" y="70" width="150" height="90" rx="4"/>
+      <text x="1127" y="104" class="th" text-anchor="middle">Promotion → main</text>
+      <text x="1127" y="126" class="ts" text-anchor="middle">Bloquée si qualité KO</text>
+      <text x="1127" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#854F0B">Intégrateur</text>
+    </g>
+    <line x1="1202" y1="115" x2="1224" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-amber node" data-tip-title="Pipeline CI/CD — main" data-tip-body="Déclenché à chaque push sur main : build, tests, déploiement. Atteint uniquement si la promotion a franchi la porte de qualité.">
+      <rect x="1224" y="70" width="150" height="90" rx="4"/>
+      <text x="1299" y="104" class="th" text-anchor="middle">Pipeline (main)</text>
+      <text x="1299" y="126" class="ts" text-anchor="middle">Build, tests, déployer</text>
+      <text x="1299" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#4A473A">Automatique — Admin Git/CI</text>
+    </g>
+    <line x1="1374" y1="115" x2="1396" y2="115" class="arr" marker-end="url(#a3)"/>
+
+    <g class="c-amber node" data-tip-title="Production" data-tip-body="Moteur Camunda / rFlow. Les méthodes qui atteignent cette étape ont passé la revue en préproduction et la porte de qualité SonarQube.">
+      <rect x="1396" y="70" width="150" height="90" rx="4"/>
+      <text x="1471" y="104" class="th" text-anchor="middle">Production</text>
+      <text x="1471" y="126" class="ts" text-anchor="middle">Camunda / rFlow</text>
+      <text x="1471" y="146" class="ts" text-anchor="middle" font-weight="600" font-size="11" fill="#854F0B">Intégrateur / Admin</text>
+    </g>
+
+    <rect x="20" y="195" width="14" height="14" rx="3" class="c-blue"/><text x="40" y="206" class="ts">Auteur / équipe / préprod</text>
+    <rect x="220" y="195" width="14" height="14" rx="3" class="c-amber"/><text x="240" y="206" class="ts">Intégrateur / Admin / prod</text>
+    </svg>
+    </div>
+    <p class="note">ModOp ↔ Confluence ↔ Airflow reste hors scope de BDM 2.0.</p>
+  </div>
+</section>
+
+<section class="slide" data-accent="local">
+  <p class="kicker"><i class="ti ti-device-desktop"></i>Pilier 3 — environnements locaux</p>
+  <h2>Environnement d'exécution local</h2>
+  <p class="intro">Le détail complet des deux options — le survol sur les diagrammes précédents en donne un résumé rapide.</p>
+  <div class="content">
+    <div class="toggle-row">
+      <button class="opt-btn active" data-target="optA">Option A — Airflow + Camunda locaux</button>
+      <button class="opt-btn" data-target="optB">Option B — Spring Boot + workers mockés</button>
+    </div>
+
+    <div id="optA" class="opt-panel active">
+      <p style="font-size:15px;color:var(--text-secondary);line-height:1.6;max-width:700px;">Airflow et Camunda tournent tous les deux en local : réplique complète de l'environnement réel, y compris les appels aux API externes utilisées par Airflow et l'équipe.</p>
+      <ul class="prosconslist">
+        <li>+ Parité totale avec la production, aucun comportement mocké.</li>
+        <li>+ Fonctionne désormais pour tous les workers, la contrainte de certificats SSL qui bloquait la communication avec les API externes est levée.</li>
+        <li>– Setup plus lourd : deux systèmes à faire tourner localement.</li>
+      </ul>
+    </div>
+
+    <div id="optB" class="opt-panel">
+      <p style="font-size:15px;color:var(--text-secondary);line-height:1.6;max-width:700px;">Camunda (Spring Boot embarqué) avec les workers en external task pattern mockés, et une base de données simulée — pas d'Airflow réel.</p>
+      <ul class="prosconslist">
+        <li>+ Léger et rapide à lancer, rien à installer côté Airflow.</li>
+        <li>+ Suffisant pour tester le comportement du workflow lui-même.</li>
+        <li>– Ne couvre que les workers déjà mockés : 3 sur 29 aujourd'hui.</li>
+      </ul>
+    </div>
+
+    <p class="note">La contrainte SSL qui limitait l'option A est résolue. Ce qui reste à étendre, c'est la couverture des workers mockés pour l'option B — priorisée par méthode plutôt qu'exhaustive avant tout déploiement.</p>
+  </div>
+</section>
+
+<section class="slide" data-accent="gitflow">
+  <p class="kicker"><i class="ti ti-git-branch"></i>Pilier 1</p>
+  <h2>Gitflow — le modèle</h2>
+  <p class="intro">Deux branches longues, trois types de branches courtes. Le plugin applique ce modèle, il ne l'invente pas. Survolez le diagramme pour le détail.</p>
+  <div class="content">
+    <div class="diagram narrow">
+    <svg viewBox="0 0 680 400" role="img">
+    <title>Modèle Gitflow</title>
+    <desc>develop pour le quotidien, main pour la production. Les branches feature partent de develop et y retournent. Les branches release partent de develop et fusionnent dans main et develop. Les branches hotfix partent de main et fusionnent dans main et develop.</desc>
+    <line x1="90" y1="170" x2="610" y2="170" stroke="#185FA5" stroke-width="1.5"/>
+    <text x="15" y="174" class="ts">develop</text>
+    <line x1="90" y1="310" x2="610" y2="310" stroke="#854F0B" stroke-width="1.5"/>
+    <text x="15" y="314" class="ts">main</text>
+
+    <g class="node" data-tip-title="feature/*" data-tip-body="Une nouvelle fonctionnalité ou une modification de méthode. Part de develop, y retourne via une Merge Request revue. Nommage imposé : feature/BDM-ticket-slug.">
+    <circle cx="150" cy="170" r="4" fill="#185FA5"/>
+    <line x1="150" y1="170" x2="150" y2="95" stroke="#185FA5" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <line x1="150" y1="95" x2="260" y2="95" stroke="#185FA5" stroke-width="4"/>
+    <line x1="260" y1="95" x2="260" y2="170" stroke="#185FA5" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <circle cx="260" cy="170" r="4" fill="#185FA5"/>
+    <text x="205" y="83" class="ts" text-anchor="middle">feature/*</text>
+    </g>
+
+    <g class="node" data-tip-title="release/*" data-tip-body="Prépare une livraison groupée. Part de develop, fusionne dans les deux à la fois : main (mise en ligne + tag de version) et develop (pour que le prochain cycle garde le contenu livré).">
+    <circle cx="320" cy="170" r="4" fill="#854F0B"/>
+    <line x1="320" y1="170" x2="320" y2="240" stroke="#854F0B" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <line x1="320" y1="240" x2="480" y2="240" stroke="#854F0B" stroke-width="4"/>
+    <line x1="400" y1="240" x2="400" y2="310" stroke="#854F0B" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <circle cx="400" cy="310" r="4" fill="#854F0B"/>
+    <line x1="480" y1="240" x2="480" y2="170" stroke="#854F0B" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <circle cx="480" cy="170" r="4" fill="#854F0B"/>
+    <text x="400" y="228" class="ts" text-anchor="middle">release/*</text>
+    </g>
+
+    <g class="node" data-tip-title="hotfix/*" data-tip-body="Correction urgente d'un problème déjà en production. Part de main (pas de develop, car on corrige ce qui est réellement live), fusionne dans les deux comme release/*. Ticket optionnel : un incident ne doit pas attendre.">
+    <circle cx="540" cy="310" r="4" fill="#854F0B"/>
+    <line x1="540" y1="310" x2="540" y2="370" stroke="#854F0B" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <line x1="540" y1="370" x2="600" y2="370" stroke="#854F0B" stroke-width="4"/>
+    <line x1="560" y1="370" x2="560" y2="310" stroke="#854F0B" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <circle cx="560" cy="310" r="4" fill="#854F0B"/>
+    <line x1="600" y1="370" x2="600" y2="170" stroke="#854F0B" stroke-width="0.5" stroke-dasharray="3 2"/>
+    <circle cx="600" cy="170" r="4" fill="#854F0B"/>
+    <text x="540" y="298" class="ts" text-anchor="middle">hotfix/*</text>
+    </g>
+    </svg>
+    </div>
+
+    <div class="rows" style="margin-top:8px;">
+      <div class="row-item"><div class="row-icn"><i class="ti ti-git-branch"></i></div><div><p class="row-t">feature/* &amp; bugfix/*</p><p class="row-s">Le quotidien de l'auteur méthode. Partent de develop, nommage imposé <code>feature/BDM-123456-slug</code> — le ticket reste toujours visible dans le nom de la branche.</p></div></div>
+      <div class="row-item"><div class="row-icn"><i class="ti ti-rocket"></i></div><div><p class="row-t">release/*</p><p class="row-s">L'intégrateur regroupe une livraison. Dual merge vers main (tag de version) et develop (back-merge) en une seule action « Intégrer » — l'oubli du back-merge, échec classique de Gitflow, est détecté automatiquement.</p></div></div>
+      <div class="row-item"><div class="row-icn"><i class="ti ti-alert-triangle"></i></div><div><p class="row-t">hotfix/*</p><p class="row-s">Correction urgente sur ce qui est déjà live. Part de main plutôt que de develop, suit le même dual merge que release/* — sans attendre le prochain cycle de livraison.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="cicd">
+  <p class="kicker"><i class="ti ti-git-merge"></i>Pilier 2</p>
+  <h2>CI/CD — le pipeline</h2>
+  <p class="intro">Ce qui prenait 2 jours et 6 personnes en manuel se déclenche automatiquement à chaque push.</p>
+  <div class="content">
+    <div class="diagram narrow">
+    <svg viewBox="0 0 680 160" role="img">
+    <title>Pipeline CI/CD</title>
+    <desc>Build, tests, scan SonarQube, déploiement, déclenchés automatiquement à chaque push.</desc>
+    <defs><marker id="a5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+    <g class="c-blue"><rect x="60" y="40" width="125" height="70" rx="4"/><text x="122" y="70" class="th" text-anchor="middle">Build</text><text x="122" y="90" class="ts" text-anchor="middle">Compilation</text></g>
+    <line x1="185" y1="75" x2="200" y2="75" class="arr" marker-end="url(#a5)"/>
+    <g class="c-blue"><rect x="200" y="40" width="125" height="70" rx="4"/><text x="262" y="70" class="th" text-anchor="middle">Tests</text><text x="262" y="90" class="ts" text-anchor="middle">camunda-bpm-assert</text></g>
+    <line x1="325" y1="75" x2="340" y2="75" class="arr" marker-end="url(#a5)"/>
+    <g class="c-blue"><rect x="340" y="40" width="125" height="70" rx="4"/><text x="402" y="70" class="th" text-anchor="middle">SonarQube</text><text x="402" y="90" class="ts" text-anchor="middle">Sur develop uniquement</text></g>
+    <line x1="465" y1="75" x2="480" y2="75" class="arr" marker-end="url(#a5)"/>
+    <g class="c-amber"><rect x="480" y="40" width="125" height="70" rx="4"/><text x="542" y="70" class="th" text-anchor="middle">Déployer</text><text x="542" y="90" class="ts" text-anchor="middle">Préprod ou prod</text></g>
+    </svg>
+    </div>
+    <p class="note">Deux instances du même pipeline : sur <strong>develop</strong>, il déploie en préproduction et le scan SonarQube est informatif. Sur <strong>main</strong>, il déploie en production — et n'est atteint que si la porte de qualité a été franchie.</p>
+  </div>
+</section>
+
+<section class="slide" data-accent="sonar">
+  <p class="kicker"><i class="ti ti-shield-check"></i>Pilier 4</p>
+  <h2>SonarQube — la porte de qualité</h2>
+  <p class="intro">Un scan de la qualité du BPMN, pas de la logique métier — deux moments distincts, deux comportements distincts.</p>
+  <div class="content">
+    <div class="steps">
+      <div class="step"><div class="step-icn"><i class="ti ti-info-circle"></i></div><div><p class="step-t">Sur develop (préproduction)</p><p class="step-s">Le scan tourne à chaque push, mais n'empêche jamais le déploiement en préprod — il informe, il ne bloque pas.</p></div></div>
+      <div class="step"><div class="step-icn"><i class="ti ti-lock"></i></div><div><p class="step-t">À la promotion vers main</p><p class="step-s">Le même résultat devient bloquant. Une méthode dont la qualité n'a pas été corrigée ne peut pas atteindre la production.</p></div></div>
+      <div class="step"><div class="step-icn"><i class="ti ti-list-check"></i></div><div><p class="step-t">Ce qui est évalué</p><p class="step-s">La structure du diagramme plutôt que le contenu métier — nommage des éléments, flux inutilisés ou orphelins, complexité des gateways, documentation minimale sur les tâches.</p></div></div>
+    </div>
+    <p class="note">Le détail exact des règles reste à valider avec l'équipe SonarQube — ce qui est acté ici, c'est le principe : informatif tôt, bloquant tard.</p>
+  </div>
+</section>
+
+<section class="slide" data-accent="plugin">
+  <p class="kicker"><i class="ti ti-puzzle"></i>Ce qui change</p>
+  <h2>Ce que fait le plugin, concrètement</h2>
+  <p class="intro">Le plugin ne remplace pas Gitflow, CI/CD ou SonarQube — il les rend utilisables au quotidien sans passer par un terminal. Fonctionnalités Git, plus un assistant IA et un catalogue de patterns, au même endroit.</p>
+  <div class="content grid">
+    <div class="card">
+      <i class="ti ti-list-check card-icn"></i>
+      <p class="t">Prise en main guidée</p>
+      <p class="s">Checklist ordonnée (« My work ») : choisir le dossier, démarrer le suivi, se déclarer, créer le premier point de sauvegarde, connecter le serveur d'équipe si besoin. Aucune commande à taper.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-git-commit card-icn"></i>
+      <p class="t">Usage quotidien</p>
+      <p class="s">Statut, diff, commit, push, pull en un clic. L'auteur voit l'état de ses fichiers et un bouton pour sauvegarder — jamais un terminal.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-git-compare card-icn"></i>
+      <p class="t">Diff visuel BPMN</p>
+      <p class="s">Les éléments ajoutés ou modifiés sont surlignés directement sur le diagramme, les éléments supprimés listés à côté — pas de XML à lire.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-clock-history card-icn"></i>
+      <p class="t">Historique &amp; traçabilité</p>
+      <p class="s">Vue chronologique des versions d'une méthode : qui a changé quoi et quand, avec un historique complet — l'inverse du drive partagé sans mémoire.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-git-pull-request card-icn"></i>
+      <p class="t">Revue en Merge Request</p>
+      <p class="s">Ouvrir une MR sur GitLab et suivre son état directement depuis le modeler, sans changer d'outil pour la revue.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-flag card-icn"></i>
+      <p class="t">Signaler un problème</p>
+      <p class="s">Consulter la liste des issues GitLab ouvertes sur le dépôt directement depuis le plugin, sans changer d'outil. La création d'une issue se fait pour l'instant encore sur GitLab.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-rocket card-icn"></i>
+      <p class="t">Release &amp; hotfix</p>
+      <p class="s">Version suggérée automatiquement ; une seule action « Intégrer » fait le double merge vers main et develop ; le retour oublié vers develop est détecté.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-git-merge card-icn"></i>
+      <p class="t">Résolution de conflit guidée</p>
+      <p class="s">Un conflit ouvre un panneau dédié avec l'état exact de la fusion — jamais d'auto-résolution, jamais un fichier truffé de marqueurs bruts.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-shield-lock card-icn"></i>
+      <p class="t">Garde-fous</p>
+      <p class="s">Mode développeur qui sépare l'usage occasionnel des opérations sensibles (console, suppression forcée). En modèle Gitflow, jamais de push direct vers main — un mode « fusion directe » existe pour le modèle tronc commun en solo, avec avertissement explicite à l'écran.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-sparkles card-icn"></i>
+      <p class="t">Édition assistée par IA</p>
+      <p class="s">Décrire un changement en langage naturel ; le modèle propose une nouvelle version du BPMN affichée en diff, jamais appliquée ni commitée sans validation explicite.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-template card-icn"></i>
+      <p class="t">Catalogue de patterns prêts à l'emploi</p>
+      <p class="s">Des diagrammes types (approbation, boucle de relance, revue parallèle...) livrés avec le plugin, à copier pour démarrer une méthode sans repartir de zéro.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+    <div class="card">
+      <i class="ti ti-search card-icn"></i>
+      <p class="t">Recherche sémantique</p>
+      <p class="s">Retrouver une tâche, un assigné ou un processus appelé à travers tout le corpus de diagrammes du dépôt, en une recherche plutôt qu'en ouvrant chaque fichier.</p>
+      <label class="upload-slot"><input type="file" accept="image/*"><span>+ Ajouter une capture</span><img></label>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="plugin">
+  <p class="kicker"><i class="ti ti-git-branch"></i>Ce qui change</p>
+  <h2>Le plugin face à la définition standard de Gitflow</h2>
+  <p class="intro">Le modèle vu à l'instant, appliqué sans qu'un auteur ait besoin de connaître ces règles par cœur.</p>
+  <div class="content">
+  <table>
+  <tr><th>Gitflow (règle standard)</th><th>Le plugin</th></tr>
+  <tr><td>Deux branches longues : develop / main, branches feature/, hotfix/</td><td>Choix « tronc commun » ou « Gitflow » dans les réglages, écrit dans <code>.camunda-git.json</code> partagé</td></tr>
+  <tr><td>Départ de branche = convention humaine</td><td>Automatique : feature/bugfix partent de develop, hotfix de main</td></tr>
+  <tr><td>Nommage = convention</td><td>Imposé : <code>feature/BDM-123456-slug</code>, lisible en clair dans l'UI</td></tr>
+  <tr><td>Release/hotfix → merge dans main ET develop (2 commandes)</td><td>Une action « Intégrer » fait les deux merges --no-ff</td></tr>
+  <tr><td>Oubli du back-merge = échec classique et silencieux</td><td>Détecté et signalé automatiquement</td></tr>
+  <tr><td>Versioning = discipline humaine</td><td>Suggestion auto de version + validation du tag</td></tr>
+  <tr><td>Conflits = git brut</td><td>Panneau de résolution dédié, jamais d'auto-résolution</td></tr>
+  <tr><td>Pas de contrôle sur qui touche main</td><td>Mode développeur : l'auteur n'a pas accès aux commandes qui atteignent main</td></tr>
+  </table>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <p class="kicker"><i class="ti ti-users-group"></i>Rôles</p>
+  <h2>Qui fait quoi — avant</h2>
+  <p class="intro">Peu de séparation entre les rôles : une même personne est souvent responsable et exécutante sur la quasi-totalité des étapes.</p>
+  <div class="content">
+  <table>
+  <tr><th>Étape</th><th>Auteur Méthode</th><th>Resp. mise en prod</th><th>Validateur</th></tr>
+  <tr><td>Copier / renommer sur le drive</td><td>R/A</td><td>–</td><td>–</td></tr>
+  <tr><td>Déployer vers l'env. de test</td><td>R/A</td><td>–</td><td>–</td></tr>
+  <tr><td>Recette / non-régression</td><td>R</td><td>I</td><td>R</td></tr>
+  <tr><td>Déployer vers Production</td><td>I</td><td>R/A</td><td>I</td></tr>
+  <tr><td>Non-régression en production</td><td>R</td><td>I</td><td>R</td></tr>
+  </table>
+  <p class="note"><strong>R</strong> Responsable (exécute) · <strong>A</strong> Approbateur (rend des comptes) · <strong>C</strong> Consulté (avis avant action) · <strong>I</strong> Informé (tenu au courant). Une même case R/A signifie qu'aucune séparation n'existe entre l'exécution et la responsabilité finale — c'est le symptôme principal du fonctionnement actuel.</p>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <p class="kicker"><i class="ti ti-users-group"></i>Rôles</p>
+  <h2>Qui fait quoi — après</h2>
+  <p class="intro">L'intégrateur devient un rôle à part entière : propriétaire des releases/hotfix et des conflits d'intégration, seul chemin vers la production.</p>
+  <div class="content">
+  <table>
+  <tr><th>Use case</th><th>Auteur Méthode</th><th>Intégrateur</th><th>Relecteur</th><th>Admin Git/CI</th><th>Comité</th></tr>
+  <tr><td>Créer une branche</td><td>R/A</td><td>–</td><td>I</td><td>C</td><td>–</td></tr>
+  <tr><td>Modifier &amp; committer</td><td>R/A</td><td>–</td><td>I</td><td>–</td><td>–</td></tr>
+  <tr><td>Ouvrir une MR</td><td>R/A</td><td>I</td><td>C</td><td>I</td><td>–</td></tr>
+  <tr><td>Revue (diff visuel)</td><td>I</td><td>I</td><td>R/A</td><td>C</td><td>–</td></tr>
+  <tr><td>Conflit (intégration release/hotfix)</td><td>I</td><td>R/A</td><td>C</td><td>C</td><td>–</td></tr>
+  <tr><td>Tag / version</td><td>I</td><td>R/A</td><td>I</td><td>A</td><td>–</td></tr>
+  <tr><td>Déploiement CI/CD → prod</td><td>I</td><td>R/A</td><td>–</td><td>A</td><td>I</td></tr>
+  </table>
+  <p class="note"><strong>R</strong> Responsable (exécute) · <strong>A</strong> Approbateur (rend des comptes) · <strong>C</strong> Consulté (avis avant action) · <strong>I</strong> Informé (tenu au courant). À comparer à la table « avant » : chaque étape a désormais un A distinct de son R sur les points sensibles (conflit d'intégration, tag, déploiement prod).</p>
+  </div>
+</section>
+
+<section class="slide" data-accent="plugin">
+  <p class="kicker"><i class="ti ti-photo"></i>En pratique</p>
+  <h2>Exemples</h2>
+  <p class="intro">Emplacements prévus pour des captures d'écran réelles du plugin — à remplacer manuellement.</p>
+  <div class="content grid">
+    <div class="placeholder"><strong>Exemple 1</strong><span>Checklist de prise en main</span></div>
+    <div class="placeholder"><strong>Exemple 2</strong><span>Diff visuel BPMN</span></div>
+    <div class="placeholder"><strong>Exemple 3</strong><span>Écran de résolution de conflit</span></div>
+  </div>
+  <p class="note">Pour ajouter une vraie capture : remplacer un bloc <code>&lt;div class="placeholder"&gt;...&lt;/div&gt;</code> par <code>&lt;img src="nom-du-fichier.png" style="width:100%;border-radius:12px"&gt;</code>, image placée dans le même dossier que ce fichier html.</p>
+</section>
+
+<section class="slide" data-accent="adopt">
+  <p class="kicker"><i class="ti ti-school"></i>Adoption</p>
+  <h2>Plan de formation</h2>
+  <div class="content">
+    <div class="steps">
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-layout-list"></i></div><div><p class="step-t">Atelier en deux temps</p><p class="step-s">Pour que chacun n'apprenne que ce dont il a besoin.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-users"></i></div><div><p class="step-t">Tout le monde</p><p class="step-s">Concepts + prise en main guidée du plugin (checklist « My work », premier commit, flux quotidien branche → commit → push → MR) sur un cas réel.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-shield-star"></i></div><div><p class="step-t">Futurs intégrateurs</p><p class="step-s">Release/hotfix, résolution de conflits, mode développeur.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-life-buoy"></i></div><div><p class="step-t">Support</p><p class="step-s">Fiche mémo et créneau de questions après la formation.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="adopt">
+  <p class="kicker"><i class="ti ti-cloud-upload"></i>Adoption</p>
+  <h2>Déploiement du plugin</h2>
+  <div class="content">
+    <div class="steps">
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-bolt"></i></div><div><p class="step-t">Pas de build nécessaire</p><p class="step-s">Le plugin tourne dans le process principal d'Electron, sans étape webpack.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-folder-plus"></i></div><div><p class="step-t">Installation</p><p class="step-s">Copie du dossier dans le répertoire plugins de Camunda Modeler + <code>npm install</code>.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-wave-square"></i></div><div><p class="step-t">Rollout en trois vagues</p><p class="step-s">Pilote (1-2 volontaires) → ajustements → généralisation avec formation.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="gov">
+  <p class="kicker"><i class="ti ti-users-group"></i>Continuité</p>
+  <h2>Gouvernance</h2>
+  <div class="content">
+    <p class="intro">La connaissance du pipeline est aujourd'hui concentrée sur peu de personnes, dont des postes temporaires. Documenter maintenant évite de dépendre d'une seule mémoire.</p>
+    <div class="steps">
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-git-merge"></i></div><div><p class="step-t">Pipeline CI/CD</p><p class="step-s">Build, checks, déploiement — le plus critique.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-git-branch"></i></div><div><p class="step-t">Git Flow</p><p class="step-s">Branches, merge, conventions.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-settings"></i></div><div><p class="step-t">Configuration du moteur Camunda</p><p class="step-s">Environnements, déploiement.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-checklist"></i></div><div><p class="step-t">Règles de validation</p><p class="step-s">SonarQube, checks BPMN.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <p class="kicker"><i class="ti ti-telescope"></i>Pour finir</p>
+  <h2>Perspectives</h2>
+  <div class="content">
+    <div class="steps">
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-sparkles"></i></div><div><p class="step-t">Construit avec Claude Code</p><p class="step-s">Le plugin a été développé avec Claude Code.</p></div></div>
+      <div class="step reveal-item"><div class="step-icn"><i class="ti ti-road"></i></div><div><p class="step-t">Prochaines étapes</p><p class="step-s">Édition IA, catalogue de patterns et recherche sémantique sont déjà livrés (slide précédente). Ce qui reste : les autres évolutions rFlow, hors périmètre de cette présentation.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-accent="neutral">
+  <div class="center">
+    <h1>Merci</h1>
+    <p class="intro">Questions ?</p>
+  </div>
+</section>
+
+<div class="navbar">
+  <button id="prev">← Précédent</button>
+  <div class="dots"></div>
+  <span id="counter"></span>
+  <button id="next">Suivant →</button>
+  <span class="hint">clic / flèches / espace</span>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsBox = document.querySelector('.dots');
+  slides.forEach((s,n) => { const d = document.createElement('div'); d.className='dot'+(n===0?' active':''); d.onclick=()=>{ show(n); revealAll(); }; dotsBox.appendChild(d); });
+  const dots = document.querySelectorAll('.dot');
+  let idx = 0;
+  function revealAll(){ slides[idx].querySelectorAll('.reveal-item').forEach(it=>it.classList.add('revealed')); }
+  function show(i){
+    idx = Math.max(0, Math.min(slides.length-1, i));
+    slides.forEach((s,n)=>s.classList.toggle('active', n===idx));
+    dots.forEach((d,n)=>d.classList.toggle('active', n===idx));
+    document.getElementById('counter').textContent = (idx+1)+' / '+slides.length;
+  }
+  function revealNextOrAdvance(){
+    const items = slides[idx].querySelectorAll('.reveal-item:not(.revealed)');
+    if (items.length) { items[0].classList.add('revealed'); return; }
+    show(idx+1);
+  }
+
+  const tip = document.getElementById('tooltip');
+  document.querySelectorAll('[data-tip-title]').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      tip.innerHTML = '<strong>'+el.dataset.tipTitle+'</strong><span>'+el.dataset.tipBody+'</span>';
+      tip.style.display = 'block';
+    });
+    el.addEventListener('mousemove', (e) => {
+      let x = e.clientX + 18, y = e.clientY + 18;
+      if (x + 290 > window.innerWidth) x = e.clientX - 296;
+      if (y + 110 > window.innerHeight) y = e.clientY - 120;
+      tip.style.left = x+'px'; tip.style.top = y+'px';
+    });
+    el.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+  });
+
+  document.querySelectorAll('.upload-slot input').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const file = inp.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const slot = inp.closest('.upload-slot');
+        const img = slot.querySelector('img');
+        const span = slot.querySelector('span');
+        img.src = reader.result;
+        img.style.display = 'block';
+        span.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.onclick = () => {
+      const row = btn.closest('.toggle-row');
+      row.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const panels = row.parentElement.querySelectorAll('.opt-panel');
+      panels.forEach(p => p.classList.toggle('active', p.id === btn.dataset.target));
+    };
+  });
+
+  document.getElementById('next').onclick = revealNextOrAdvance;
+  document.getElementById('prev').onclick = () => { show(idx-1); revealAll(); };
+  document.addEventListener('keydown', e => {
+    if (e.key==='ArrowRight' || e.key===' ') { e.preventDefault(); revealNextOrAdvance(); }
+    if (e.key==='ArrowLeft') { show(idx-1); revealAll(); }
+  });
+  show(0);
+</script>
+
+</body>
+</html>

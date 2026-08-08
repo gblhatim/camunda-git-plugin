@@ -80,8 +80,13 @@ async function resolveHost() {
 /**
  * The open merge/pull requests, each flagged with whether it conflicts and
  * whether its source branch is the one you are on.
+ *
+ * `enrich` is passed through to GitHub, where the conflict and review
+ * columns cost two extra API calls per request. Only an explicit refresh
+ * asks for them; opening the tab gets the one-request list. GitLab carries
+ * both in the list itself, so the flag makes no difference there.
  */
-async function list() {
+async function list({ enrich = false } = {}) {
   const { info } = await resolveHost();
 
   if (!info.isGitHub && !info.isGitLab) {
@@ -100,7 +105,7 @@ async function list() {
 
   try {
     items = info.isGitHub
-      ? await remoteService.listGitHubPulls(info, config.githubToken)
+      ? await remoteService.listGitHubPulls(info, config.githubToken, { enrich })
       : await remoteService.listGitLabMergeRequests(info, config.gitlabToken);
   } catch (err) {
     // A failed API call - most often a private project with no token - is

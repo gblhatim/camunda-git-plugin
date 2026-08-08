@@ -1,0 +1,69 @@
+<section class="slide" id="s-config" data-section="Piliers" data-accent="gitflow" data-title="Deux configurations, séparées">
+  <p class="kicker">Pilier 01 · configuration</p>
+  <h2>Deux configurations, et une raison de les séparer</h2>
+  <p class="lede">
+    Analystes et développeurs travaillent dans le même dépôt. « D'où partent les features » ne peut pas être
+    une supposition faite machine par machine — mais « quel dossier j'ai ouvert » ne regarde que moi.
+  </p>
+
+  <div class="body">
+    <div class="cols c-2" style="height:100%">
+      <div class="stack">
+        <div class="card" style="flex:1">
+          <div class="row" style="margin-bottom:10px">
+            <span class="badge b-accent">Partagée</span>
+            <span class="mono small dimmer">.camunda-git.json — committée avec le projet</span>
+          </div>
+          <div class="code" style="margin-bottom:12px">{
+  <span class="k">"branchModel"</span>: <span class="s">"gitflow"</span>,        <span class="c">// ou "trunk"</span>
+  <span class="k">"baseBranch"</span>: <span class="s">"develop"</span>,
+  <span class="k">"releaseBranch"</span>: <span class="s">"main"</span>,
+  <span class="k">"branchPrefixes"</span>: {
+    <span class="k">"feature"</span>: <span class="s">"feature/"</span>,
+    <span class="k">"bugfix"</span>:  <span class="s">"bugfix/"</span>,
+    <span class="k">"hotfix"</span>:  <span class="s">"hotfix/"</span>
+  },
+  <span class="k">"mergePolicy"</span>: <span class="s">"merge-request"</span>,
+  <span class="k">"jiraHost"</span>: <span class="s">"…"</span>,
+  <span class="k">"jiraProjectKey"</span>: <span class="s">"BDM"</span>
+}</div>
+          <ul class="clean">
+            <li><strong>Écrite une fois</strong>, valable pour toute l'équipe.</li>
+            <li><strong>Jamais générée automatiquement</strong> — créer ce fichier à l'ouverture d'un panneau salirait une copie de travail propre.</li>
+            <li><span class="mono">"trunk"</span> = tronc commun, une version partagée. <span class="mono">"gitflow"</span> = version publiée séparée.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" style="flex:1">
+          <div class="row" style="margin-bottom:10px">
+            <span class="badge">Locale</span>
+            <span class="mono small dimmer">~/.camunda-git-plugin/config.json — par personne</span>
+          </div>
+          <div class="code" style="margin-bottom:12px">{
+  <span class="k">"folder"</span>: <span class="s">"C:/methodes/univers-facturation"</span>,
+  <span class="k">"tokens"</span>: { <span class="k">"gitlab"</span>: <span class="s">"…"</span> },
+  <span class="k">"autoPull"</span>: <span class="n">false</span>,
+  <span class="k">"developerMode"</span>: <span class="n">false</span>
+}</div>
+          <ul class="clean">
+            <li>Dossier ouvert, jetons, auto-pull, mode développeur — <strong>propres à la machine</strong>.</li>
+            <li><strong>Auto-pull désactivé par défaut</strong>, et jamais au démarrage du modeler.</li>
+            <li><strong>Mode développeur désactivé par défaut</strong>, activé personne par personne.</li>
+          </ul>
+        </div>
+
+        <div class="callout warn">
+          <strong>Limitation connue et documentée :</strong> les jetons sont stockés en clair dans ce fichier local.
+          C'est un choix assumé pour l'instant, pas un oubli — à traiter si le dépôt sort du poste de travail.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Le reste des garde-fous techniques — validation anti-traversal des chemins, routes mutantes en POST uniquement,
+    jeton d'API régénéré à chaque lancement — vit dans le code, pas dans la configuration.
+  </div>
+</section>

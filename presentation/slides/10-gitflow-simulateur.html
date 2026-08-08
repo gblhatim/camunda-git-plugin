@@ -1,0 +1,40 @@
+<section class="slide" id="s-gitsim" data-section="Piliers" data-accent="gitflow" data-title="Gitflow en action">
+  <p class="kicker">Pilier 01 · démonstration</p>
+  <h2>Le modèle, en action</h2>
+  <p class="lede">
+    Chaque bouton correspond à une action réelle du plugin. La commande git exécutée derrière s'affiche à droite —
+    c'est exactement ce que montre l'onglet <strong>Activité</strong> du plugin.
+  </p>
+
+  <div class="body">
+    <div id="gitsim" class="cols c-3-2" style="height:100%">
+      <div class="gitgraph-wrap">
+        <svg id="gg-svg" viewBox="0 0 1000 400" preserveAspectRatio="xMinYMid meet"></svg>
+      </div>
+
+      <div class="stack" style="height:100%">
+        <div id="gg-status" class="card pad-sm mono" style="font-size:12.5px"></div>
+
+        <div id="gg-actions" class="cols c-2" style="gap:8px">
+          <button class="btn" data-a="feature">Nouveau sujet</button>
+          <button class="btn" data-a="commit">Enregistrer</button>
+          <button class="btn" data-a="mr">Merge Request</button>
+          <button class="btn" data-a="release">Préparer une release</button>
+          <button class="btn" data-a="hotfix">Hotfix urgent</button>
+          <button class="btn primary" data-a="integrate">Intégrer</button>
+          <button class="btn sm" data-a="reset" style="grid-column:1/-1">⟲ Repartir de zéro</button>
+        </div>
+
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+          <div class="code-title">Activité — commandes exécutées</div>
+          <div id="gg-log" class="term" style="flex:1;min-height:0"></div>
+        </div>
+
+        <div class="callout" style="flex:none;font-size:12.5px">
+          <strong>Ce que l'auteur ne fait jamais :</strong> choisir sa branche de départ, taper un nom de branche,
+          se souvenir du back-merge, ou pousser directement sur <span class="mono">main</span>.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
