@@ -1,0 +1,5 @@
+# Committed build output and vendored dependencies are checked out byte-for-byte:
+# no CRLF translation, so shebangs and any checksummed file survive a clone on
+# Windows. They are also excluded from GitHub's language stats and diffs.
+node_modules/** -text linguist-vendored
+client/dist/client.js -text linguist-generated

@@ -1,4 +1,17 @@
-node_modules/
-client/dist/
+# Generated at startup by menu/bridge-server.js - a per-run port and token.
 bridge.js
 bridge.json
+client/dist/bridge.js
+
+# node_modules/ is ignored but NOT untracked: the production dependency tree
+# is committed (see .gitattributes) so the plugin can be copied onto machines
+# that have no npm. Ignoring it only hides the devDependencies a local
+# `npm install` restores, which must never reach a release.
+#
+# Releasing a new build:
+#   npm install && npm run build && npm prune --omit=dev
+#   git add -f node_modules client/dist/client.js
+#
+# The `-f` is required, and it is what picks up files added by a dependency
+# upgrade - a plain `git add` would skip them.
+node_modules/
